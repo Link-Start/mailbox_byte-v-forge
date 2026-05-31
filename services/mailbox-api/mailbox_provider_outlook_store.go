@@ -2,112 +2,71 @@ package main
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/byte-v-forge/common-lib/emailx"
-	"github.com/byte-v-forge/common-lib/envx"
-	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/byte-v-forge/common-lib/timex"
-
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"mailboxapi/pb"
 )
 
-func (s *MailboxStore) RecordInboxMessages(ctx context.Context, email string, messages []graphMessage) ([]*mailboxv1.EmailInboxMessage, error) {
-	email = emailx.Normalize(email)
-	if email == "" {
-		return nil, errors.New("email_address is required")
+func upsertOutlookMailboxData(ctx context.Context, tx pgx.Tx, mailbox *pb.EmailMailbox, now int64) error {
+	authStatus := strings.TrimSpace(mailbox.GetAuthStatus())
+	if authStatus == "" {
+		authStatus = authStatusOAuthPending
+		if strings.TrimSpace(mailbox.GetRefreshToken()) != "" {
+			authStatus = authStatusAuthorized
+		}
 	}
-	if len(messages) == 0 {
-		return []*mailboxv1.EmailInboxMessage{}, nil
-	}
+	_, err := tx.Exec(ctx, `
+		INSERT INTO mailbox_outlook_accounts (
+			mailbox_email, password, refresh_token, access_token,
+			auth_status, last_error, created_at, updated_at
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$7)
+		ON CONFLICT (mailbox_email) DO UPDATE SET
+			password = CASE WHEN EXCLUDED.password <> '' THEN EXCLUDED.password ELSE mailbox_outlook_accounts.password END,
+			refresh_token = CASE WHEN EXCLUDED.refresh_token <> '' THEN EXCLUDED.refresh_token ELSE mailbox_outlook_accounts.refresh_token END,
+			access_token = CASE WHEN EXCLUDED.access_token <> '' THEN EXCLUDED.access_token ELSE mailbox_outlook_accounts.access_token END,
+			auth_status = CASE
+				WHEN $8 <> '' THEN EXCLUDED.auth_status
+				WHEN EXCLUDED.refresh_token <> '' THEN 'AUTHORIZED'
+				ELSE mailbox_outlook_accounts.auth_status
+			END,
+			last_error = CASE WHEN $8 <> '' OR EXCLUDED.last_error <> '' THEN EXCLUDED.last_error ELSE mailbox_outlook_accounts.last_error END,
+			updated_at = EXCLUDED.updated_at
+	`, emailx.Normalize(mailbox.GetEmailAddress()), strings.TrimSpace(mailbox.GetPassword()),
+		strings.TrimSpace(mailbox.GetRefreshToken()), strings.TrimSpace(mailbox.GetAccessToken()),
+		authStatus, strings.TrimSpace(mailbox.GetLastError()), now, strings.TrimSpace(mailbox.GetAuthStatus()))
+	return err
+}
 
-	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		return nil, err
+func validateOutlookPollableMailbox(row *mailboxRow) error {
+	if strings.TrimSpace(row.RefreshToken) == "" {
+		return fmt.Errorf("mailbox has no refresh token: %s", emailx.Redact(row.Email))
 	}
-	defer func() { _ = tx.Rollback(ctx) }()
+	if row.AuthStatus != authStatusAuthorized {
+		return fmt.Errorf("mailbox is not authorized: %s auth_status=%s", emailx.Redact(row.Email), row.AuthStatus)
+	}
+	return nil
+}
 
-	now := time.Now().Unix()
-	unseen := make([]*mailboxv1.EmailInboxMessage, 0, len(messages))
-	var maxReceivedAtNs int64
-	touchedMailboxes := map[string]struct{}{}
-	for _, msg := range messages {
-		receivedAtNs := timex.UnixNano(msg.ReceivedDateTime)
-		if receivedAtNs > maxReceivedAtNs {
-			maxReceivedAtNs = receivedAtNs
-		}
-		inboxMsg := inboxMessage(email, msg)
-		key := stableMessageKey(emailProviderOutlook, email, messageKey(msg))
-		persistedMessages := []*mailboxv1.EmailInboxMessage{}
-		for _, mailboxEmail := range messageMailboxEmails(email, inboxMsg.GetRecipients()) {
-			persisted := &mailboxv1.EmailInboxMessage{
-				Id:                 inboxMsg.GetId(),
-				MailboxEmail:       mailboxEmail,
-				Subject:            inboxMsg.GetSubject(),
-				FromAddress:        inboxMsg.GetFromAddress(),
-				BodyPreview:        inboxMsg.GetBodyPreview(),
-				ReceivedAtUnix:     inboxMsg.GetReceivedAtUnix(),
-				Recipients:         inboxMsg.GetRecipients(),
-				ProviderKey:        emailProviderOutlook,
-				SourceMailboxEmail: email,
-				BodyText:           inboxMsg.GetBodyText(),
-				HtmlBody:           inboxMsg.GetHtmlBody(),
-				RawSize:            inboxMsg.GetRawSize(),
-			}
-			persistedMessages = append(persistedMessages, emailMessageWithSignals(persisted, ""))
-			touchedMailboxes[mailboxEmail] = struct{}{}
-			if err := insertInboxMessage(ctx, tx, inboxPersistMessage{
-				key:            stableMessageKey(emailProviderOutlook, mailboxEmail, messageKey(msg)),
-				id:             inboxMsg.GetId(),
-				mailboxEmail:   mailboxEmail,
-				subject:        inboxMsg.GetSubject(),
-				fromAddress:    inboxMsg.GetFromAddress(),
-				bodyPreview:    inboxMsg.GetBodyPreview(),
-				receivedAtUnix: inboxMsg.GetReceivedAtUnix(),
-				recipients:     inboxMsg.GetRecipients(),
-				provider:       emailProviderOutlook,
-				sourceEmail:    email,
-				bodyText:       inboxMsg.GetBodyText(),
-				htmlBody:       inboxMsg.GetHtmlBody(),
-				rawSize:        inboxMsg.GetRawSize(),
-			}, now); err != nil {
-				return nil, err
-			}
-		}
-		tag, err := tx.Exec(ctx, `
-			INSERT INTO mailbox_inbox_seen (provider, mailbox_email, message_key, seen_at)
-			VALUES ($1, $2, $3, $4)
-			ON CONFLICT (provider, mailbox_email, message_key) DO NOTHING
-		`, emailProviderOutlook, email, key, now)
-		if err != nil {
-			return nil, err
-		}
-		if tag.RowsAffected() > 0 {
-			unseen = append(unseen, persistedMessages...)
-		}
-	}
-	if maxReceivedAtNs > 0 {
-		if _, err := tx.Exec(ctx, `
-			UPDATE mailboxes
-			SET last_inbox_received_at_ns = GREATEST(last_inbox_received_at_ns, $1),
-				updated_at = $2
-			WHERE email = $3
-		`, maxReceivedAtNs, now, email); err != nil {
-			return nil, err
-		}
-	}
-	for mailboxEmail := range touchedMailboxes {
-		if err := pruneMailboxMessages(ctx, tx, emailProviderOutlook, mailboxEmail, envx.Int("MAILBOX_OUTLOOK_MAX_MESSAGES_PER_MAILBOX", defaultOutlookMaxMessages)); err != nil {
-			return nil, err
-		}
-	}
-	if err := s.enqueueInboxOutboxEvents(ctx, tx, unseen); err != nil {
-		return nil, err
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return nil, err
-	}
-	s.recordRecentInboxMessages(ctx, unseen)
-	return unseen, nil
+func updateOutlookAuthStatus(ctx context.Context, tx pgx.Tx, email string, authStatus string, lastError string, now int64) error {
+	_, err := tx.Exec(ctx, `
+		UPDATE mailbox_outlook_accounts
+		SET auth_status = $1, last_error = $2, updated_at = $3
+		WHERE mailbox_email = $4
+	`, strings.TrimSpace(authStatus), strings.TrimSpace(lastError), now, emailx.Normalize(email))
+	return err
+}
+
+func updateOutlookTokens(ctx context.Context, pool *pgxpool.Pool, email string, refreshToken string, accessToken string) error {
+	_, err := pool.Exec(ctx, `
+		UPDATE mailbox_outlook_accounts
+		SET refresh_token = $1, access_token = $2, auth_status = $3, last_error = '', updated_at = $4
+		WHERE mailbox_email = $5
+	`, strings.TrimSpace(refreshToken), strings.TrimSpace(accessToken), authStatusAuthorized, time.Now().Unix(), emailx.Normalize(email))
+	return err
 }

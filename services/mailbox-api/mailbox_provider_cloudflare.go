@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/byte-v-forge/common-lib/envx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/jackc/pgx/v5"
@@ -79,17 +81,34 @@ func cloudflareMailboxProvider() *mailboxProviderPlugin {
 	}
 }
 
-func listCloudflareVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, limit int) ([]*pb.EmailMailbox, error) {
-	rows, err := pool.Query(ctx, `
-		SELECT 'cloudflare:' || msg.mailbox_email, msg.mailbox_email,
-			$1, '', '', '', '', '', MIN(msg.created_at), MAX(msg.updated_at)
-		FROM mailbox_inbox_messages msg
-		WHERE msg.provider = $1
-		  AND NOT EXISTS (SELECT 1 FROM mailboxes m WHERE m.email = msg.mailbox_email)
-		GROUP BY msg.mailbox_email
-		ORDER BY MAX(msg.updated_at) DESC
-		LIMIT $2
-	`, emailProviderCloudflare, limit)
+func listCloudflareVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, filter mailboxListQuery) ([]*pb.EmailMailbox, error) {
+	args := []any{emailProviderCloudflare}
+	where := ""
+	if filter.EmailAddress != "" {
+		args = append(args, filter.EmailAddress)
+		where += fmt.Sprintf(" AND msg.mailbox_email = $%d", len(args))
+	}
+	query := fmt.Sprintf(`
+		SELECT 'cloudflare:' || v.mailbox_email, v.mailbox_email,
+			$1, '', '', '', '', '', v.created_at, v.updated_at
+		FROM (
+			SELECT msg.mailbox_email, MIN(msg.created_at) AS created_at, MAX(msg.updated_at) AS updated_at
+			FROM mailbox_inbox_messages msg
+			WHERE msg.provider = $1
+			  AND NOT EXISTS (SELECT 1 FROM mailboxes m WHERE m.email = msg.mailbox_email)
+			  %s
+			GROUP BY msg.mailbox_email
+		) v
+		WHERE 1=1
+	`, where)
+	if filter.hasCursor() {
+		args = append(args, filter.Cursor.UpdatedAt.Unix(), emailx.Normalize(filter.Cursor.ID))
+		query += fmt.Sprintf(" AND (v.updated_at < $%d OR (v.updated_at = $%d AND v.mailbox_email < $%d))", len(args)-1, len(args)-1, len(args))
+	}
+	args = append(args, filter.scanLimit())
+	query += fmt.Sprintf(" ORDER BY v.updated_at DESC, v.mailbox_email DESC LIMIT $%d", len(args))
+
+	rows, err := pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

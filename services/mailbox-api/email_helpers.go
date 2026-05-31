@@ -12,7 +12,6 @@ const (
 	defaultOAuthClientID       = "9e5f94bc-e8a4-4e73-b8be-63364c29d753"
 	defaultOAuthScope          = "https://graph.microsoft.com/Mail.Read"
 	defaultTokenURL            = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-	defaultGraphMessagesURL    = "https://graph.microsoft.com/v1.0/me/messages"
 	defaultPollIntervalSeconds = 5
 	defaultMessageLimit        = 25
 	defaultHTTPTimeoutSeconds  = 20
@@ -41,11 +40,11 @@ var (
 )
 
 func logInfo(format string, args ...any) {
-	log.Printf("[MAIL] "+format, args...)
+	log.Printf("[MAIL] "+format, safeMailboxLogArgs(args...)...)
 }
 
 func logWarning(format string, args ...any) {
-	log.Printf("[MAIL] WARNING "+format, args...)
+	log.Printf("[MAIL] WARNING "+format, safeMailboxLogArgs(args...)...)
 }
 
 func normalizeScope(value string) string {

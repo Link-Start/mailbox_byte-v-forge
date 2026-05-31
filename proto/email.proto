@@ -51,10 +51,13 @@ message ListEmailMailboxesRequest {
   int32 limit = 2;
   string auth_status = 3;
   string provider_key = 4;
+  string cursor = 5;
+  string email_address = 6;
 }
 
 message ListEmailMailboxesResponse {
   repeated EmailMailbox mailboxes = 1;
+  string next_cursor = 2;
 }
 
 message DeleteMailboxRequest {

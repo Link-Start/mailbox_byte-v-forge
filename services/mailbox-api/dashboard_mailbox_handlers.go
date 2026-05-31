@@ -21,9 +21,11 @@ func (s *dashboardServer) handleMailboxes(w http.ResponseWriter, r *http.Request
 			authStatus = strings.TrimSpace(r.URL.Query().Get("status"))
 		}
 		resp, err := s.mailboxClient.ListMailboxes(r.Context(), &pb.ListEmailMailboxesRequest{
-			AuthStatus:  authStatus,
-			ProviderKey: strings.TrimSpace(r.URL.Query().Get("provider_key")),
-			Limit:       limit,
+			AuthStatus:   authStatus,
+			ProviderKey:  strings.TrimSpace(r.URL.Query().Get("provider_key")),
+			EmailAddress: strings.TrimSpace(r.URL.Query().Get("email_address")),
+			Cursor:       strings.TrimSpace(r.URL.Query().Get("cursor")),
+			Limit:        limit,
 		})
 		if err != nil {
 			writeError(w, http.StatusBadGateway, err)

@@ -16,5 +16,6 @@
 - provider 能力差异禁止散落硬编码 `if outlook/cloudflare`；需要差异时在 provider capability、provider adapter 或 provider 专属组件边界表达。
 - 前端查询统一使用 TanStack Query；SSE/事件推送通过共享事件适配层进入 QueryClient cache 或本仓领域 hook。
 - 第三方 provider 已有官方 SDK、官方 UI/Web Component、官方图标或官方设计资产时，优先使用官方维护包；不得手写等价组件或伪品牌图标。
-- 不提交测试、CI/CD、运行日志、截图、token、cookie、refresh token、access token、注册结果或其他敏感运行产物。
+- Linter 检查必须达到 0 error / 0 warning；禁止通过修改或放宽 linter 配置、降低规则级别、删除规则、添加 ignore/disable/nolint/ts-ignore/eslint-disable/biome-ignore/prettier-ignore 等方式绕过问题，只能按 linter 规则修复源码、类型、格式或依赖边界。
+- 不提交 CI/CD、运行日志、截图、token、cookie、refresh token、access token、注册结果或其他敏感运行产物。
 - 后端优先使用 Go，按 Clean Code、DI 和面向抽象设计组织代码。

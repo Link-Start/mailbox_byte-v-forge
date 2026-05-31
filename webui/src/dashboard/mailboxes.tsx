@@ -64,13 +64,6 @@ type ProviderDefinition = {
   Component: ComponentType<MailboxProviderPanelProps>;
 };
 
-type ProviderView = {
-  value: MailboxProviderTab;
-  label: string;
-  capability?: MailboxProviderCapability;
-  mailboxes: Mailbox[];
-  Component: ComponentType<MailboxProviderPanelProps>;
-};
 
 type MailboxPanelProps = {
   mailboxes: Mailbox[];
@@ -83,6 +76,9 @@ type MailboxPanelProps = {
   inboxLoading: boolean;
   domainSyncing: boolean;
   runningOperationByEmail: Map<string, MailboxOperation>;
+  hasMoreMailboxes?: boolean;
+  loadingMoreMailboxes?: boolean;
+  onLoadMoreMailboxes: () => void | Promise<void>;
   onSelect: (mailbox: Mailbox) => void;
   onOAuth: (emailAddress?: string) => Promise<void>;
   onFetchInbox: () => Promise<void>;
@@ -103,6 +99,9 @@ function providerPanelProps(props: MailboxPanelProps): Omit<MailboxProviderPanel
     inboxLoading: props.inboxLoading,
     domainSyncing: props.domainSyncing,
     runningOperationByEmail: props.runningOperationByEmail,
+    hasMoreMailboxes: props.hasMoreMailboxes,
+    loadingMoreMailboxes: props.loadingMoreMailboxes,
+    onLoadMoreMailboxes: props.onLoadMoreMailboxes,
     onSelect: props.onSelect,
     onOAuth: props.onOAuth,
     onFetchInbox: props.onFetchInbox,

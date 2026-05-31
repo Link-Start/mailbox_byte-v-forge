@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
 import {
+  DEFAULT_CURSOR_PAGE_SIZE,
   api,
   createHotStreamURL,
+  cursorPageURL,
   type ListMailboxDomainsResponse,
   type ListMailboxOperationsResponse,
   type ListMailboxProviderCapabilitiesResponse,
   useHotStreamInvalidation,
+  useCursorPageItems,
   useQuery,
   useQueryClient
 } from '@byte-v-forge/common-ui';
@@ -22,7 +25,12 @@ const mailboxQueryKeys = {
 
 export function useMailboxData(selectedEmail: string) {
   const queryClient = useQueryClient();
-  const mailboxesQuery = useQuery({ queryKey: mailboxQueryKeys.mailboxes, queryFn: () => api<ListEmailMailboxesResponse>('/api/mailbox/mailboxes?limit=500') });
+  const mailboxesQuery = useCursorPageItems<Mailbox, ListEmailMailboxesResponse, 'mailboxes'>({
+    queryKey: mailboxQueryKeys.mailboxes,
+    field: 'mailboxes',
+    queryFn: (cursor) => api<ListEmailMailboxesResponse>(mailboxListURL(cursor)),
+    pageSize: DEFAULT_CURSOR_PAGE_SIZE
+  });
   const domainsQuery = useQuery({ queryKey: mailboxQueryKeys.domains, queryFn: () => api<ListMailboxDomainsResponse>('/api/mailbox/domains') });
   const providerCapabilitiesQuery = useQuery({ queryKey: mailboxQueryKeys.providerCapabilities, queryFn: () => api<ListMailboxProviderCapabilitiesResponse>('/api/mailbox/provider-capabilities') });
   const runningOperationsQuery = useQuery({
@@ -36,7 +44,7 @@ export function useMailboxData(selectedEmail: string) {
       { queryKey: mailboxQueryKeys.runningOperations, eventTypes: ['mailbox.operation.updated'], resourceTypes: ['mailbox.operation'] }
     ]
   });
-  const mailboxes = Array.isArray(mailboxesQuery.data?.mailboxes) ? mailboxesQuery.data.mailboxes : [];
+  const mailboxes = mailboxesQuery.items;
   const runningOperations = Array.isArray(runningOperationsQuery.data?.operations) ? runningOperationsQuery.data.operations : [];
   const selected = mailboxes.find((mailbox) => mailbox.email_address === selectedEmail) || null;
   const runningOperationByEmail = useMemo(() => latestOperationByEmail(runningOperations), [runningOperations]);
@@ -48,6 +56,9 @@ export function useMailboxData(selectedEmail: string) {
     domains: Array.isArray(domainsQuery.data?.domains) ? domainsQuery.data.domains : [],
     providerCapabilities: Array.isArray(providerCapabilitiesQuery.data?.providers) ? providerCapabilitiesQuery.data.providers : [],
     busy: mailboxesQuery.isLoading || domainsQuery.isLoading || providerCapabilitiesQuery.isLoading,
+    hasMoreMailboxes: mailboxesQuery.pagination.hasNext,
+    loadingMoreMailboxes: mailboxesQuery.pagination.loading,
+    loadMoreMailboxes: mailboxesQuery.loadMore,
     loadError: mailboxesQuery.error || domainsQuery.error || providerCapabilitiesQuery.error || runningOperationsQuery.error,
     invalidate: () => invalidateMailboxQueries(queryClient)
   };
@@ -57,6 +68,10 @@ export type MailboxData = ReturnType<typeof useMailboxData>;
 
 function invalidateMailboxQueries(queryClient: ReturnType<typeof useQueryClient>) {
   return Promise.all(Object.values(mailboxQueryKeys).map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+}
+
+function mailboxListURL(cursor: string) {
+  return cursorPageURL('/api/mailbox/mailboxes', { cursor, limit: DEFAULT_CURSOR_PAGE_SIZE });
 }
 
 function latestOperationByEmail(operations: MailboxOperation[]) {

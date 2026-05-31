@@ -4,8 +4,7 @@ export { canonicalUiEmail, formatEmailList, maskEmail, normalizeUiEmail } from '
 export { mergeInboxMessage, useMailboxEmailEventCache } from './mailbox-events';
 export { mailboxProviderValue } from './mailbox-provider-config';
 export {
-  inboxResultForMailbox,
-  latestOtpForEmail,
+  latestOtpForInboxResult,
   messageSignals,
   signalKindName,
   signalLabel,

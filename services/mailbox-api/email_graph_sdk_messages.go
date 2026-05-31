@@ -1,0 +1,61 @@
+package main
+
+import graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
+
+func graphMessagesFromSDK(messages []graphmodels.Messageable) []graphMessage {
+	out := make([]graphMessage, 0, len(messages))
+	for _, message := range messages {
+		if message == nil {
+			continue
+		}
+		out = append(out, graphMessage{
+			ID:                     stringValueFromPtr(message.GetId()),
+			Subject:                stringValueFromPtr(message.GetSubject()),
+			From:                   graphRecipientFromSDK(message.GetFrom()),
+			BodyPreview:            stringValueFromPtr(message.GetBodyPreview()),
+			Body:                   graphBodyFromSDK(message.GetBody()),
+			ToRecipients:           graphRecipientsFromSDK(message.GetToRecipients()),
+			CcRecipients:           graphRecipientsFromSDK(message.GetCcRecipients()),
+			BccRecipients:          graphRecipientsFromSDK(message.GetBccRecipients()),
+			InternetMessageHeaders: graphHeadersFromSDK(message.GetInternetMessageHeaders()),
+			ReceivedDateTime:       graphTimeFromSDK(message.GetReceivedDateTime()),
+		})
+	}
+	return out
+}
+
+func graphBodyFromSDK(body graphmodels.ItemBodyable) graphBody {
+	if body == nil {
+		return graphBody{}
+	}
+	return graphBody{Content: stringValueFromPtr(body.GetContent())}
+}
+
+func graphRecipientFromSDK(recipient graphmodels.Recipientable) graphRecipient {
+	if recipient == nil || recipient.GetEmailAddress() == nil {
+		return graphRecipient{}
+	}
+	return graphRecipient{EmailAddress: graphEmailAddress{Address: stringValueFromPtr(recipient.GetEmailAddress().GetAddress())}}
+}
+
+func graphRecipientsFromSDK(recipients []graphmodels.Recipientable) []graphRecipient {
+	out := make([]graphRecipient, 0, len(recipients))
+	for _, recipient := range recipients {
+		out = append(out, graphRecipientFromSDK(recipient))
+	}
+	return out
+}
+
+func graphHeadersFromSDK(headers []graphmodels.InternetMessageHeaderable) []graphHeader {
+	out := make([]graphHeader, 0, len(headers))
+	for _, header := range headers {
+		if header == nil {
+			continue
+		}
+		out = append(out, graphHeader{
+			Name:  stringValueFromPtr(header.GetName()),
+			Value: stringValueFromPtr(header.GetValue()),
+		})
+	}
+	return out
+}

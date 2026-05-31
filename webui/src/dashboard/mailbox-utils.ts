@@ -4,38 +4,14 @@ import { mailboxProviderConfig, mailboxProviderConfigs, mailboxProviderMatches, 
 import type { Mailbox, MailboxProviderActionCapability, MailboxProviderCapability } from './types';
 
 export { mailboxProviderConfig, mailboxProviderConfigs, mailboxProviderMatches, mailboxProviderTabFor, mailboxProviderValue, type MailboxProviderTab };
-export type MailboxActionKey = 'import_mailbox' | 'run_oauth' | 'fetch_inbox' | 'receive_webhook' | 'auto_create_mailbox' | 'sync_domains';
-
 export type MailboxBatchItem = {
   email: string;
   password: string;
 };
 
-export const mailboxActions = {
-  importMailbox: 'import_mailbox',
-  runOAuth: 'run_oauth',
-  fetchInbox: 'fetch_inbox',
-  receiveWebhook: 'receive_webhook',
-  autoCreateMailbox: 'auto_create_mailbox',
-  syncDomains: 'sync_domains'
-} as const;
-
-const mailboxActionByProto: Partial<Record<MailboxProviderAction, MailboxActionKey>> = {
-  [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_IMPORT_MAILBOX]: mailboxActions.importMailbox,
-  [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_RUN_OAUTH]: mailboxActions.runOAuth,
-  [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_FETCH_INBOX]: mailboxActions.fetchInbox,
-  [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_RECEIVE_WEBHOOK]: mailboxActions.receiveWebhook,
-  [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_AUTO_CREATE_MAILBOX]: mailboxActions.autoCreateMailbox,
-  [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_SYNC_DOMAINS]: mailboxActions.syncDomains
-};
-
 export function domainForEmail(email: string) {
   const [, domain = ''] = normalizeUiEmail(email).split('@');
   return domain;
-}
-
-export function uniqueStrings(values: string[]) {
-  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).sort();
 }
 
 export function tokenText(mailbox: Mailbox) {
@@ -98,8 +74,8 @@ export function capabilityForProvider(capabilities: MailboxProviderCapability[],
   return capabilities.find((capability) => mailboxProviderMatches(capability.key, target));
 }
 
-export function providerAction(capability: MailboxProviderCapability | undefined, action: MailboxActionKey) {
-  return (capability?.actions || []).find((item) => actionKey(item.action) === action);
+export function providerAction(capability: MailboxProviderCapability | undefined, action: MailboxProviderAction) {
+  return (capability?.actions || []).find((item) => item.action === action);
 }
 
 export function canRunMailboxAction(mailbox: Mailbox, action: MailboxProviderActionCapability | undefined) {
@@ -114,13 +90,10 @@ export function bulkMailboxActionCount(mailboxes: Mailbox[], action: MailboxProv
   return mailboxes.filter((mailbox) => canRunMailboxAction(mailbox, action)).length;
 }
 
-export function canRunProviderMailboxAction(capabilities: MailboxProviderCapability[], mailbox: Mailbox, action: MailboxActionKey) {
+export function canRunProviderMailboxAction(capabilities: MailboxProviderCapability[], mailbox: Mailbox, action: MailboxProviderAction) {
   return canRunMailboxAction(mailbox, providerAction(capabilityForProvider(capabilities, mailbox.provider_key), action));
 }
 
-export function actionKey(action: MailboxProviderAction): MailboxActionKey | '' {
-  return mailboxActionByProto[action] || '';
-}
 
 function requiredCredentialsPresent(mailbox: Mailbox, credentials: MailboxCredentialKind[]) {
   return credentials.every((credential) => credentialPresent(mailbox, credential));

@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
+  activeActionTargets,
   api,
+  actionTargetStateKey,
+  hasActiveAction,
   short,
   type FetchMailboxInboxesRequest,
   type ListMailboxInboxResponse,
@@ -10,6 +13,7 @@ import {
   type SyncMailboxDomainsResponse,
   useQuery,
   useQueryClient,
+  useAsyncActionRunner,
   useToastMessage
 } from '@byte-v-forge/common-ui';
 import { maskEmail, normalizeUiEmail } from './email-utils';
@@ -26,52 +30,28 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSe
   const selectedInboxKey = useMemo(() => mailboxInboxQueryKey(selectedEmail), [selectedEmail]);
   const inboxQuery = useQuery<InboxResult | null>({
     queryKey: selectedInboxKey,
-    queryFn: () => fetchStoredInbox(selectedEmail),
-    enabled: false,
+    queryFn: () => selectedEmail ? fetchStoredInbox(selectedEmail) : Promise.resolve(null),
+    enabled: !!selectedEmail,
     initialData: null
   });
-  const [oauthing, setOAuthing] = useState('');
-  const [inboxLoading, setInboxLoading] = useState(false);
-  const [storedInboxLoading, setStoredInboxLoading] = useState(false);
-  const [domainSyncing, setDomainSyncing] = useState(false);
+  const runner = useAsyncActionRunner();
 
   useEffect(() => { if (data.loadError) toast.showError(data.loadError); }, [data.loadError, toast.showError]);
 
-  useEffect(() => {
-    if (!selectedEmail) return;
-    let cancelled = false;
-    setStoredInboxLoading(true);
-    fetchStoredInbox(selectedEmail)
-      .then((result) => {
-        if (!cancelled) queryClient.setQueryData(selectedInboxKey, result);
-      })
-      .catch((err) => {
-        if (!cancelled) toast.showError(err);
-      })
-      .finally(() => {
-        if (!cancelled) setStoredInboxLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [selectedEmail, selectedInboxKey, queryClient, toast.showError]);
 
   async function runOAuth(emailAddress = '') {
-    setOAuthing(emailAddress || '*');
-    try {
+    const target = emailAddress.trim() || '*';
+    await runner.tryRun(actionTargetStateKey('oauth', target), async () => {
       const input: StartMailboxOAuthRequest = { email_address: emailAddress, only_missing: !emailAddress, limit: 100 };
       const resp = await api<StartMailboxOAuthResponse>('/api/mailbox/mailboxes/oauth', { method: 'POST', body: JSON.stringify(input) });
       toast.showToast(!resp.started || resp.error_message ? 'error' : 'ok', resp.error_message || (!resp.started ? 'OAuth 流程启动失败' : `OAuth 流程已提交: ${short(resp.operation_id)}`));
       await data.invalidate();
-    } catch (err) {
-      toast.showError(err);
-    } finally {
-      setOAuthing('');
-    }
+    }, { onError: toast.showError });
   }
 
   async function fetchInbox(emailAddress = '') {
-    setInboxLoading(true);
-    try {
-      const target = emailAddress.trim();
+    const target = normalizeUiEmail(emailAddress);
+    await runner.tryRun(actionTargetStateKey('fetch-inbox', target || '*'), async () => {
       const input: FetchMailboxInboxesRequest = { limit_per_mailbox: 10, max_mailboxes: target ? 1 : 200, email_address: target, parser_profile: '', received_after_unix: 0 };
       const resp = await api<InboxResponse>('/api/mailbox/mailboxes/inbox', { method: 'POST', body: JSON.stringify(input) });
       for (const result of resp.results || []) {
@@ -80,11 +60,7 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSe
       }
       toast.showToast(resp.failed_count > 0 ? 'error' : 'ok', `${target ? `${showSecrets ? target : maskEmail(target)} ` : ''}收信完成：${resp.message_count} 封邮件`);
       await data.invalidate();
-    } catch (err) {
-      toast.showError(err);
-    } finally {
-      setInboxLoading(false);
-    }
+    }, { onError: toast.showError });
   }
 
   async function syncProviderDomains(providerKey: string) {
@@ -93,8 +69,7 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSe
       toast.showError('provider_key is required');
       return;
     }
-    setDomainSyncing(true);
-    try {
+    await runner.tryRun(actionTargetStateKey('sync-domains', targetProvider), async () => {
       const input: SyncMailboxDomainsRequest = { provider_key: targetProvider };
       const resp = await api<SyncMailboxDomainsResponse>('/api/mailbox/domains', {
         method: 'POST',
@@ -102,19 +77,17 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSe
       });
       toast.showToast(resp.error_message ? 'error' : 'ok', resp.error_message || `${providerDisplayName(data, targetProvider)} 域名已同步: ${resp.synced_count || 0}`);
       await data.invalidate();
-    } catch (err) {
-      toast.showError(err);
-    } finally {
-      setDomainSyncing(false);
-    }
+    }, { onError: toast.showError });
   }
 
   async function deleteMailbox(mailbox: Mailbox) {
     if (!window.confirm(`删除邮箱 ${showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address)}？`)) return;
-    await api<DeleteMailboxResponse>(`/api/mailbox/mailboxes/${encodeURIComponent(mailbox.email_address)}`, { method: 'DELETE' });
-    setSelectedEmail((prev) => prev === mailbox.email_address ? '' : prev);
-    toast.showOK('邮箱已删除');
-    await data.invalidate();
+    await runner.tryRun(actionTargetStateKey('delete-mailbox', mailbox.email_address), async () => {
+      await api<DeleteMailboxResponse>(`/api/mailbox/mailboxes/${encodeURIComponent(mailbox.email_address)}`, { method: 'DELETE' });
+      setSelectedEmail((prev) => prev === mailbox.email_address ? '' : prev);
+      toast.showOK('邮箱已删除');
+      await data.invalidate();
+    }, { onError: toast.showError });
   }
 
   async function done(message: string) {
@@ -122,7 +95,19 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSe
     await data.invalidate();
   }
 
-  return { toast, inboxResult: inboxQuery.data ?? null, inboxQueryKey: selectedInboxKey, oauthing, inboxLoading: storedInboxLoading || inboxQuery.isFetching || inboxLoading, domainSyncing, runOAuth, fetchInbox, syncProviderDomains, deleteMailbox, done };
+  return {
+    toast,
+    inboxResult: inboxQuery.data ?? null,
+    inboxQueryKey: selectedInboxKey,
+    oauthing: activeActionTargets(runner.activeKeys, 'oauth')[0] || '',
+    inboxLoading: inboxQuery.isFetching || hasActiveAction(runner.activeKeys, 'fetch-inbox'),
+    domainSyncing: hasActiveAction(runner.activeKeys, 'sync-domains'),
+    runOAuth,
+    fetchInbox,
+    syncProviderDomains,
+    deleteMailbox,
+    done
+  };
 }
 
 async function fetchStoredInbox(email: string) {

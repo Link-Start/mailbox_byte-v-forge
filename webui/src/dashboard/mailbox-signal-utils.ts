@@ -1,12 +1,11 @@
 import { normalizeUiEmail } from './email-utils';
-import type { EmailSignal, InboxMessage, InboxResponse, LatestOtp } from './types';
+import type { EmailSignal, InboxMessage, InboxResult, LatestOtp } from './types';
 
-export function latestOtpForEmail(response: InboxResponse | null, _mailboxes: unknown[], email: string): LatestOtp | null {
+export function latestOtpForInboxResult(result: InboxResult | null, email: string): LatestOtp | null {
   const target = normalizeUiEmail(email);
-  if (!target) return null;
+  if (!result || !target) return null;
   const candidates: LatestOtp[] = [];
-  const result = inboxResultForMailbox(response, email);
-  for (const message of result?.messages || []) {
+  for (const message of result.messages || []) {
     const matchesTarget = normalizeUiEmail(message.mailbox_email) === target ||
       (message.recipients || []).some((recipient) => normalizeUiEmail(recipient) === target);
     const code = verificationCodeForMessage(message);
@@ -16,18 +15,6 @@ export function latestOtpForEmail(response: InboxResponse | null, _mailboxes: un
   return candidates[0] || null;
 }
 
-export function inboxResultForMailbox(response: InboxResponse | null, email: string) {
-  const target = normalizeUiEmail(email);
-  if (!response || !target) return undefined;
-  return (response.results || []).find((result) => {
-    if (normalizeUiEmail(result.mailbox?.email_address || '') === target) return true;
-    return (result.messages || []).some((message) => (
-      normalizeUiEmail(message.mailbox_email) === target ||
-      (message.recipients || []).some((recipient) => normalizeUiEmail(recipient) === target)
-    ));
-  });
-}
-
 export function verificationCodeForMessage(message: InboxMessage): string {
   const primary = signalCode(message.primary_signal, 'otp');
   if (primary) return primary;
@@ -35,7 +22,7 @@ export function verificationCodeForMessage(message: InboxMessage): string {
     const code = signalCode(signal, 'otp');
     if (code) return code;
   }
-  return message.otp || '';
+  return '';
 }
 
 export function messageSignals(message: InboxMessage): EmailSignal[] {

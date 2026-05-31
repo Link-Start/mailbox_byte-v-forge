@@ -1,6 +1,4 @@
-import type { DisplayLabelMap } from './types';
-
-const mailboxStatusLabels: DisplayLabelMap = {
+const mailboxStatusLabels: Record<string, string> = {
   AUTHORIZED: '已授权',
   OAUTH_PENDING: '待 OAuth',
   AUTH_FAILED: '认证失败',

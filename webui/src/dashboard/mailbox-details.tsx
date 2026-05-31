@@ -15,7 +15,7 @@ import { maskEmail } from './email-utils';
 import { mailboxStatusText } from './labels';
 import { MailboxInboxSection } from './mailbox-inbox';
 import { MailboxOtpPanel } from './otp-panel';
-import { latestOtpForEmail } from './mailbox-signal-utils';
+import { latestOtpForInboxResult } from './mailbox-signal-utils';
 import { authStatus, mailboxProviderConfig, tokenText } from './mailbox-utils';
 import type { InboxResult, LatestOtp, Mailbox } from './types';
 
@@ -31,13 +31,7 @@ export function MailboxDetails({ mailbox, showSecrets, inboxResult, inboxLoading
 }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'inbox'>('overview');
   const inboxMessageCount = inboxResult?.messages?.length || 0;
-  const latestOtp = latestOtpForEmail(inboxResult ? {
-    results: [inboxResult],
-    mailbox_count: 1,
-    fetched_count: 1,
-    failed_count: inboxResult.error_message ? 1 : 0,
-    message_count: inboxMessageCount
-  } : null, [], mailbox.email_address);
+  const latestOtp = latestOtpForInboxResult(inboxResult || null, mailbox.email_address);
 
   useEffect(() => {
     setActiveTab('overview');

@@ -1,10 +1,7 @@
-import { useState, type FormEventHandler } from 'react';
+import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import {
   ActionButtonGroup,
-  api,
-  ControlledInputFieldList,
-  ControlledTextareaField,
   errorText,
   Sheet,
   SheetContent,
@@ -13,23 +10,14 @@ import {
   SheetHeader,
   SheetTitle,
   SegmentedControl,
+  useAsyncActionRunner,
   useForm
 } from '@byte-v-forge/common-ui';
-import type { ActionButtonDescriptor, Control, ControlledInputFieldDescriptor } from '@byte-v-forge/common-ui';
-import { mailboxProviderConfig, parseMailboxBatch, type MailboxProviderTab } from './mailbox-utils';
-import type { UpsertEmailMailboxRequest, UpsertEmailMailboxResponse } from '../proto/email';
-
-type FormState = {
-  email: string;
-  password: string;
-  refresh_token: string;
-  access_token: string;
-};
-type ImportMode = 'single' | 'batch';
-const importModeOptions = [
-  { value: 'single', label: '单个' },
-  { value: 'batch', label: '批量' },
-] satisfies { value: ImportMode; label: string }[];
+import type { ActionButtonDescriptor } from '@byte-v-forge/common-ui';
+import { mailboxProviderConfig, type MailboxProviderTab } from './mailbox-utils';
+import { BatchMailboxImportForm, SingleMailboxImportForm } from './mailbox-import-form';
+import { importMailboxBatch, importSingleMailbox } from './mailbox-import-submit';
+import { mailboxImportModeOptions, type MailboxBatchImportFormState, type MailboxImportFormState, type MailboxImportMode } from './mailbox-import-types';
 
 export function MailboxImportSheet({ open, provider, busy, onOpenChange, onDone, onError }: {
   open: boolean;
@@ -39,88 +27,35 @@ export function MailboxImportSheet({ open, provider, busy, onOpenChange, onDone,
   onDone: (message: string) => void;
   onError: (message: string) => void;
 }) {
-  const [mode, setMode] = useState<ImportMode>('single');
-  const [working, setWorking] = useState(false);
-  const singleForm = useForm<FormState>({ defaultValues: { email: '', password: '', refresh_token: '', access_token: '' } });
-  const batchForm = useForm<{ batchText: string }>({ defaultValues: { batchText: '' } });
+  const [mode, setMode] = useState<MailboxImportMode>('single');
+  const runner = useAsyncActionRunner();
+  const singleForm = useForm<MailboxImportFormState>({ defaultValues: { email: '', password: '', refresh_token: '', access_token: '' } });
+  const batchForm = useForm<MailboxBatchImportFormState>({ defaultValues: { batchText: '' } });
   const importConfig = mailboxProviderConfig(provider).import;
-  const singleEmail = singleForm.watch('email');
-  const batchText = batchForm.watch('batchText');
   const activeFormId = mode === 'single' ? 'mailbox-import-single' : 'mailbox-import-batch';
   if (!importConfig) return null;
-  const credentialFields = importConfig.credentialFields;
-  const footerActions: ActionButtonDescriptor[] = [{
-    id: 'close',
-    label: '关闭',
-    variant: 'outline',
-    onClick: () => onOpenChange(false),
-  }, {
-    id: 'submit',
-    label: '入池',
-    icon: <Plus />,
-    type: 'submit',
-    form: activeFormId,
-    disabled: busy || working || (mode === 'single' ? !singleEmail.trim() : !batchText.trim()),
-  }];
+  const config = importConfig;
 
-  function payload(email: string, password: string, values = singleForm.getValues()): UpsertEmailMailboxRequest {
-    return {
-      mailbox: {
-        email_address: email,
-        password: credentialFields.includes('password') ? password : '',
-        refresh_token: credentialFields.includes('refresh_token') ? values.refresh_token : '',
-        access_token: credentialFields.includes('access_token') ? values.access_token : '',
-        provider_key: provider,
-        auth_status: '',
-        last_error: '',
-        created_at: 0,
-        updated_at: 0,
-        latest_signal: undefined,
-        domain: ''
-      }
-    };
-  }
-
-  async function saveSingle(values: FormState) {
-    setWorking(true);
-    try {
-      const resp = await api<UpsertEmailMailboxResponse>('/api/mailbox/mailboxes', { method: 'POST', body: JSON.stringify(payload(values.email, values.password, values)) });
+  async function saveSingle(values: MailboxImportFormState) {
+    await runImport(async () => {
+      const message = await importSingleMailbox(provider, config.credentialKinds, values);
       singleForm.reset({ email: '', password: '', refresh_token: '', access_token: '' });
-      onDone(`邮箱已入池: ${resp.mailbox?.email_address || values.email}`);
-    } catch (err) {
-      onError(errorText(err));
-    } finally {
-      setWorking(false);
-    }
+      return message;
+    });
   }
 
-  async function saveBatch(values: { batchText: string }) {
-    const batch = parseMailboxBatch(values.batchText, provider);
-    if (batch.items.length === 0) {
-      onError(batch.errors.length ? `批量入池失败：${batch.errors[0]}` : '没有可入池邮箱');
-      return;
-    }
-    setWorking(true);
-    let success = 0;
-    const failures = [...batch.errors];
-    try {
-      for (const item of batch.items) {
-        try {
-          await api<UpsertEmailMailboxResponse>('/api/mailbox/mailboxes', { method: 'POST', body: JSON.stringify(payload(item.email, item.password)) });
-          success += 1;
-        } catch (err) {
-          failures.push(`${item.email}: ${errorText(err)}`);
-        }
-      }
-      if (success > 0) {
-        batchForm.reset({ batchText: '' });
-        onDone(`批量入池成功 ${success}${failures.length ? `，失败 ${failures.length}` : ''}`);
-      } else {
-        onError(`批量入池失败：${failures.slice(0, 3).join('；')}`);
-      }
-    } finally {
-      setWorking(false);
-    }
+  async function saveBatch(values: MailboxBatchImportFormState) {
+    await runImport(async () => {
+      const message = await importMailboxBatch(provider, config.credentialKinds, values);
+      batchForm.reset({ batchText: '' });
+      return message;
+    });
+  }
+
+  async function runImport(importer: () => Promise<string>) {
+    await runner.tryRun(`import:${mode}`, async () => {
+      onDone(await importer());
+    }, { onError: (err) => onError(errorText(err)) });
   }
 
   return (
@@ -131,69 +66,42 @@ export function MailboxImportSheet({ open, provider, busy, onOpenChange, onDone,
           <SheetDescription>{importConfig.description}</SheetDescription>
         </SheetHeader>
         <div className="grid gap-3 p-4">
-          <SegmentedControl value={mode} options={importModeOptions} onChange={setMode} />
+          <SegmentedControl value={mode} options={mailboxImportModeOptions} onChange={setMode} />
           {mode === 'single' ? (
-            <SingleMailboxForm formId="mailbox-import-single" control={singleForm.control} fields={credentialFields} onSubmit={singleForm.handleSubmit(saveSingle)} />
+            <SingleMailboxImportForm formId="mailbox-import-single" control={singleForm.control} credentialKinds={importConfig.credentialKinds} onSubmit={singleForm.handleSubmit(saveSingle)} />
           ) : (
-            <form id="mailbox-import-batch" onSubmit={batchForm.handleSubmit(saveBatch)}>
-              <ControlledTextareaField
-                control={batchForm.control}
-                name="batchText"
-                className="min-h-32 resize-y"
-                placeholder={importConfig.batchPlaceholder}
-              />
-            </form>
+            <BatchMailboxImportForm formId="mailbox-import-batch" control={batchForm.control} placeholder={importConfig.batchPlaceholder} onSubmit={batchForm.handleSubmit(saveBatch)} />
           )}
         </div>
         <SheetFooter className="border-t">
-          <ActionButtonGroup className="grid gap-2" actions={footerActions} />
+          <ActionButtonGroup className="grid gap-2" actions={footerActions({ busy: busy || runner.busy, form: activeFormId, disabled: submitDisabled(mode, singleForm.watch('email'), batchForm.watch('batchText')), onClose: () => onOpenChange(false) })} />
         </SheetFooter>
       </SheetContent>
     </Sheet>
   );
 }
 
-function SingleMailboxForm({ formId, control, fields: credentialFields, onSubmit }: {
-  formId: string;
-  control: Control<FormState>;
-  fields: string[];
-  onSubmit: FormEventHandler<HTMLFormElement>;
-}) {
-  const fields: ControlledInputFieldDescriptor<FormState>[] = [{
-    id: 'email',
-    name: 'email',
-    label: '邮箱',
-    placeholder: '邮箱',
-    inputId: 'mailbox-import-email',
-  }, {
-    id: 'password',
-    name: 'password',
-    label: '密码',
-    placeholder: '邮箱密码，可空',
-    type: 'password',
-    inputId: 'mailbox-import-password',
-    visible: credentialFields.includes('password'),
-  }, {
-    id: 'refresh-token',
-    name: 'refresh_token',
-    label: 'Refresh token',
-    placeholder: 'Refresh token，可空',
-    type: 'password',
-    inputId: 'mailbox-import-refresh-token',
-    visible: credentialFields.includes('refresh_token'),
-  }, {
-    id: 'access-token',
-    name: 'access_token',
-    label: 'Access token',
-    placeholder: 'Access token，可空',
-    type: 'password',
-    inputId: 'mailbox-import-access-token',
-    visible: credentialFields.includes('access_token'),
-  }];
+function submitDisabled(mode: MailboxImportMode, singleEmail: string, batchText: string) {
+  return mode === 'single' ? !singleEmail.trim() : !batchText.trim();
+}
 
-  return (
-    <form id={formId} className="grid gap-2" onSubmit={onSubmit}>
-      <ControlledInputFieldList control={control} fields={fields} />
-    </form>
-  );
+function footerActions({ busy, form, disabled, onClose }: {
+  busy: boolean;
+  form: string;
+  disabled: boolean;
+  onClose: () => void;
+}): ActionButtonDescriptor[] {
+  return [{
+    id: 'close',
+    label: '关闭',
+    variant: 'outline',
+    onClick: onClose,
+  }, {
+    id: 'submit',
+    label: '入池',
+    icon: <Plus />,
+    type: 'submit',
+    form,
+    disabled: busy || disabled,
+  }];
 }

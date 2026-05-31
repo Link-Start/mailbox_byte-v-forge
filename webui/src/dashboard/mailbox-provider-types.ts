@@ -11,6 +11,9 @@ export type MailboxProviderPanelProps = {
   inboxLoading: boolean;
   domainSyncing: boolean;
   runningOperationByEmail: Map<string, MailboxOperation>;
+  hasMoreMailboxes?: boolean;
+  loadingMoreMailboxes?: boolean;
+  onLoadMoreMailboxes: () => void | Promise<void>;
   onSelect: (mailbox: Mailbox) => void;
   onOAuth: (emailAddress?: string) => Promise<void>;
   onFetchInbox: () => Promise<void>;

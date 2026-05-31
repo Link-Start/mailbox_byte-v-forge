@@ -94,7 +94,7 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 }
 
 func writeError(w http.ResponseWriter, status int, err error) {
-	writeJSON(w, status, map[string]string{"error": err.Error()})
+	writeJSON(w, status, map[string]string{"error": safeMailboxError(err)})
 }
 
 func withCORS(next http.Handler) http.Handler {

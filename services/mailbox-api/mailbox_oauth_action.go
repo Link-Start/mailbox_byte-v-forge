@@ -16,7 +16,7 @@ func (a *mailboxActivities) runMailboxOAuthAction(ctx context.Context, operation
 		Limit:        limit,
 	})
 	if err != nil {
-		return mailboxOperationResult{OperationID: operationID, Success: false, ErrorMessage: err.Error()}
+		return mailboxOperationResult{OperationID: operationID, Success: false, ErrorMessage: safeMailboxError(err)}
 	}
 
 	accounts := selection.GetAccounts()
@@ -30,7 +30,7 @@ func (a *mailboxActivities) runMailboxOAuthAction(ctx context.Context, operation
 			results = append(results, &pb.MailboxOAuthResult{
 				EmailAddress: emailx.Normalize(account.GetEmailAddress()),
 				Success:      false,
-				ErrorMessage: err.Error(),
+				ErrorMessage: safeMailboxError(err),
 			})
 			continue
 		}
@@ -45,7 +45,7 @@ func (a *mailboxActivities) runMailboxOAuthAction(ctx context.Context, operation
 		Results:     results,
 	})
 	if err != nil && result.ErrorMessage == "" {
-		result.ErrorMessage = err.Error()
+		result.ErrorMessage = safeMailboxError(err)
 	}
 	return result
 }

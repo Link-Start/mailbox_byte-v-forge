@@ -1,6 +1,6 @@
 import { Eye, EyeOff, Inbox, KeyRound, Plus, RefreshCcw } from 'lucide-react';
-import type { ToolbarActionDescriptor } from '@byte-v-forge/common-ui';
-import { actionKey, bulkMailboxActionCount, mailboxActions, type MailboxActionKey, type MailboxProviderTab } from './mailbox-utils';
+import { MailboxProviderAction, type ToolbarActionDescriptor } from '@byte-v-forge/common-ui';
+import { bulkMailboxActionCount, type MailboxProviderTab } from './mailbox-utils';
 import type { Mailbox, MailboxProviderActionCapability, MailboxProviderCapability } from './types';
 
 type ProviderToolbarView = {
@@ -28,14 +28,14 @@ type ToolbarActionFactory = (ctx: {
   openImport: (provider: MailboxProviderTab) => void;
 }) => ToolbarActionDescriptor;
 
-const toolbarActionFactories: Partial<Record<MailboxActionKey, ToolbarActionFactory>> = {
-  [mailboxActions.importMailbox]: ({ view, openImport }) => ({
+const toolbarActionFactories: Partial<Record<MailboxProviderAction, ToolbarActionFactory>> = {
+  [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_IMPORT_MAILBOX]: ({ view, openImport }) => ({
     id: 'import-mailbox',
     label: '导入邮箱',
     icon: <Plus className="size-4" />,
     onClick: () => openImport(view.value),
   }),
-  [mailboxActions.runOAuth]: ({ action, view, props }) => {
+  [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_RUN_OAUTH]: ({ action, view, props }) => {
     const count = bulkMailboxActionCount(view.mailboxes, action);
     return {
       id: 'run-oauth',
@@ -45,7 +45,7 @@ const toolbarActionFactories: Partial<Record<MailboxActionKey, ToolbarActionFact
       onClick: () => void props.onOAuth(),
     };
   },
-  [mailboxActions.fetchInbox]: ({ action, view, props }) => {
+  [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_FETCH_INBOX]: ({ action, view, props }) => {
     const count = bulkMailboxActionCount(view.mailboxes, action);
     return {
       id: 'fetch-inbox',
@@ -55,7 +55,7 @@ const toolbarActionFactories: Partial<Record<MailboxActionKey, ToolbarActionFact
       onClick: () => void props.onFetchInbox(),
     };
   },
-  [mailboxActions.syncDomains]: ({ view, props }) => ({
+  [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_SYNC_DOMAINS]: ({ view, props }) => ({
     id: 'sync-domains',
     label: props.domainSyncing ? '同步中' : '同步域名',
     icon: <RefreshCcw className="size-4" />,
@@ -66,10 +66,7 @@ const toolbarActionFactories: Partial<Record<MailboxActionKey, ToolbarActionFact
 
 export function providerToolbarActions(view: ProviderToolbarView, props: ProviderToolbarProps, openImport: (provider: MailboxProviderTab) => void) {
   const actions = (view.capability?.actions || [])
-    .map((action) => {
-      const key = actionKey(action.action);
-      return key ? toolbarActionFactories[key]?.({ action, view, props, openImport }) : undefined;
-    })
+    .map((action) => toolbarActionFactories[action.action]?.({ action, view, props, openImport }))
     .filter((action): action is ToolbarActionDescriptor => !!action);
   return [...actions, secretsAction(props)];
 }

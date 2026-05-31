@@ -1,8 +1,7 @@
+import { MailboxCredentialKind } from '@byte-v-forge/common-ui';
 import type { Mailbox } from './types';
 
 export type MailboxProviderTab = 'outlook' | 'cloudflare';
-export type MailboxCredentialField = 'password' | 'refresh_token' | 'access_token';
-
 export type MailboxProviderUIConfig = {
   value: MailboxProviderTab;
   label: string;
@@ -14,7 +13,7 @@ export type MailboxProviderUIConfig = {
     description: string;
     batchPlaceholder: string;
     allowPlainEmailBatch: boolean;
-    credentialFields: MailboxCredentialField[];
+    credentialKinds: MailboxCredentialKind[];
   };
 };
 
@@ -28,7 +27,11 @@ export const mailboxProviderConfigs = [{
     description: 'Outlook 可附带密码或 OAuth token。',
     batchPlaceholder: 'account@example.com----password',
     allowPlainEmailBatch: false,
-    credentialFields: ['password', 'refresh_token', 'access_token'],
+    credentialKinds: [
+      MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD,
+      MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN,
+      MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN,
+    ],
   },
 }, {
   value: 'cloudflare',
