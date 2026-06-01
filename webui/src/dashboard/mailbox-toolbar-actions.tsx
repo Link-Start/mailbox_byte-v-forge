@@ -31,7 +31,7 @@ type ToolbarActionFactory = (ctx: {
 const toolbarActionFactories: Partial<Record<MailboxProviderAction, ToolbarActionFactory>> = {
   [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_IMPORT_MAILBOX]: ({ view, openImport }) => ({
     id: 'import-mailbox',
-    label: '导入邮箱',
+    label: '添加邮箱账号',
     icon: <Plus className="size-4" />,
     onClick: () => openImport(view.value),
   }),

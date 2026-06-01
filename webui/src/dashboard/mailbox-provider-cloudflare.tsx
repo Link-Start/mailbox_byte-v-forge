@@ -1,3 +1,5 @@
+import { Mail } from 'lucide-react';
+import { AccountManagementFrame } from '@byte-v-forge/common-ui';
 import { MailboxDomainGroups } from './mailbox-list';
 import { mailboxProviderConfig, mailboxProviderMatches } from './mailbox-utils';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
@@ -8,7 +10,7 @@ export function CloudflareMailboxProviderPanel(props: MailboxProviderPanelProps)
     .filter((domain) => mailboxProviderMatches(domain.provider_key, config.value))
     .map((domain) => domain.domain);
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3">
+    <AccountManagementFrame title={`${config.label}邮箱账号`} icon={<Mail size={16} />} actions={props.actions}>
       <MailboxDomainGroups
         {...props}
         providerCapability={props.capability}
@@ -17,6 +19,6 @@ export function CloudflareMailboxProviderPanel(props: MailboxProviderPanelProps)
         emptyDomainsText="域名未配置；邮件到达后会按 recipient 自动归组。"
         emptyDomainText="这个域名下暂无邮件地址，收到邮件后会自动出现。"
       />
-    </div>
+    </AccountManagementFrame>
   );
 }

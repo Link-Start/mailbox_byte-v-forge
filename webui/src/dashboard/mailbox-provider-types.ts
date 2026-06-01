@@ -1,9 +1,11 @@
+import type { ReactNode } from 'react';
 import type { Mailbox, MailboxDomain, MailboxOperation, MailboxProviderCapability } from './types';
 
 export type MailboxProviderPanelProps = {
   mailboxes: Mailbox[];
   domains: MailboxDomain[];
   capability?: MailboxProviderCapability;
+  actions?: ReactNode;
   selected?: string;
   busy: boolean;
   showSecrets: boolean;

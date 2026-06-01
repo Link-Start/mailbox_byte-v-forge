@@ -33,9 +33,6 @@ export function MailboxPanel(props: MailboxPanelProps) {
     capability: capabilityForProvider(props.providerCapabilities, definition.value),
     mailboxes: props.mailboxes.filter((mailbox) => mailboxProviderMatches(mailbox.provider_key, definition.value)),
   }));
-  const activeView = providerViews.find((view) => view.value === activeProvider) || providerViews[0];
-  const toolbarActions = providerToolbarActions(activeView, props, setImportProvider);
-
   return (
     <>
       <PanelTabs
@@ -44,13 +41,19 @@ export function MailboxPanel(props: MailboxPanelProps) {
         tabsClassName="min-h-0 flex-1 overflow-hidden"
         tabsListVariant="line"
         tabsListClassName="h-8"
-        actions={<ToolbarActionButtons actions={toolbarActions} />}
         tabs={providerViews.map(({ value, label, capability, mailboxes, Component }) => ({
           value,
           label: capability?.display_name || label,
           triggerClassName: 'gap-1.5 px-2',
-          contentClassName: 'overflow-auto',
-          content: <Component {...panelProps} mailboxes={mailboxes} capability={capability} />
+          contentClassName: 'flex flex-col overflow-hidden',
+          content: (
+            <Component
+              {...panelProps}
+              mailboxes={mailboxes}
+              capability={capability}
+              actions={<ToolbarActionButtons actions={providerToolbarActions({ value, capability, mailboxes }, props, setImportProvider)} />}
+            />
+          )
         }))}
       />
       <MailboxImportSheet open={!!importProvider} provider={importProvider || activeProvider} busy={props.busy} onOpenChange={(open) => !open && setImportProvider(undefined)} onDone={props.onDone} onError={props.onError} />

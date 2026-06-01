@@ -62,7 +62,7 @@ export function MailboxImportSheet({ open, provider, busy, onOpenChange, onDone,
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[min(460px,100vw)] p-0 sm:max-w-none">
         <SheetHeader className="border-b">
-          <SheetTitle>导入邮箱</SheetTitle>
+          <SheetTitle>添加邮箱账号</SheetTitle>
           <SheetDescription>{importConfig.description}</SheetDescription>
         </SheetHeader>
         <div className="grid gap-3 p-4">
@@ -98,7 +98,7 @@ function footerActions({ busy, form, disabled, onClose }: {
     onClick: onClose,
   }, {
     id: 'submit',
-    label: '入池',
+    label: '添加',
     icon: <Plus />,
     type: 'submit',
     form,
