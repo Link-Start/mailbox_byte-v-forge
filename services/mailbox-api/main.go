@@ -26,26 +26,22 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	browserConn, err := newGRPCClient("browser automation", cfg.browserAutomationAddr)
+	browserConn, err := grpcclient.NewRequiredInsecure("browser automation", cfg.browserAutomationAddr)
 	if err != nil {
 		log.Fatalf("failed to connect browser automation: %s", safeMailboxError(err))
 	}
 	defer browserConn.Close()
 
-	coordinationClient, closeCoordinationClient, err := newRequiredRedisClient(ctx, cfg.coordinationRedisURL, "MAILBOX_COORDINATION_REDIS_URL is required for mailbox coordination")
+	coordinationClient, err := redisx.NewRequiredClient(ctx, cfg.coordinationRedisURL, "MAILBOX_COORDINATION_REDIS_URL is required for mailbox coordination")
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox coordination redis client: %s", safeMailboxError(err))
 	}
-	if closeCoordinationClient != nil {
-		defer func() { _ = closeCoordinationClient() }()
-	}
-	recentEmailClient, closeRecentEmailClient, err := newRequiredRedisClient(ctx, cfg.recentEmailRedisURL, "MAILBOX_RECENT_EMAIL_REDIS_URL is required for mailbox recent email cache")
+	defer func() { _ = coordinationClient.Close() }()
+	recentEmailClient, err := redisx.NewRequiredClient(ctx, cfg.recentEmailRedisURL, "MAILBOX_RECENT_EMAIL_REDIS_URL is required for mailbox recent email cache")
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox recent email redis client: %s", safeMailboxError(err))
 	}
-	if closeRecentEmailClient != nil {
-		defer func() { _ = closeRecentEmailClient() }()
-	}
+	defer func() { _ = recentEmailClient.Close() }()
 
 	recentCache := newRecentEmailCache(recentEmailClient, cfg.recentEmailCachePrefix, cfg.recentEmailCacheTTL, cfg.recentEmailCacheMax)
 	mailboxStore, err := NewMailboxStore(ctx, cfg.pgDSN, recentCache)
@@ -58,12 +54,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to initialize platform event bus: %s", safeMailboxError(err))
 	}
-	if closePlatformEventBus != nil {
-		defer closePlatformEventBus()
-	}
-	if platformEventBus == nil {
-		log.Fatal("PLATFORM_NATS_URL is required for mailbox event workers")
-	}
+	defer closePlatformEventBus()
 	hotBus, closeHotStream, err := newMailboxHotStreamBus(ctx, cfg)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox hotstream: %s", safeMailboxError(err))
@@ -132,7 +123,7 @@ func main() {
 	pb.RegisterMailboxServiceServer(grpcServer, mailboxServer)
 	grpchealth.RegisterServing(grpcServer)
 
-	dashboardConn, err := grpcclient.NewInsecure(selfTarget(cfg.listenAddr))
+	dashboardConn, err := grpcclient.NewInsecure(grpcclient.SelfTarget(cfg.listenAddr))
 	if err != nil {
 		log.Fatalf("connect mailbox dashboard API: %s", safeMailboxError(err))
 	}
