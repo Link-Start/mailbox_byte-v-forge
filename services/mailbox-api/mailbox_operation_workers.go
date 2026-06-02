@@ -20,6 +20,7 @@ func runMailboxRegistrationWorker(ctx context.Context, consumer eventbus.Consume
 	return eventbus.RunTypedConsumerWorker(ctx, eventbus.TypedConsumerWorkerConfig[*pb.MailboxRegistrationOperationRequest]{
 		Name:       "mailbox registration requests",
 		Consumer:   consumer,
+		Expected:   mailboxRegistrationRequested.ExpectedMessage(),
 		NewMessage: func() *pb.MailboxRegistrationOperationRequest { return &pb.MailboxRegistrationOperationRequest{} },
 		Validate: func(request *pb.MailboxRegistrationOperationRequest) error {
 			return validateMailboxOperationID(request.GetOperationId())
@@ -55,6 +56,7 @@ func runMailboxOAuthWorker(ctx context.Context, consumer eventbus.Consumer, oper
 	return eventbus.RunTypedConsumerWorker(ctx, eventbus.TypedConsumerWorkerConfig[*pb.MailboxOAuthOperationRequest]{
 		Name:       "mailbox OAuth requests",
 		Consumer:   consumer,
+		Expected:   mailboxOAuthRequested.ExpectedMessage(),
 		NewMessage: func() *pb.MailboxOAuthOperationRequest { return &pb.MailboxOAuthOperationRequest{} },
 		Validate: func(request *pb.MailboxOAuthOperationRequest) error {
 			return validateMailboxOperationID(request.GetOperationId())

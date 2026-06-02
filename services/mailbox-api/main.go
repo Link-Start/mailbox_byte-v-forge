@@ -82,24 +82,24 @@ func main() {
 	workDispatcher := newMailboxWorkDispatcher(operations.db, "mailbox-api")
 	emailBackend := &EmailService{store: mailboxStore, watcher: mailWatcher, providers: cfg.providers, inboxLock: inboxLock, work: workDispatcher}
 
-	pollConsumer, err := platformEventBus.PullWorkerConsumer(cfg.eventStreamName, eventcatalog.MailboxEmailPollRequested.Subject, eventcatalog.MailboxEmailPollRequested.ConsumerDurable, 10, 60*time.Second)
+	pollConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, eventcatalog.MailboxEmailPollRequested, 10, 60*time.Second)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox email poll worker: %s", safeMailboxError(err))
 	}
 
-	fetchConsumer, err := platformEventBus.PullWorkerConsumer(cfg.eventStreamName, mailboxInboxFetchRequested.Subject, mailboxInboxFetchRequested.ConsumerDurable, 5, 5*time.Minute)
+	fetchConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxInboxFetchRequested, 5, 5*time.Minute)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox inbox fetch worker: %s", safeMailboxError(err))
 	}
 
 	activities := newMailboxActivitiesForProviders(cfg.providers, browserautomationv1.NewBrowserAutomationServiceClient(browserConn), emailBackend, operations, hotEvents)
 
-	registrationConsumer, err := platformEventBus.PullWorkerConsumer(cfg.eventStreamName, mailboxRegistrationRequested.Subject, mailboxRegistrationRequested.ConsumerDurable, 2, 5*time.Minute)
+	registrationConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxRegistrationRequested, 2, 5*time.Minute)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox registration worker: %s", safeMailboxError(err))
 	}
 
-	oauthConsumer, err := platformEventBus.PullWorkerConsumer(cfg.eventStreamName, mailboxOAuthRequested.Subject, mailboxOAuthRequested.ConsumerDurable, 2, 5*time.Minute)
+	oauthConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxOAuthRequested, 2, 5*time.Minute)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox OAuth worker: %s", safeMailboxError(err))
 	}

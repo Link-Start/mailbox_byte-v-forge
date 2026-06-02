@@ -19,6 +19,7 @@ func runMailboxInboxFetchWorker(ctx context.Context, consumer eventbus.Consumer,
 	return eventbus.RunTypedConsumerWorker(ctx, eventbus.TypedConsumerWorkerConfig[*pb.MailboxInboxFetchRequest]{
 		Name:           "mailbox inbox fetch requests",
 		Consumer:       consumer,
+		Expected:       mailboxInboxFetchRequested.ExpectedMessage(),
 		NewMessage:     func() *pb.MailboxInboxFetchRequest { return &pb.MailboxInboxFetchRequest{} },
 		Handler:        worker.handle,
 		MalformedLabel: "terminate malformed mailbox inbox fetch request",

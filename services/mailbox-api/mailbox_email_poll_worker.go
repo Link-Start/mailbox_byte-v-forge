@@ -6,6 +6,7 @@ import (
 
 	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/byte-v-forge/common-lib/eventbus"
+	"github.com/byte-v-forge/common-lib/eventcatalog"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 )
 
@@ -18,6 +19,7 @@ func runMailboxEmailPollWorker(ctx context.Context, consumer eventbus.Consumer, 
 	return eventbus.RunTypedConsumerWorker(ctx, eventbus.TypedConsumerWorkerConfig[*mailboxv1.MailboxEmailPollRequest]{
 		Name:           "mailbox email poll requests",
 		Consumer:       consumer,
+		Expected:       eventcatalog.MailboxEmailPollRequested.ExpectedMessage(),
 		NewMessage:     func() *mailboxv1.MailboxEmailPollRequest { return &mailboxv1.MailboxEmailPollRequest{} },
 		Handler:        worker.handle,
 		MalformedLabel: "terminate malformed mailbox email poll request",

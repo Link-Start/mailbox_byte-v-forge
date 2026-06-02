@@ -8,6 +8,7 @@ import (
 
 	"github.com/byte-v-forge/common-lib/eventbus"
 	"github.com/byte-v-forge/common-lib/eventcatalog"
+	"github.com/byte-v-forge/common-lib/eventoutbox"
 	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"google.golang.org/protobuf/proto"
@@ -37,24 +38,25 @@ func (p *mailboxPlatformEvents) Publish(ctx context.Context, message eventbus.Me
 	return p.publisher.Publish(ctx, message)
 }
 
-func mailboxPlatformEventMessages(source string, messages []*mailboxv1.EmailInboxMessage) ([]eventbus.Message, error) {
-	events := []eventbus.Message{}
+func mailboxPlatformEventRecords(source string, messages []*mailboxv1.EmailInboxMessage) ([]eventoutbox.Record, error) {
+	records := []eventoutbox.Record{}
 	for _, message := range messages {
 		if message == nil {
 			continue
 		}
-		eventMessage, err := mailboxEmailReceivedEventMessage(source, message)
+		record, err := mailboxEmailReceivedEventRecord(source, message)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("prepare mailbox platform event record: %w", err)
 		}
-		events = append(events, eventMessage)
+		records = append(records, record)
 	}
-	return events, nil
+	return records, nil
 }
 
-func mailboxEmailReceivedEventMessage(source string, message *mailboxv1.EmailInboxMessage) (eventbus.Message, error) {
+func mailboxEmailReceivedEventRecord(source string, message *mailboxv1.EmailInboxMessage) (eventoutbox.Record, error) {
 	eventCtx := mailboxPlatformEventContext(source, eventcatalog.MailboxEmailReceived.EventName, emailReceivedEventID(message), message)
-	return eventcatalog.MailboxEmailReceived.NewMessage(
+	return eventoutbox.NewRecordFor(
+		eventcatalog.MailboxEmailReceived,
 		&mailboxv1.MailboxEmailReceivedEvent{
 			Context: eventCtx,
 			Message: proto.Clone(message).(*mailboxv1.EmailInboxMessage),

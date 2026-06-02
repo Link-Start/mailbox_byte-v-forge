@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/eventbus"
 	"github.com/byte-v-forge/common-lib/eventoutbox"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/jackc/pgx/v5"
@@ -17,21 +16,17 @@ func (s *MailboxStore) enqueueInboxOutboxEvents(ctx context.Context, tx pgx.Tx, 
 	if len(messages) == 0 {
 		return nil
 	}
-	eventMessages, err := mailboxPlatformEventMessages(mailboxPlatformEventSource, messages)
+	records, err := mailboxPlatformEventRecords(mailboxPlatformEventSource, messages)
 	if err != nil {
 		return err
 	}
-	return enqueueMailboxOutboxEvents(ctx, tx, eventMessages)
+	return enqueueMailboxOutboxEvents(ctx, tx, records)
 }
 
-func enqueueMailboxOutboxEvents(ctx context.Context, tx pgx.Tx, messages []eventbus.Message) error {
-	for _, message := range messages {
-		record, err := eventoutbox.NewRecord(message)
-		if err != nil {
-			return fmt.Errorf("prepare mailbox outbox event: %w", err)
-		}
+func enqueueMailboxOutboxEvents(ctx context.Context, tx pgx.Tx, records []eventoutbox.Record) error {
+	for _, record := range records {
 		if err := eventoutbox.InsertRecordPgx(ctx, tx, mailboxPlatformEventOutboxTable, record, time.Now().Unix()); err != nil {
-			return err
+			return fmt.Errorf("insert mailbox outbox event: %w", err)
 		}
 	}
 	return nil
