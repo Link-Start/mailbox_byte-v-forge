@@ -87,19 +87,19 @@ func main() {
 		log.Fatalf("failed to initialize mailbox email poll worker: %s", safeMailboxError(err))
 	}
 
-	fetchConsumer, err := platformEventBus.PullWorkerConsumer(cfg.eventStreamName, eventcatalog.MailboxInboxFetchRequested.Subject, eventcatalog.MailboxInboxFetchRequested.ConsumerDurable, 5, 5*time.Minute)
+	fetchConsumer, err := platformEventBus.PullWorkerConsumer(cfg.eventStreamName, mailboxInboxFetchRequested.Subject, mailboxInboxFetchRequested.ConsumerDurable, 5, 5*time.Minute)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox inbox fetch worker: %s", safeMailboxError(err))
 	}
 
 	activities := newMailboxActivitiesForProviders(cfg.providers, browserautomationv1.NewBrowserAutomationServiceClient(browserConn), emailBackend, operations, hotEvents)
 
-	registrationConsumer, err := platformEventBus.PullWorkerConsumer(cfg.eventStreamName, eventcatalog.MailboxRegistrationRequested.Subject, eventcatalog.MailboxRegistrationRequested.ConsumerDurable, 2, 5*time.Minute)
+	registrationConsumer, err := platformEventBus.PullWorkerConsumer(cfg.eventStreamName, mailboxRegistrationRequested.Subject, mailboxRegistrationRequested.ConsumerDurable, 2, 5*time.Minute)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox registration worker: %s", safeMailboxError(err))
 	}
 
-	oauthConsumer, err := platformEventBus.PullWorkerConsumer(cfg.eventStreamName, eventcatalog.MailboxOAuthRequested.Subject, eventcatalog.MailboxOAuthRequested.ConsumerDurable, 2, 5*time.Minute)
+	oauthConsumer, err := platformEventBus.PullWorkerConsumer(cfg.eventStreamName, mailboxOAuthRequested.Subject, mailboxOAuthRequested.ConsumerDurable, 2, 5*time.Minute)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox OAuth worker: %s", safeMailboxError(err))
 	}

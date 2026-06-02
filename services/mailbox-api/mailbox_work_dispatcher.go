@@ -35,11 +35,11 @@ func newMailboxWorkDispatcher(db *gorm.DB, source string) *mailboxWorkDispatcher
 }
 
 func (d *mailboxWorkDispatcher) PublishRegistrationRequested(ctx context.Context, operationID string) error {
-	return d.publishOperationRequested(ctx, eventcatalog.MailboxRegistrationRequested, "mailbox-registration-", operationID, &pb.MailboxRegistrationOperationRequest{OperationId: strings.TrimSpace(operationID)})
+	return d.publishOperationRequested(ctx, mailboxRegistrationRequested, "mailbox-registration-", operationID, &pb.MailboxRegistrationOperationRequest{OperationId: strings.TrimSpace(operationID)})
 }
 
 func (d *mailboxWorkDispatcher) PublishOAuthRequested(ctx context.Context, operationID string) error {
-	return d.publishOperationRequested(ctx, eventcatalog.MailboxOAuthRequested, "mailbox-oauth-", operationID, &pb.MailboxOAuthOperationRequest{OperationId: strings.TrimSpace(operationID)})
+	return d.publishOperationRequested(ctx, mailboxOAuthRequested, "mailbox-oauth-", operationID, &pb.MailboxOAuthOperationRequest{OperationId: strings.TrimSpace(operationID)})
 }
 
 func (d *mailboxWorkDispatcher) publishOperationRequested(ctx context.Context, definition eventcatalog.Definition, eventPrefix string, operationID string, request proto.Message) error {
@@ -92,9 +92,9 @@ func (d *mailboxWorkDispatcher) PublishInboxFetchRequested(ctx context.Context, 
 	if request == nil {
 		request = &mailboxv1.FetchMailboxInboxesRequest{}
 	}
-	eventCtx := d.context(eventcatalog.MailboxInboxFetchRequested.EventName, eventbus.StableEventID("mailbox-inbox-fetch-", operationID), operationID)
+	eventCtx := d.context(mailboxInboxFetchRequested.EventName, eventbus.StableEventID("mailbox-inbox-fetch-", operationID), operationID)
 	return d.enqueue(ctx, eventbus.Message{
-		Subject: eventcatalog.MailboxInboxFetchRequested.Subject,
+		Subject: mailboxInboxFetchRequested.Subject,
 		Event: &pb.MailboxInboxFetchRequest{
 			OperationId: operationID,
 			Request:     proto.Clone(request).(*mailboxv1.FetchMailboxInboxesRequest),
