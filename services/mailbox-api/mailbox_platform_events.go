@@ -37,28 +37,31 @@ func (p *mailboxPlatformEvents) Publish(ctx context.Context, message eventbus.Me
 	return p.publisher.Publish(ctx, message)
 }
 
-func mailboxPlatformEventMessages(source string, messages []*mailboxv1.EmailInboxMessage) []eventbus.Message {
+func mailboxPlatformEventMessages(source string, messages []*mailboxv1.EmailInboxMessage) ([]eventbus.Message, error) {
 	events := []eventbus.Message{}
 	for _, message := range messages {
 		if message == nil {
 			continue
 		}
-		events = append(events, mailboxEmailReceivedEventMessage(source, message))
+		eventMessage, err := mailboxEmailReceivedEventMessage(source, message)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, eventMessage)
 	}
-	return events
+	return events, nil
 }
 
-func mailboxEmailReceivedEventMessage(source string, message *mailboxv1.EmailInboxMessage) eventbus.Message {
+func mailboxEmailReceivedEventMessage(source string, message *mailboxv1.EmailInboxMessage) (eventbus.Message, error) {
 	eventCtx := mailboxPlatformEventContext(source, eventcatalog.MailboxEmailReceived.EventName, emailReceivedEventID(message), message)
-	return eventbus.Message{
-		Subject: eventcatalog.MailboxEmailReceived.Subject,
-		Event: &mailboxv1.MailboxEmailReceivedEvent{
+	return eventcatalog.MailboxEmailReceived.NewMessage(
+		&mailboxv1.MailboxEmailReceivedEvent{
 			Context: eventCtx,
 			Message: proto.Clone(message).(*mailboxv1.EmailInboxMessage),
 		},
-		Context:    eventCtx,
-		Attributes: emailAttributes(message, nil),
-	}
+		eventCtx,
+		emailAttributes(message, nil),
+	)
 }
 
 func mailboxPlatformEventContext(source string, eventName string, eventID string, message *mailboxv1.EmailInboxMessage) *commonv1.EventContext {

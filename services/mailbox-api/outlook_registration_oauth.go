@@ -49,7 +49,8 @@ func (r *outlookRegistrationRunner) runBrowserOAuth(ctx context.Context, email s
 }
 
 func (r *outlookRegistrationRunner) oauthAuthorizeURL(state string) string {
-	return r.oauthConfig().AuthCodeURL(
+	cfg := r.oauthConfig()
+	return cfg.AuthCodeURL(
 		state,
 		oauth2.SetAuthURLParam("response_mode", "query"),
 		oauth2.SetAuthURLParam("prompt", "login"),
@@ -63,7 +64,8 @@ func (r *outlookRegistrationRunner) exchangeOAuthCode(ctx context.Context, code 
 	if r.httpClient != nil {
 		ctx = context.WithValue(ctx, oauth2.HTTPClient, r.httpClient)
 	}
-	token, err := r.oauthConfig().Exchange(ctx, code, oauth2.SetAuthURLParam("scope", strings.Join(r.cfg.oauthScopes, " ")))
+	cfg := r.oauthConfig()
+	token, err := cfg.Exchange(ctx, code, oauth2.SetAuthURLParam("scope", strings.Join(r.cfg.oauthScopes, " ")))
 	if err != nil {
 		return oauthResult{}, fmt.Errorf("OAuth token exchange failed: %s", safeMailboxText(err.Error()))
 	}

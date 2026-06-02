@@ -17,7 +17,11 @@ func (s *MailboxStore) enqueueInboxOutboxEvents(ctx context.Context, tx pgx.Tx, 
 	if len(messages) == 0 {
 		return nil
 	}
-	return enqueueMailboxOutboxEvents(ctx, tx, mailboxPlatformEventMessages(mailboxPlatformEventSource, messages))
+	eventMessages, err := mailboxPlatformEventMessages(mailboxPlatformEventSource, messages)
+	if err != nil {
+		return err
+	}
+	return enqueueMailboxOutboxEvents(ctx, tx, eventMessages)
 }
 
 func enqueueMailboxOutboxEvents(ctx context.Context, tx pgx.Tx, messages []eventbus.Message) error {
