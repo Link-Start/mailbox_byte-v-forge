@@ -3,9 +3,9 @@ package main
 import (
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
+	"github.com/byte-v-forge/common-lib/envx"
 	"github.com/byte-v-forge/common-lib/protojsonx"
 
 	"mailboxapi/pb"
@@ -44,7 +44,7 @@ func (h *graphWebhookHandler) handleCloudflareEmail(w http.ResponseWriter, r *ht
 }
 
 func validWebhookToken(r *http.Request) bool {
-	expected := strings.TrimSpace(os.Getenv("MAILBOX_WEBHOOK_TOKEN"))
+	expected := envx.String("MAILBOX_WEBHOOK_TOKEN")
 	if expected == "" {
 		logWarning("MAILBOX_WEBHOOK_TOKEN is required for email webhook ingestion")
 		return false

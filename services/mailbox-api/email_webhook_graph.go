@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -89,7 +88,7 @@ func validGraphWebhookRequestToken(r *http.Request) bool {
 }
 
 func webhookSecret() string {
-	return strings.TrimSpace(os.Getenv("MAILBOX_WEBHOOK_TOKEN"))
+	return envx.String("MAILBOX_WEBHOOK_TOKEN")
 }
 
 func (h *graphWebhookHandler) triggerRefresh() {

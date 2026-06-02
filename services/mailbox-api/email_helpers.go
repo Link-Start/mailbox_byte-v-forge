@@ -9,9 +9,6 @@ import (
 const (
 	defaultListenAddr          = ":50051"
 	defaultWebhookTokenHeader  = "X-Webhook-Token"
-	defaultOAuthClientID       = "9e5f94bc-e8a4-4e73-b8be-63364c29d753"
-	defaultOAuthScope          = "https://graph.microsoft.com/Mail.Read"
-	defaultTokenURL            = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
 	defaultPollIntervalSeconds = 5
 	defaultMessageLimit        = 25
 	defaultHTTPTimeoutSeconds  = 20

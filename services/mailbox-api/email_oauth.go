@@ -28,15 +28,15 @@ func NewOAuthManager(refreshToken string) *OAuthManager {
 	if timeout <= 0 {
 		timeout = defaultHTTPTimeoutSeconds
 	}
-	scope := normalizeScope(envx.StringDefault("OUTLOOK_OAUTH_SCOPE", defaultOAuthScope))
+	scope := normalizeScope(envx.StringDefault("OUTLOOK_OAUTH_SCOPE", outlookOAuthMailReadScope))
 	if scope == "" {
-		scope = defaultOAuthScope
+		scope = outlookOAuthMailReadScope
 	}
 	return &OAuthManager{
 		refreshToken: strings.TrimSpace(refreshToken),
-		clientID:     envx.StringDefault("OUTLOOK_OAUTH_CLIENT_ID", defaultOAuthClientID),
+		clientID:     envx.StringDefault("OUTLOOK_OAUTH_CLIENT_ID", defaultOutlookOAuthClientID),
 		scope:        scope,
-		tokenURL:     envx.StringDefault("OUTLOOK_OAUTH_TOKEN_URL", defaultTokenURL),
+		tokenURL:     envx.StringDefault("OUTLOOK_OAUTH_TOKEN_URL", defaultOutlookOAuthTokenURL),
 		httpClient:   &http.Client{Timeout: time.Duration(timeout) * time.Second},
 	}
 }
@@ -65,6 +65,9 @@ func (m *OAuthManager) CurrentTokens() (string, string) {
 func (m *OAuthManager) refreshLocked(ctx context.Context) (string, error) {
 	if strings.TrimSpace(m.refreshToken) == "" {
 		return "", fmt.Errorf("refresh token is missing")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, m.httpClient)
 	cfg := m.oauthConfig()

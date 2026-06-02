@@ -2,15 +2,14 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
 	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
 	"github.com/google/uuid"
+	"golang.org/x/oauth2"
 )
 
 func (r *outlookRegistrationRunner) runBrowserOAuth(ctx context.Context, email string, password string) (oauthResult, error) {
@@ -50,48 +49,42 @@ func (r *outlookRegistrationRunner) runBrowserOAuth(ctx context.Context, email s
 }
 
 func (r *outlookRegistrationRunner) oauthAuthorizeURL(state string) string {
-	values := url.Values{}
-	values.Set("client_id", r.cfg.oauthClientID)
-	values.Set("response_type", "code")
-	values.Set("redirect_uri", r.cfg.oauthRedirect)
-	values.Set("response_mode", "query")
-	values.Set("scope", strings.Join(r.cfg.oauthScopes, " "))
-	values.Set("state", state)
-	values.Set("prompt", "login")
-	return defaultOutlookOAuthAuthorizeURL + "?" + values.Encode()
+	return r.oauthConfig().AuthCodeURL(
+		state,
+		oauth2.SetAuthURLParam("response_mode", "query"),
+		oauth2.SetAuthURLParam("prompt", "login"),
+	)
 }
 
 func (r *outlookRegistrationRunner) exchangeOAuthCode(ctx context.Context, code string) (oauthResult, error) {
-	values := url.Values{}
-	values.Set("client_id", r.cfg.oauthClientID)
-	values.Set("scope", strings.Join(r.cfg.oauthScopes, " "))
-	values.Set("code", code)
-	values.Set("redirect_uri", r.cfg.oauthRedirect)
-	values.Set("grant_type", "authorization_code")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, defaultOutlookOAuthTokenURL, strings.NewReader(values.Encode()))
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if r.httpClient != nil {
+		ctx = context.WithValue(ctx, oauth2.HTTPClient, r.httpClient)
+	}
+	token, err := r.oauthConfig().Exchange(ctx, code, oauth2.SetAuthURLParam("scope", strings.Join(r.cfg.oauthScopes, " ")))
 	if err != nil {
-		return oauthResult{}, err
+		return oauthResult{}, fmt.Errorf("OAuth token exchange failed: %s", safeMailboxText(err.Error()))
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	resp, err := r.httpClient.Do(req)
-	if err != nil {
-		return oauthResult{}, err
-	}
-	defer resp.Body.Close()
-	var payload map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		return oauthResult{}, err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return oauthResult{}, fmt.Errorf("OAuth token exchange failed: %s", safeMailboxText(stringMapValue(payload, "error_description")))
-	}
-	refresh := stringMapValue(payload, "refresh_token")
-	access := stringMapValue(payload, "access_token")
+	refresh := strings.TrimSpace(token.RefreshToken)
 	if refresh == "" {
 		return oauthResult{}, errors.New("OAuth token exchange returned empty refresh_token")
 	}
-	return oauthResult{refreshToken: refresh, accessToken: access}, nil
+	return oauthResult{refreshToken: refresh, accessToken: strings.TrimSpace(token.AccessToken)}, nil
+}
+
+func (r *outlookRegistrationRunner) oauthConfig() oauth2.Config {
+	return oauth2.Config{
+		ClientID:    r.cfg.oauthClientID,
+		RedirectURL: r.cfg.oauthRedirect,
+		Scopes:      r.cfg.oauthScopes,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:   defaultOutlookOAuthAuthorizeURL,
+			TokenURL:  defaultOutlookOAuthTokenURL,
+			AuthStyle: oauth2.AuthStyleInParams,
+		},
+	}
 }
 
 func stringMapValue(data map[string]any, key string) string {

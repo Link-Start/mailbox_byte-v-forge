@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/byte-v-forge/common-lib/envx"
@@ -17,7 +16,7 @@ const defaultCloudflareAPIBaseURL = "https://api.cloudflare.com/client/v4"
 
 func loadCloudflareEmailDomains() []string {
 	cfg := loadCloudflareEmailConfig()
-	token := strings.TrimSpace(os.Getenv("MAILBOX_CLOUDFLARE_API_TOKEN"))
+	token := envx.String("MAILBOX_CLOUDFLARE_API_TOKEN")
 	if token == "" {
 		if cfg != nil && len(cfg.GetZones()) > 0 {
 			logWarning("MAILBOX_CLOUDFLARE_API_TOKEN is required to load Cloudflare email domains")
@@ -41,7 +40,7 @@ func loadCloudflareEmailDomains() []string {
 }
 
 func loadCloudflareEmailConfig() *pb.CloudflareEmailConfig {
-	path := strings.TrimSpace(os.Getenv("MAILBOX_CLOUDFLARE_EMAIL_CONFIG_FILE"))
+	path := envx.String("MAILBOX_CLOUDFLARE_EMAIL_CONFIG_FILE")
 	if path == "" {
 		return nil
 	}
