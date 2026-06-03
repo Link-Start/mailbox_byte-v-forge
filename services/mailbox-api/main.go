@@ -78,7 +78,7 @@ func main() {
 	}
 	hotEvents := newMailboxHotStream(hotBus)
 	platformEmailEvents := newMailboxPlatformEvents(platformEventBus)
-	mailWatcher := NewMailWatcher(inboxService, mailboxRepo, hotEvents)
+	mailWatcher := NewMailWatcher(inboxService, mailboxRepo, cfg.outlook.watcher, hotEvents)
 
 	operations, err := newOperationStore(cfg.pgDSN)
 	if err != nil {
@@ -97,7 +97,7 @@ func main() {
 		log.Fatalf("failed to initialize mailbox inbox fetch worker: %s", safeMailboxError(err))
 	}
 
-	activities := newMailboxActivitiesForProviders(cfg.providers, cfg.outlookRegistration, browserautomationv1.NewBrowserAutomationServiceClient(browserConn), emailBackend, mailboxRepo, operations, hotEvents)
+	activities := newMailboxActivitiesForProviders(cfg.providers, cfg.outlook.registration, browserautomationv1.NewBrowserAutomationServiceClient(browserConn), emailBackend, mailboxRepo, operations, hotEvents)
 
 	registrationConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxRegistrationRequested, 2, 5*time.Minute)
 	if err != nil {

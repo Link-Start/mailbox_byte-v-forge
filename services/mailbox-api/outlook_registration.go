@@ -17,6 +17,7 @@ const (
 )
 
 type outlookRegistrationConfig struct {
+	enabled        bool
 	resultsDir     string
 	proxyRef       string
 	locale         string
@@ -55,6 +56,7 @@ type oauthResult struct {
 func loadOutlookRegistrationConfig() outlookRegistrationConfig {
 	locale := envx.StringDefault("OUTLOOK_REGISTER_AUTOMATION_LOCALE", "en-US")
 	return outlookRegistrationConfig{
+		enabled:        envx.Bool("OUTLOOK_REGISTER_ENABLED", false),
 		resultsDir:     envx.StringDefault("OUTLOOK_REGISTER_RESULTS_DIR", defaultOutlookResultsDir),
 		proxyRef:       envx.StringDefault("OUTLOOK_REGISTER_AUTOMATION_PROXY_REF", "outlook"),
 		locale:         locale,

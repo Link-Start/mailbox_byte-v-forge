@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/envx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 
 	"mailboxapi/internal/inboxapp"
@@ -27,6 +26,7 @@ type MailWatcher struct {
 	pollInterval int
 	inboxOverlap int
 	httpClient   *http.Client
+	oauthConfig  outlookOAuthConfig
 	events       *mailboxHotStream
 
 	mu            sync.Mutex
@@ -55,33 +55,15 @@ func (e *GraphFetchError) Retryable() bool {
 	return e.StatusCode == http.StatusTooManyRequests || e.StatusCode >= http.StatusInternalServerError
 }
 
-func NewMailWatcher(inbox *inboxapp.Service, mailboxes *mailboxpg.Repository, events *mailboxHotStream) *MailWatcher {
-	messageLimit := envx.Int("OUTLOOK_MESSAGE_LIMIT", defaultMessageLimit)
-	if messageLimit < 1 {
-		messageLimit = 1
-	}
-	if messageLimit > 100 {
-		messageLimit = 100
-	}
-	pollInterval := envx.Int("OUTLOOK_POLL_INTERVAL_SECONDS", defaultPollIntervalSeconds)
-	if pollInterval < 1 {
-		pollInterval = 1
-	}
-	inboxOverlap := envx.Int("OUTLOOK_INBOX_OVERLAP_SECONDS", defaultInboxOverlapSeconds)
-	if inboxOverlap < 0 {
-		inboxOverlap = 0
-	}
-	timeout := envx.Int("OUTLOOK_HTTP_TIMEOUT_SECONDS", defaultHTTPTimeoutSeconds)
-	if timeout <= 0 {
-		timeout = defaultHTTPTimeoutSeconds
-	}
+func NewMailWatcher(inbox *inboxapp.Service, mailboxes *mailboxpg.Repository, cfg outlookWatcherConfig, events *mailboxHotStream) *MailWatcher {
 	return &MailWatcher{
 		inbox:         inbox,
 		mailboxes:     mailboxes,
-		messageLimit:  messageLimit,
-		pollInterval:  pollInterval,
-		inboxOverlap:  inboxOverlap,
-		httpClient:    &http.Client{Timeout: time.Duration(timeout) * time.Second},
+		messageLimit:  cfg.messageLimit,
+		pollInterval:  cfg.pollInterval,
+		inboxOverlap:  cfg.inboxOverlap,
+		httpClient:    &http.Client{Timeout: cfg.httpTimeout},
+		oauthConfig:   cfg.oauth,
 		events:        events,
 		oauthManagers: map[string]oauthEntry{},
 	}

@@ -54,7 +54,7 @@ func (w *MailWatcher) oauthManagerForMailbox(mailbox *mailboxmodel.Record) *OAut
 	defer w.mu.Unlock()
 	entry, ok := w.oauthManagers[key]
 	if !ok || entry.refreshToken != refreshToken {
-		entry = oauthEntry{refreshToken: refreshToken, manager: NewOAuthManager(refreshToken)}
+		entry = oauthEntry{refreshToken: refreshToken, manager: NewOAuthManager(refreshToken, w.oauthConfig)}
 		w.oauthManagers[key] = entry
 	}
 	return entry.manager

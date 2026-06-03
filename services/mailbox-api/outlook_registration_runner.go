@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/byte-v-forge/common-lib/emailx"
-	"github.com/byte-v-forge/common-lib/envx"
 
 	"mailboxapi/pb"
 )
@@ -22,7 +21,7 @@ func (r *outlookRegistrationRunner) RunMailboxRegistration(ctx context.Context, 
 	if len(records) > 0 {
 		return registrationResponse(records, nil), nil
 	}
-	if !req.GetEnabled() || !envx.Bool("OUTLOOK_REGISTER_ENABLED", false) {
+	if !req.GetEnabled() || !r.cfg.enabled {
 		return &pb.RunMailboxRegistrationResponse{Success: false, ExitCode: 0, ErrorMessage: "mailbox registration is disabled"}, nil
 	}
 	return &pb.RunMailboxRegistrationResponse{

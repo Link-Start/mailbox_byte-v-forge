@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/envx"
 	"golang.org/x/oauth2"
 )
 
@@ -23,21 +22,13 @@ type OAuthManager struct {
 	httpClient   *http.Client
 }
 
-func NewOAuthManager(refreshToken string) *OAuthManager {
-	timeout := envx.Int("OUTLOOK_HTTP_TIMEOUT_SECONDS", defaultHTTPTimeoutSeconds)
-	if timeout <= 0 {
-		timeout = defaultHTTPTimeoutSeconds
-	}
-	scope := normalizeScope(envx.StringDefault("OUTLOOK_OAUTH_SCOPE", outlookOAuthMailReadScope))
-	if scope == "" {
-		scope = outlookOAuthMailReadScope
-	}
+func NewOAuthManager(refreshToken string, cfg outlookOAuthConfig) *OAuthManager {
 	return &OAuthManager{
 		refreshToken: strings.TrimSpace(refreshToken),
-		clientID:     envx.StringDefault("OUTLOOK_OAUTH_CLIENT_ID", defaultOutlookOAuthClientID),
-		scope:        scope,
-		tokenURL:     envx.StringDefault("OUTLOOK_OAUTH_TOKEN_URL", defaultOutlookOAuthTokenURL),
-		httpClient:   &http.Client{Timeout: time.Duration(timeout) * time.Second},
+		clientID:     cfg.clientID,
+		scope:        cfg.scope,
+		tokenURL:     cfg.tokenURL,
+		httpClient:   cfg.httpClient(),
 	}
 }
 
