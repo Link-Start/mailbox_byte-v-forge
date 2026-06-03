@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"mailboxapi/internal/mailboxmodel"
+	"mailboxapi/internal/mailboxpg"
 	"mailboxapi/internal/mailboxprovider"
 )
 
@@ -117,11 +118,11 @@ func listCloudflareVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, fil
 
 	out := []*mailboxmodel.Record{}
 	for rows.Next() {
-		row, err := scanMailbox(rows)
+		row, err := mailboxpg.ScanMailbox(rows)
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, row.toRecord())
+		out = append(out, row.ToRecord(normalizeEmailProvider, prepareMailboxProjection))
 	}
 	return out, rows.Err()
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/byte-v-forge/common-lib/pagex"
 
 	"mailboxapi/internal/mailboxmodel"
+	"mailboxapi/internal/mailboxpg"
 	"mailboxapi/internal/mailboxprovider"
 )
 
@@ -109,7 +110,7 @@ func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxpr
 
 	out := []*mailboxmodel.Record{}
 	for rows.Next() {
-		row, err := scanMailbox(rows)
+		row, err := mailboxpg.ScanMailbox(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -141,11 +142,11 @@ func (s *MailboxStore) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*
 
 	out := []*mailboxmodel.Record{}
 	for rows.Next() {
-		row, err := scanMailbox(rows)
+		row, err := mailboxpg.ScanMailbox(rows)
 		if err != nil {
 			return nil, err
 		}
-		if s.providers.ValidatePoll(row.toProviderRecord()) != nil {
+		if s.providers.ValidatePoll(row.ToProviderRecord()) != nil {
 			continue
 		}
 		out = append(out, s.recordFromMailboxRow(row))

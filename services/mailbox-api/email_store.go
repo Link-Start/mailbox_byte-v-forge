@@ -14,19 +14,6 @@ import (
 	"mailboxapi/internal/mailboxprovider"
 )
 
-type mailboxRow struct {
-	ID           string
-	Email        string
-	Provider     string
-	Password     string
-	RefreshToken string
-	AccessToken  string
-	AuthStatus   string
-	LastError    string
-	CreatedAt    int64
-	UpdatedAt    int64
-}
-
 type inboxMessageRow struct {
 	ID             string
 	MailboxEmail   string

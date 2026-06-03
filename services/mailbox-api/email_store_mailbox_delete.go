@@ -8,6 +8,8 @@ import (
 
 	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/jackc/pgx/v5"
+
+	"mailboxapi/internal/mailboxpg"
 )
 
 func (s *MailboxStore) DeleteMailbox(ctx context.Context, email string) (bool, error) {
@@ -21,7 +23,7 @@ func (s *MailboxStore) DeleteMailbox(ctx context.Context, email string) (bool, e
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	row, err := scanMailbox(tx.QueryRow(ctx, s.providers.MailboxSelectSQL()+" WHERE m.email = $1 FOR UPDATE", email))
+	row, err := mailboxpg.ScanMailbox(tx.QueryRow(ctx, s.providers.MailboxSelectSQL()+" WHERE m.email = $1 FOR UPDATE", email))
 	if errors.Is(err, pgx.ErrNoRows) {
 		deleted, deleteErr := deleteMailboxInbox(ctx, tx, []string{email})
 		if deleteErr != nil {
