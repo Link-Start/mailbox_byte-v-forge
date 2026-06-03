@@ -118,7 +118,7 @@ func (r *Repository) RecordMessages(ctx context.Context, request inboxapp.Record
 	if err := UpdateInboxWatermarks(ctx, tx, watermarks, now); err != nil {
 		return nil, err
 	}
-	if err := r.providers.PruneInbound(ctx, tx, provider, mailboxprovider.InboxRetention{
+	if err := r.pruneInbound(ctx, tx, provider, mailboxprovider.InboxRetention{
 		TouchedMailboxes: touchedMailboxes,
 		TouchedDomains:   touchedDomains,
 	}); err != nil {
@@ -240,7 +240,26 @@ func UpdateInboxWatermarks(ctx context.Context, tx pgx.Tx, watermarks map[string
 	return nil
 }
 
-func PruneDomainMessages(ctx context.Context, tx pgx.Tx, provider string, domain string, limit int) error {
+func pruneMailboxMessages(ctx context.Context, tx pgx.Tx, provider string, mailboxEmail string, limit int) error {
+	provider = mailboxprovider.NormalizeKey(provider)
+	mailboxEmail = emailx.Normalize(mailboxEmail)
+	if provider == "" || mailboxEmail == "" || limit <= 0 {
+		return nil
+	}
+	keys, err := expiredInboxKeys(ctx, tx, `
+		SELECT provider, mailbox_email, message_key
+		FROM mailbox_inbox_messages
+		WHERE provider = $1 AND mailbox_email = $2
+		ORDER BY received_at DESC, updated_at DESC, message_key DESC
+		OFFSET $3
+	`, provider, mailboxEmail, limit)
+	if err != nil {
+		return err
+	}
+	return deleteInboxKeys(ctx, tx, keys)
+}
+
+func pruneDomainMessages(ctx context.Context, tx pgx.Tx, provider string, domain string, limit int) error {
 	provider = mailboxprovider.NormalizeKey(provider)
 	domain = strings.Trim(strings.ToLower(strings.TrimSpace(domain)), ".")
 	if provider == "" || domain == "" || limit <= 0 {
@@ -257,6 +276,32 @@ func PruneDomainMessages(ctx context.Context, tx pgx.Tx, provider string, domain
 		return err
 	}
 	return deleteInboxKeys(ctx, tx, keys)
+}
+
+func (r *Repository) pruneInbound(ctx context.Context, tx pgx.Tx, provider string, retention mailboxprovider.InboxRetention) error {
+	definition := r.providers.RetentionByKey(provider)
+	if definition == nil {
+		return nil
+	}
+	policy, ok := definition.RetentionPolicy()
+	if !ok {
+		return nil
+	}
+	switch policy.Scope {
+	case mailboxprovider.RetentionScopeDomain:
+		for domain := range retention.TouchedDomains {
+			if err := pruneDomainMessages(ctx, tx, provider, domain, policy.MaxMessages); err != nil {
+				return err
+			}
+		}
+	case mailboxprovider.RetentionScopeMailbox:
+		for mailboxEmail := range retention.TouchedMailboxes {
+			if err := pruneMailboxMessages(ctx, tx, provider, mailboxEmail, policy.MaxMessages); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func expiredInboxKeys(ctx context.Context, tx pgx.Tx, query string, args ...any) ([]inboxMessageKey, error) {

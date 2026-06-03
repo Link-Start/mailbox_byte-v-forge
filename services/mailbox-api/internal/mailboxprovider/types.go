@@ -1,13 +1,6 @@
 package mailboxprovider
 
-import (
-	"context"
-
-	"github.com/byte-v-forge/common-lib/pagex"
-	"github.com/jackc/pgx/v5"
-
-	"mailboxapi/internal/mailboxmodel"
-)
+import "github.com/byte-v-forge/common-lib/pagex"
 
 type RuntimeContext interface {
 	DomainsForProvider(provider string) []string
@@ -31,15 +24,33 @@ type MailboxRecord struct {
 type TokenFields struct {
 	Table              string
 	EmailColumn        string
+	PasswordColumn     string
 	RefreshTokenColumn string
 	AccessTokenColumn  string
 	AuthStatusColumn   string
 	LastErrorColumn    string
+	CreatedAtColumn    string
 	UpdatedAtColumn    string
 }
 
 func (f TokenFields) HasTokenStorage() bool {
 	return f.Table != "" && f.EmailColumn != "" && f.RefreshTokenColumn != "" && f.AccessTokenColumn != ""
+}
+
+type RetentionScope string
+
+const (
+	RetentionScopeMailbox RetentionScope = "mailbox"
+	RetentionScopeDomain  RetentionScope = "domain"
+)
+
+type MessageRetention struct {
+	Scope       RetentionScope
+	MaxMessages int
+}
+
+func (r MessageRetention) HasRetention() bool {
+	return r.Scope != "" && r.MaxMessages > 0
 }
 
 type InboxRetention struct {
@@ -63,8 +74,5 @@ func (q ListQuery) HasCursor() bool {
 	return pagex.HasKeysetCursor(q.Cursor)
 }
 
-type UpsertFunc func(context.Context, pgx.Tx, *mailboxmodel.Record, int64) error
 type AuthFilterFunc func(string, *[]any) string
 type ValidatePollFunc func(MailboxRecord) error
-type UpdateAuthFunc func(context.Context, pgx.Tx, string, string, string, int64) error
-type PruneInboundFunc func(context.Context, pgx.Tx, InboxRetention) error

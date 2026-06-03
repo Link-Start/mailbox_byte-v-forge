@@ -1,15 +1,12 @@
 package main
 
 import (
-	"context"
 	"strings"
 
 	"github.com/byte-v-forge/common-lib/envx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/jackc/pgx/v5"
 
 	"mailboxapi/internal/mailboxmodel"
-	"mailboxapi/internal/mailboxpg"
 	"mailboxapi/internal/mailboxprovider"
 )
 
@@ -58,13 +55,9 @@ func cloudflareMailboxProvider() mailboxprovider.Plugin {
 			}
 			return false
 		},
-		PruneInboundFunc: func(ctx context.Context, tx pgx.Tx, retention mailboxprovider.InboxRetention) error {
-			for domain := range retention.TouchedDomains {
-				if err := mailboxpg.PruneDomainMessages(ctx, tx, emailProviderCloudflare, domain, envx.Int("MAILBOX_CLOUDFLARE_MAX_MESSAGES_PER_DOMAIN", defaultCloudflareMaxDomain)); err != nil {
-					return err
-				}
-			}
-			return nil
+		RetentionPolicyValue: mailboxprovider.MessageRetention{
+			Scope:       mailboxprovider.RetentionScopeDomain,
+			MaxMessages: envx.Int("MAILBOX_CLOUDFLARE_MAX_MESSAGES_PER_DOMAIN", defaultCloudflareMaxDomain),
 		},
 		IncludeVirtualFunc: func(authStatus string) bool {
 			return authStatus == ""

@@ -16,20 +16,20 @@ func outlookMailboxProvider() mailboxprovider.Plugin {
 		SelectJoinValue:      "LEFT JOIN mailbox_outlook_accounts outlook ON outlook.mailbox_email = m.email",
 		SelectFieldsValue:    outlookSelectFields(),
 		CapabilitiesFunc:     outlookProviderCapabilities,
-		UpsertFunc:           upsertOutlookMailboxData,
 		AuthFilterFunc: func(authStatus string, args *[]any) string {
 			*args = append(*args, strings.TrimSpace(authStatus))
 			return fmt.Sprintf("outlook.auth_status = $%d", len(*args))
 		},
 		ValidatePollFunc: validateOutlookPollableMailbox,
-		UpdateAuthFunc:   updateOutlookAuthStatus,
 		TokenFieldsValue: mailboxprovider.TokenFields{
 			Table:              "mailbox_outlook_accounts",
 			EmailColumn:        "mailbox_email",
+			PasswordColumn:     "password",
 			RefreshTokenColumn: "refresh_token",
 			AccessTokenColumn:  "access_token",
 			AuthStatusColumn:   "auth_status",
 			LastErrorColumn:    "last_error",
+			CreatedAtColumn:    "created_at",
 			UpdatedAtColumn:    "updated_at",
 		},
 		PrepareLegacyDataFunc: outlookLegacyStatements,

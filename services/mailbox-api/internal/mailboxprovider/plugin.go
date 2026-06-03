@@ -1,10 +1,7 @@
 package mailboxprovider
 
 import (
-	"context"
-
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/jackc/pgx/v5"
 
 	"mailboxapi/internal/mailboxmodel"
 )
@@ -30,19 +27,16 @@ type StorageExtension interface {
 	SchemaStatements() []string
 	SelectJoin() string
 	SelectFields() SelectFields
-	Upsert(context.Context, pgx.Tx, *mailboxmodel.Record, int64) error
 	AuthFilter(string, *[]any) (string, bool)
 	CanValidatePoll() bool
 	ValidatePoll(MailboxRecord) error
-	CanUpdateAuth() bool
-	UpdateAuth(context.Context, pgx.Tx, string, string, string, int64) error
 	TokenFields() (TokenFields, bool)
 	PrepareLegacyData() []string
 }
 
 type InboxRetentionPolicy interface {
 	Identity
-	PruneInbound(context.Context, pgx.Tx, InboxRetention) error
+	RetentionPolicy() (MessageRetention, bool)
 }
 
 type VirtualMailboxSource interface {
@@ -70,12 +64,10 @@ type Definition struct {
 	LoadDomainsFunc       func() []string
 	DomainsFunc           func([]string) []*mailboxv1.MailboxDomain
 	MatchesAddressFunc    func(string, RuntimeContext) bool
-	UpsertFunc            UpsertFunc
 	AuthFilterFunc        AuthFilterFunc
 	ValidatePollFunc      ValidatePollFunc
-	UpdateAuthFunc        UpdateAuthFunc
 	TokenFieldsValue      TokenFields
-	PruneInboundFunc      PruneInboundFunc
+	RetentionPolicyValue  MessageRetention
 	IncludeVirtualFunc    func(string) bool
 	PrepareProjectionFunc func(*mailboxmodel.Record)
 	PrepareLegacyDataFunc func() []string
@@ -139,13 +131,6 @@ func (p definitionPlugin) MatchesAddress(email string, cfg RuntimeContext) bool 
 	return p.definition.MatchesAddressFunc != nil && p.definition.MatchesAddressFunc(email, cfg)
 }
 
-func (p definitionPlugin) Upsert(ctx context.Context, tx pgx.Tx, mailbox *mailboxmodel.Record, now int64) error {
-	if p.definition.UpsertFunc == nil {
-		return nil
-	}
-	return p.definition.UpsertFunc(ctx, tx, mailbox, now)
-}
-
 func (p definitionPlugin) AuthFilter(authStatus string, args *[]any) (string, bool) {
 	if p.definition.AuthFilterFunc == nil {
 		return "", false
@@ -159,22 +144,14 @@ func (p definitionPlugin) ValidatePoll(row MailboxRecord) error {
 	return p.definition.ValidatePollFunc(row)
 }
 
-func (p definitionPlugin) CanUpdateAuth() bool { return p.definition.UpdateAuthFunc != nil }
-
-func (p definitionPlugin) UpdateAuth(ctx context.Context, tx pgx.Tx, email string, authStatus string, lastError string, now int64) error {
-	return p.definition.UpdateAuthFunc(ctx, tx, email, authStatus, lastError, now)
-}
-
 func (p definitionPlugin) TokenFields() (TokenFields, bool) {
 	fields := p.definition.TokenFieldsValue
 	return fields, fields.HasTokenStorage()
 }
 
-func (p definitionPlugin) PruneInbound(ctx context.Context, tx pgx.Tx, retention InboxRetention) error {
-	if p.definition.PruneInboundFunc == nil {
-		return nil
-	}
-	return p.definition.PruneInboundFunc(ctx, tx, retention)
+func (p definitionPlugin) RetentionPolicy() (MessageRetention, bool) {
+	policy := p.definition.RetentionPolicyValue
+	return policy, policy.HasRetention()
 }
 
 func (p definitionPlugin) IncludeVirtual(authStatus string) bool {

@@ -72,7 +72,7 @@ func (r *Repository) UpsertMailbox(ctx context.Context, mailbox *mailboxmodel.Re
 	`, rowID, email, insertProvider, now, requestedProvider).Scan(&persistedProvider); err != nil {
 		return nil, err
 	}
-	if err := r.providers.Upsert(ctx, tx, persistedProvider, mailbox, now); err != nil {
+	if err := r.upsertProviderMailboxData(ctx, tx, persistedProvider, mailbox, now); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -104,7 +104,7 @@ func (r *Repository) MarkEmailAuthStatus(ctx context.Context, email string, auth
 		return nil, err
 	}
 	now := time.Now().Unix()
-	if err := r.providers.UpdateAuth(ctx, tx, row.Provider, email, authStatus, safeText(lastError), now); err != nil {
+	if err := r.updateProviderAuth(ctx, tx, row.Provider, email, authStatus, safeText(lastError), now); err != nil {
 		return nil, err
 	}
 	if _, err := tx.Exec(ctx, "UPDATE mailboxes SET updated_at = $1 WHERE email = $2", now, email); err != nil {

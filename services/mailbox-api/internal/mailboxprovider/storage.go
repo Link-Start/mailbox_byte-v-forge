@@ -1,11 +1,8 @@
 package mailboxprovider
 
 import (
-	"context"
 	"fmt"
 	"strings"
-
-	"github.com/jackc/pgx/v5"
 
 	"mailboxapi/internal/mailboxmodel"
 )
@@ -19,13 +16,6 @@ func (r *Registry) NormalizeProviderInput(provider string) string {
 		return definition.Key()
 	}
 	return value
-}
-
-func (r *Registry) Upsert(ctx context.Context, tx pgx.Tx, provider string, mailbox *mailboxmodel.Record, now int64) error {
-	if definition := r.StorageByKey(provider); definition != nil {
-		return definition.Upsert(ctx, tx, mailbox, now)
-	}
-	return nil
 }
 
 func (r *Registry) AuthFilter(provider string, authStatus string, args *[]any) string {
@@ -58,20 +48,6 @@ func (r *Registry) ValidatePoll(row MailboxRecord) error {
 		return fmt.Errorf("mailbox provider cannot poll inbox: %s", row.Provider)
 	}
 	return definition.ValidatePoll(row)
-}
-
-func (r *Registry) UpdateAuth(ctx context.Context, tx pgx.Tx, provider string, email string, authStatus string, lastError string, now int64) error {
-	if definition := r.StorageByKey(provider); definition != nil && definition.CanUpdateAuth() {
-		return definition.UpdateAuth(ctx, tx, email, authStatus, lastError, now)
-	}
-	return fmt.Errorf("mailbox provider has no auth state: %s", provider)
-}
-
-func (r *Registry) PruneInbound(ctx context.Context, tx pgx.Tx, provider string, retention InboxRetention) error {
-	if definition := r.RetentionByKey(provider); definition != nil {
-		return definition.PruneInbound(ctx, tx, retention)
-	}
-	return nil
 }
 
 func (r *Registry) PrepareProjection(mailbox *mailboxmodel.Record) {
