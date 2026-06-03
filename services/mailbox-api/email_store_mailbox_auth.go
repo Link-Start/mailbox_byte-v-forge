@@ -97,7 +97,7 @@ func (s *MailboxStore) UpdateMailboxTokens(ctx context.Context, email string, re
 }
 
 func (s *MailboxStore) MarkAuthFailed(ctx context.Context, email string, err error) {
-	if _, updateErr := s.MarkEmailAuthStatus(ctx, email, authStatusAuthFailed, safeMailboxError(err)); updateErr != nil {
+	if _, updateErr := s.MarkEmailAuthStatus(ctx, email, mailboxmodel.AuthStatusAuthFailed, safeMailboxError(err)); updateErr != nil {
 		logWarning("failed to mark mailbox auth failed for %s: %v", emailx.Redact(email), updateErr)
 	}
 }

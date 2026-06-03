@@ -24,13 +24,6 @@ const (
 	emailProviderCloudflare = "cloudflare"
 )
 
-const (
-	authStatusAuthorized        = "AUTHORIZED"
-	authStatusOAuthPending      = "OAUTH_PENDING"
-	authStatusAuthFailed        = "AUTH_FAILED"
-	authStatusNeedsManualVerify = "NEEDS_MANUAL_VERIFICATION"
-)
-
 var (
 	emailPattern   = regexp.MustCompile(`(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}`)
 	htmlTagPattern = regexp.MustCompile(`<[^>]+>`)

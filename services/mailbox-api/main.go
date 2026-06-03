@@ -18,6 +18,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
+	"mailboxapi/internal/mailboxapp"
 	"mailboxapi/pb"
 )
 
@@ -72,7 +73,7 @@ func main() {
 		log.Fatalf("failed to initialize mailbox operation store: %s", safeMailboxError(err))
 	}
 	workDispatcher := newMailboxWorkDispatcher(operations.db, "mailbox-api")
-	emailBackend := &EmailService{store: mailboxStore, watcher: mailWatcher, providers: cfg.providers, inboxLock: inboxLock, work: workDispatcher}
+	emailBackend := &EmailService{store: mailboxStore, mailboxes: mailboxapp.NewService(mailboxStore), watcher: mailWatcher, providers: cfg.providers, inboxLock: inboxLock, work: workDispatcher}
 
 	pollConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, eventcatalog.MailboxEmailPollRequested, 10, 60*time.Second)
 	if err != nil {

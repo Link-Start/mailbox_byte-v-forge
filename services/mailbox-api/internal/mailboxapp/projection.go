@@ -1,29 +1,18 @@
-package main
+package mailboxapp
 
 import (
 	"strings"
 
 	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
+	"github.com/byte-v-forge/common-lib/redactx"
 
 	"mailboxapi/internal/mailboxmodel"
 )
 
-func publicFetchInboxesResponse(resp *mailboxv1.FetchMailboxInboxesResponse, operationID string) *mailboxv1.FetchMailboxInboxesResponse {
-	if resp == nil {
-		return &mailboxv1.FetchMailboxInboxesResponse{OperationId: operationID}
-	}
-	return &mailboxv1.FetchMailboxInboxesResponse{
-		Results:      append([]*mailboxv1.FetchMailboxInboxResult{}, resp.GetResults()...),
-		MailboxCount: resp.GetMailboxCount(),
-		FetchedCount: resp.GetFetchedCount(),
-		FailedCount:  resp.GetFailedCount(),
-		MessageCount: resp.GetMessageCount(),
-		OperationId:  operationID,
-	}
-}
+const mailboxErrorSnippetLimit = 600
 
-func publicMailbox(mailbox *mailboxmodel.Record) *mailboxv1.EmailMailbox {
+func PublicMailbox(mailbox *mailboxmodel.Record) *mailboxv1.EmailMailbox {
 	if mailbox == nil {
 		return nil
 	}
@@ -32,26 +21,51 @@ func publicMailbox(mailbox *mailboxmodel.Record) *mailboxv1.EmailMailbox {
 		LastError:       mailbox.GetLastError(),
 		CreatedAt:       mailbox.GetCreatedAt(),
 		UpdatedAt:       mailbox.GetUpdatedAt(),
-		AuthStatus:      publicMailboxAuthStatus(mailbox.GetAuthStatus()),
+		AuthStatus:      mailboxmodel.PublicAuthStatus(mailbox.GetAuthStatus()),
 		ProviderKey:     mailbox.GetProviderKey(),
 		LatestSignal:    mailbox.GetLatestSignal(),
 		Domain:          mailbox.GetDomain(),
-		CredentialState: publicMailboxCredentialState(mailbox),
-		Credentials:     publicMailboxCredentials(mailbox),
+		CredentialState: credentialState(mailbox),
+		Credentials:     credentials(mailbox),
 	}
 }
 
-func publicMailboxList(mailboxes []*mailboxmodel.Record) []*mailboxv1.EmailMailbox {
+func PublicMailboxList(mailboxes []*mailboxmodel.Record) []*mailboxv1.EmailMailbox {
 	out := make([]*mailboxv1.EmailMailbox, 0, len(mailboxes))
 	for _, mailbox := range mailboxes {
-		if public := publicMailbox(mailbox); public != nil {
+		if public := PublicMailbox(mailbox); public != nil {
 			out = append(out, public)
 		}
 	}
 	return out
 }
 
-func publicMailboxCredentialState(mailbox *mailboxmodel.Record) *mailboxv1.MailboxCredentialState {
+func RecordFromCredentialInput(input *mailboxv1.MailboxCredentialInput) *mailboxmodel.Record {
+	if input == nil {
+		return nil
+	}
+	return applyCredentialInput(&mailboxmodel.Record{
+		EmailAddress: emailx.Normalize(input.GetEmailAddress()),
+		ProviderKey:  strings.TrimSpace(input.GetProviderKey()),
+		AuthStatus:   mailboxmodel.AuthStatusValue(input.GetAuthStatus()),
+		LastError:    safeText(input.GetLastError()),
+	}, input)
+}
+
+func CredentialInput(mailbox *mailboxmodel.Record) *mailboxv1.MailboxCredentialInput {
+	if mailbox == nil {
+		return nil
+	}
+	return &mailboxv1.MailboxCredentialInput{
+		EmailAddress: mailbox.GetEmailAddress(),
+		ProviderKey:  mailbox.GetProviderKey(),
+		Credentials:  credentials(mailbox),
+		AuthStatus:   mailboxmodel.PublicAuthStatus(mailbox.GetAuthStatus()),
+		LastError:    mailbox.GetLastError(),
+	}
+}
+
+func credentialState(mailbox *mailboxmodel.Record) *mailboxv1.MailboxCredentialState {
 	if mailbox == nil {
 		return nil
 	}
@@ -75,7 +89,7 @@ func publicMailboxCredentialState(mailbox *mailboxmodel.Record) *mailboxv1.Mailb
 	}
 }
 
-func publicMailboxCredentials(mailbox *mailboxmodel.Record) []*mailboxv1.MailboxCredentialValue {
+func credentials(mailbox *mailboxmodel.Record) []*mailboxv1.MailboxCredentialValue {
 	if mailbox == nil {
 		return nil
 	}
@@ -90,18 +104,6 @@ func publicMailboxCredentials(mailbox *mailboxmodel.Record) []*mailboxv1.Mailbox
 	appendValue(mailboxv1.MailboxCredentialKind_MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN, mailbox.GetRefreshToken())
 	appendValue(mailboxv1.MailboxCredentialKind_MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN, mailbox.GetAccessToken())
 	return values
-}
-
-func mailboxRecordFromCredentialInput(input *mailboxv1.MailboxCredentialInput) *mailboxmodel.Record {
-	if input == nil {
-		return nil
-	}
-	return applyCredentialInput(&mailboxmodel.Record{
-		EmailAddress: emailx.Normalize(input.GetEmailAddress()),
-		ProviderKey:  strings.TrimSpace(input.GetProviderKey()),
-		AuthStatus:   mailboxAuthStatusValue(input.GetAuthStatus()),
-		LastError:    safeMailboxText(input.GetLastError()),
-	}, input)
 }
 
 func applyCredentialInput(record *mailboxmodel.Record, input *mailboxv1.MailboxCredentialInput) *mailboxmodel.Record {
@@ -121,4 +123,8 @@ func applyCredentialInput(record *mailboxmodel.Record, input *mailboxv1.MailboxC
 		}
 	}
 	return record
+}
+
+func safeText(value string) string {
+	return redactx.TextSnippet(value, mailboxErrorSnippetLimit)
 }

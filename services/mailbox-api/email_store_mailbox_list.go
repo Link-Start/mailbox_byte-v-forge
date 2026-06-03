@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -16,26 +15,19 @@ import (
 	"mailboxapi/internal/mailboxprovider"
 )
 
-var errInvalidMailboxListCursor = errors.New("invalid mailbox cursor")
-
-type mailboxListPage struct {
-	Mailboxes  []*mailboxmodel.Record
-	NextCursor string
-}
-
-func (s *MailboxStore) ListMailboxes(ctx context.Context, authStatus string, provider string, emailAddress string, cursorValue string, limit int32) (mailboxListPage, error) {
+func (s *MailboxStore) ListMailboxes(ctx context.Context, authStatus string, provider string, emailAddress string, cursorValue string, limit int32) (mailboxmodel.ListPage, error) {
 	query, err := newMailboxListQuery(authStatus, provider, emailAddress, cursorValue, limit)
 	if err != nil {
-		return mailboxListPage{}, err
+		return mailboxmodel.ListPage{}, err
 	}
 	stored, err := s.listStoredMailboxes(ctx, query)
 	if err != nil {
-		return mailboxListPage{}, err
+		return mailboxmodel.ListPage{}, err
 	}
 	rows := stored
 	virtual, err := listMailboxProviderVirtualMailboxes(ctx, s.pool, query)
 	if err != nil {
-		return mailboxListPage{}, err
+		return mailboxmodel.ListPage{}, err
 	}
 	if len(virtual) > 0 {
 		rows = append(rows, virtual...)
@@ -46,7 +38,7 @@ func (s *MailboxStore) ListMailboxes(ctx context.Context, authStatus string, pro
 func newMailboxListQuery(authStatus string, provider string, emailAddress string, cursorValue string, limit int32) (mailboxprovider.ListQuery, error) {
 	cursor, err := pagex.DecodeKeysetCursor(cursorValue)
 	if err != nil {
-		return mailboxprovider.ListQuery{}, errInvalidMailboxListCursor
+		return mailboxprovider.ListQuery{}, mailboxmodel.ErrInvalidMailboxListCursor
 	}
 	return mailboxprovider.ListQuery{
 		AuthStatus:   strings.TrimSpace(authStatus),
@@ -57,7 +49,7 @@ func newMailboxListQuery(authStatus string, provider string, emailAddress string
 	}, nil
 }
 
-func mailboxPageFromRows(rows []*mailboxmodel.Record, limit int) mailboxListPage {
+func mailboxPageFromRows(rows []*mailboxmodel.Record, limit int) mailboxmodel.ListPage {
 	rows = uniqueMailboxRows(rows)
 	sort.SliceStable(rows, func(i, j int) bool {
 		if rows[i].GetUpdatedAt() == rows[j].GetUpdatedAt() {
@@ -68,7 +60,7 @@ func mailboxPageFromRows(rows []*mailboxmodel.Record, limit int) mailboxListPage
 	page := pagex.NewKeysetPage(rows, limit, func(mailbox *mailboxmodel.Record) pagex.KeysetCursor {
 		return pagex.KeysetCursorValue(time.Unix(mailbox.GetUpdatedAt(), 0).UTC(), mailbox.GetEmailAddress())
 	})
-	return mailboxListPage{Mailboxes: page.Items, NextCursor: page.NextCursor}
+	return mailboxmodel.ListPage{Mailboxes: page.Items, NextCursor: page.NextCursor}
 }
 
 func uniqueMailboxRows(rows []*mailboxmodel.Record) []*mailboxmodel.Record {
@@ -138,7 +130,7 @@ func (s *MailboxStore) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*
 		n = 500
 	}
 	args := []any{}
-	query := mailboxSelectSQL() + " WHERE " + mailboxProviderAuthFilter("", authStatusAuthorized, &args)
+	query := mailboxSelectSQL() + " WHERE " + mailboxProviderAuthFilter("", mailboxmodel.AuthStatusAuthorized, &args)
 	args = append(args, n)
 	query += fmt.Sprintf(" ORDER BY m.updated_at DESC, m.email DESC LIMIT $%d", len(args))
 	rows, err := s.pool.Query(ctx, query, args...)

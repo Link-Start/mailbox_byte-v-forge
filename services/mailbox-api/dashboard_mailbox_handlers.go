@@ -8,6 +8,8 @@ import (
 
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/byte-v-forge/common-lib/httpx"
+
+	"mailboxapi/internal/mailboxmodel"
 )
 
 func (s *dashboardServer) handleMailboxes(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +21,7 @@ func (s *dashboardServer) handleMailboxes(w http.ResponseWriter, r *http.Request
 			authStatus = strings.TrimSpace(r.URL.Query().Get("status"))
 		}
 		resp, err := s.mailboxClient.ListMailboxes(r.Context(), &mailboxv1.ListEmailMailboxesRequest{
-			AuthStatus:   publicMailboxAuthStatus(authStatus),
+			AuthStatus:   mailboxmodel.PublicAuthStatus(authStatus),
 			ProviderKey:  strings.TrimSpace(r.URL.Query().Get("provider_key")),
 			EmailAddress: strings.TrimSpace(r.URL.Query().Get("email_address")),
 			Cursor:       strings.TrimSpace(r.URL.Query().Get("cursor")),

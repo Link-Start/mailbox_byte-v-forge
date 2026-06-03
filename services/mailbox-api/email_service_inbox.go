@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"mailboxapi/internal/mailboxapp"
 	"mailboxapi/internal/mailboxmodel"
 )
 
@@ -37,7 +38,7 @@ func (s *EmailService) ListInbox(ctx context.Context, request *mailboxv1.ListMai
 		resultMailbox = mailbox
 	}
 	return &mailboxv1.ListMailboxInboxResponse{Result: &mailboxv1.FetchMailboxInboxResult{
-		Mailbox:  publicMailbox(resultMailbox),
+		Mailbox:  mailboxapp.PublicMailbox(resultMailbox),
 		Messages: messages,
 	}}, nil
 }

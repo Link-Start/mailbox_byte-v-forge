@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"mailboxapi/internal/mailboxapp"
 	"mailboxapi/internal/mailboxmodel"
 )
 
@@ -75,7 +76,7 @@ func (s *EmailService) storedOnlyInboxResponse(ctx context.Context, email string
 		FetchedCount: int32(1),
 		MessageCount: int32(len(messages)),
 		Results: []*mailboxv1.FetchMailboxInboxResult{{
-			Mailbox:  publicMailbox(resultMailbox),
+			Mailbox:  mailboxapp.PublicMailbox(resultMailbox),
 			Messages: messages,
 		}},
 	}, true, nil
@@ -93,7 +94,7 @@ func (s *EmailService) fetchInboxTargets(ctx context.Context, request *mailboxv1
 		default:
 		}
 
-		result := &mailboxv1.FetchMailboxInboxResult{Mailbox: publicMailbox(target.resultMailbox)}
+		result := &mailboxv1.FetchMailboxInboxResult{Mailbox: mailboxapp.PublicMailbox(target.resultMailbox)}
 		messages, err := s.watcher.FetchMailboxInbox(ctx, target.fetchMailbox, request.GetLimitPerMailbox(), request.GetReceivedAfterUnix())
 		if err != nil {
 			result.ErrorMessage = safeMailboxError(err)

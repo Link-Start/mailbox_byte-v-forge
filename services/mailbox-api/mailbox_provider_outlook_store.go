@@ -17,9 +17,9 @@ import (
 func upsertOutlookMailboxData(ctx context.Context, tx pgx.Tx, mailbox *mailboxmodel.Record, now int64) error {
 	authStatus := strings.TrimSpace(mailbox.GetAuthStatus())
 	if authStatus == "" {
-		authStatus = authStatusOAuthPending
+		authStatus = mailboxmodel.AuthStatusOAuthPending
 		if strings.TrimSpace(mailbox.GetRefreshToken()) != "" {
-			authStatus = authStatusAuthorized
+			authStatus = mailboxmodel.AuthStatusAuthorized
 		}
 	}
 	_, err := tx.Exec(ctx, `
@@ -48,7 +48,7 @@ func validateOutlookPollableMailbox(row mailboxprovider.MailboxRecord) error {
 	if strings.TrimSpace(row.RefreshToken) == "" {
 		return fmt.Errorf("mailbox has no refresh token: %s", emailx.Redact(row.Email))
 	}
-	if row.AuthStatus != authStatusAuthorized {
+	if row.AuthStatus != mailboxmodel.AuthStatusAuthorized {
 		return fmt.Errorf("mailbox is not authorized: %s auth_status=%s", emailx.Redact(row.Email), row.AuthStatus)
 	}
 	return nil
@@ -68,6 +68,6 @@ func updateOutlookTokens(ctx context.Context, pool *pgxpool.Pool, email string, 
 		UPDATE mailbox_outlook_accounts
 		SET refresh_token = $1, access_token = $2, auth_status = $3, last_error = '', updated_at = $4
 		WHERE mailbox_email = $5
-	`, strings.TrimSpace(refreshToken), strings.TrimSpace(accessToken), authStatusAuthorized, time.Now().Unix(), emailx.Normalize(email))
+	`, strings.TrimSpace(refreshToken), strings.TrimSpace(accessToken), mailboxmodel.AuthStatusAuthorized, time.Now().Unix(), emailx.Normalize(email))
 	return err
 }

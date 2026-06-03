@@ -2,52 +2,6 @@ package main
 
 import mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 
-func publicMailboxAuthStatus(value string) mailboxv1.MailboxAuthStatus {
-	switch value {
-	case authStatusOAuthPending:
-		return mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_OAUTH_PENDING
-	case authStatusAuthorized:
-		return mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_AUTHORIZED
-	case authStatusAuthFailed:
-		return mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_AUTH_FAILED
-	case authStatusNeedsManualVerify:
-		return mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_NEEDS_MANUAL_VERIFICATION
-	case "PASSWORD_ONLY":
-		return mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_PASSWORD_ONLY
-	case "WEBHOOK_ONLY":
-		return mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_WEBHOOK_ONLY
-	case "DISABLED":
-		return mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_DISABLED
-	case "UNKNOWN":
-		return mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_UNKNOWN
-	default:
-		return mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_UNKNOWN
-	}
-}
-
-func mailboxAuthStatusValue(status mailboxv1.MailboxAuthStatus) string {
-	switch status {
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_OAUTH_PENDING:
-		return authStatusOAuthPending
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_AUTHORIZED:
-		return authStatusAuthorized
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_AUTH_FAILED:
-		return authStatusAuthFailed
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_NEEDS_MANUAL_VERIFICATION:
-		return authStatusNeedsManualVerify
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_PASSWORD_ONLY:
-		return "PASSWORD_ONLY"
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_WEBHOOK_ONLY:
-		return "WEBHOOK_ONLY"
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_DISABLED:
-		return "DISABLED"
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_UNKNOWN:
-		return "UNKNOWN"
-	default:
-		return ""
-	}
-}
-
 func publicOperationAction(value string) mailboxv1.MailboxOperationAction {
 	switch value {
 	case operationActionRegisterMailbox:
