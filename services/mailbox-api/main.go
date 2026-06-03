@@ -20,6 +20,7 @@ import (
 
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxapp"
+	"mailboxapi/internal/mailboxpg"
 	"mailboxapi/pb"
 )
 
@@ -47,12 +48,11 @@ func main() {
 
 	recentCache := newRecentEmailCache(recentEmailClient, cfg.recentEmailCachePrefix, cfg.recentEmailCacheTTL, cfg.recentEmailCacheMax)
 	secretStore := newMailboxSecretStore(recentEmailClient, cfg.recentEmailCachePrefix+":secrets", cfg.recentEmailCacheTTL)
-	mailboxStore, err := NewMailboxStore(ctx, cfg.pgDSN, defaultMailboxProviderRegistry())
+	mailboxRepo, err := mailboxpg.OpenRepository(ctx, cfg.pgDSN, defaultMailboxProviderRegistry(), mailboxPlatformEventOutboxTable)
 	if err != nil {
-		log.Fatalf("failed to initialize mailbox store: %s", safeMailboxError(err))
+		log.Fatalf("failed to initialize mailbox repository: %s", safeMailboxError(err))
 	}
-	defer mailboxStore.Close()
-	mailboxRepo := mailboxStore.mailboxes
+	defer mailboxRepo.Close()
 	inboxService := inboxapp.NewService(inboxapp.Config{
 		Repository:  mailboxRepo,
 		Providers:   defaultMailboxProviderRegistry(),
@@ -111,7 +111,9 @@ func main() {
 
 	errCh := make(chan error, 3)
 	group, groupCtx := errgroup.WithContext(ctx)
-	group.Go(func() error { return runMailboxPlatformEventOutboxWorker(groupCtx, mailboxStore, platformEmailEvents) })
+	group.Go(func() error {
+		return mailboxRepo.RunOutboxWorker(groupCtx, mailboxPlatformEventOutboxTable, platformEmailEvents, logWarning)
+	})
 	group.Go(func() error { return runMailboxEmailPollWorker(groupCtx, pollConsumer, emailBackend) })
 	group.Go(func() error { return runMailboxInboxFetchWorker(groupCtx, fetchConsumer, emailBackend, operations) })
 	group.Go(func() error {
