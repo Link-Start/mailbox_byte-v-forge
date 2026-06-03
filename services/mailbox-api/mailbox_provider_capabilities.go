@@ -5,7 +5,7 @@ import (
 	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxmodel"
 )
 
 func (c mailboxProviderRuntimeConfig) ListCapabilities(req *mailboxv1.ListMailboxProviderCapabilitiesRequest) *mailboxv1.ListMailboxProviderCapabilitiesResponse {
@@ -22,7 +22,7 @@ func (c mailboxProviderRuntimeConfig) ListCapabilities(req *mailboxv1.ListMailbo
 	return &mailboxv1.ListMailboxProviderCapabilitiesResponse{Providers: providers}
 }
 
-func (c mailboxProviderRuntimeConfig) StoredInboxOnlyMailbox(email string) (*pb.EmailMailbox, bool) {
+func (c mailboxProviderRuntimeConfig) StoredInboxOnlyMailbox(email string) (*mailboxmodel.Record, bool) {
 	email = emailx.Normalize(email)
 	if email == "" {
 		return nil, false
@@ -31,7 +31,7 @@ func (c mailboxProviderRuntimeConfig) StoredInboxOnlyMailbox(email string) (*pb.
 		if !provider.StoredInboxOnly() || !provider.MatchesAddress(email, c) {
 			continue
 		}
-		mailbox := &pb.EmailMailbox{
+		mailbox := &mailboxmodel.Record{
 			EmailAddress: email,
 			ProviderKey:  provider.Key(),
 			Domain:       domainForEmail(email),
@@ -59,10 +59,11 @@ func (c mailboxProviderRuntimeConfig) IsStoredInboxOnlyAddress(email string) boo
 	return ok
 }
 
-func newMailboxActivitiesForProviders(cfg mailboxProviderRuntimeConfig, browserClient browserautomationv1.BrowserAutomationServiceClient, emailBackend emailBackend, operations *operationStore, hot *mailboxHotStream) *mailboxActivities {
+func newMailboxActivitiesForProviders(cfg mailboxProviderRuntimeConfig, browserClient browserautomationv1.BrowserAutomationServiceClient, emailBackend emailBackend, mailboxStore *MailboxStore, operations *operationStore, hot *mailboxHotStream) *mailboxActivities {
 	return &mailboxActivities{
 		outlookRegistration: newOutlookRegistrationRunner(cfg.registration, browserClient, nil),
 		emailBackend:        emailBackend,
+		mailboxStore:        mailboxStore,
 		operations:          operations,
 		hot:                 hot,
 	}

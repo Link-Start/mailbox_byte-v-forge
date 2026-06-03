@@ -2,71 +2,7 @@ syntax = "proto3";
 
 package email;
 
-import "byte/v/forge/contracts/mailbox/v1/mailbox.proto";
-
 option go_package = "./;pb";
-
-message EmailMailbox {
-  string email_address = 1;
-  string password = 2;
-  string refresh_token = 3;
-  string access_token = 4;
-  reserved 5, 6;
-  reserved "status";
-  string last_error = 7;
-  reserved 8, 9;
-  reserved "is_primary", "primary_email";
-  int64 created_at = 10;
-  int64 updated_at = 11;
-  reserved 12, 13, 14, 16, 17;
-  reserved "latest_otp", "latest_otp_subject", "latest_otp_received_at_unix",
-    "latest_otp_provider", "latest_otp_source_mailbox_email";
-  string auth_status = 15;
-  string provider_key = 18;
-  byte.v.forge.contracts.mailbox.v1.EmailSignal latest_signal = 19;
-  string domain = 20;
-}
-
-message MarkEmailAuthStatusRequest {
-  string email_address = 1;
-  string auth_status = 2;
-  string last_error = 3;
-}
-
-message MarkEmailAuthStatusResponse {
-  EmailMailbox mailbox = 1;
-}
-
-message UpsertEmailMailboxRequest {
-  EmailMailbox mailbox = 1;
-}
-
-message UpsertEmailMailboxResponse {
-  EmailMailbox mailbox = 1;
-}
-
-message ListEmailMailboxesRequest {
-  reserved 1;
-  reserved "status";
-  int32 limit = 2;
-  string auth_status = 3;
-  string provider_key = 4;
-  string cursor = 5;
-  string email_address = 6;
-}
-
-message ListEmailMailboxesResponse {
-  repeated EmailMailbox mailboxes = 1;
-  string next_cursor = 2;
-}
-
-message DeleteMailboxRequest {
-  string email_address = 1;
-}
-
-message DeleteMailboxResponse {
-  bool deleted = 1;
-}
 
 message InboundEmailWebhook {
   int32 version = 1;

@@ -7,6 +7,7 @@ import (
 
 	"github.com/byte-v-forge/common-lib/emailx"
 
+	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/pb"
 )
 
@@ -79,7 +80,7 @@ func (a *mailboxActivities) persistRegisteredAccounts(ctx context.Context, accou
 		if password == "" {
 			return fmt.Errorf("mailbox account missing password: %s", emailx.Redact(email))
 		}
-		if err := a.upsertMailbox(ctx, &pb.EmailMailbox{
+		if err := a.upsertMailbox(ctx, &mailboxmodel.Record{
 			EmailAddress: email,
 			Password:     password,
 			RefreshToken: strings.TrimSpace(account.GetRefreshToken()),

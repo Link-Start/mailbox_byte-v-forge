@@ -1,13 +1,17 @@
-import type { EmailMailbox } from '../proto/email';
 import type {
+  EmailMailbox as Mailbox,
   EmailInboxMessage,
   EmailSignal,
   FetchMailboxInboxResult,
   FetchMailboxInboxesResponse,
+  DeleteMailboxResponse,
+  ListEmailMailboxesResponse,
   MailboxDomain,
   MailboxOperation,
   MailboxProviderActionCapability,
-  MailboxProviderCapabilities
+  MailboxProviderCapabilities,
+  UpsertEmailMailboxRequest,
+  UpsertEmailMailboxResponse
 } from '@byte-v-forge/common-ui';
 
 export type {
@@ -15,13 +19,17 @@ export type {
   EmailSignal,
   FetchMailboxInboxResult as InboxResult,
   FetchMailboxInboxesResponse as InboxResponse,
+  DeleteMailboxResponse,
+  ListEmailMailboxesResponse,
+  Mailbox,
   MailboxDomain,
   MailboxOperation,
-  MailboxProviderActionCapability
+  MailboxProviderActionCapability,
+  UpsertEmailMailboxRequest,
+  UpsertEmailMailboxResponse
 };
 
 export type MailboxProviderCapability = MailboxProviderCapabilities;
-export type Mailbox = EmailMailbox;
 
 export type LatestOtp = {
   captured: boolean;

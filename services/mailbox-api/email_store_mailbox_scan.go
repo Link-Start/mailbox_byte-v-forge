@@ -5,7 +5,7 @@ import (
 
 	"github.com/byte-v-forge/common-lib/emailx"
 
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxmodel"
 )
 
 func scanMailbox(scanner rowScanner) (*mailboxRow, error) {
@@ -28,11 +28,11 @@ func scanMailbox(scanner rowScanner) (*mailboxRow, error) {
 	return &row, nil
 }
 
-func (m *mailboxRow) toProto() *pb.EmailMailbox {
+func (m *mailboxRow) toRecord() *mailboxmodel.Record {
 	if m == nil {
 		return nil
 	}
-	mailbox := &pb.EmailMailbox{
+	mailbox := &mailboxmodel.Record{
 		EmailAddress: m.Email,
 		ProviderKey:  normalizeEmailProvider(m.Provider),
 		Password:     m.Password,

@@ -10,11 +10,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"
-	"mailboxapi/pb"
 )
 
-func upsertOutlookMailboxData(ctx context.Context, tx pgx.Tx, mailbox *pb.EmailMailbox, now int64) error {
+func upsertOutlookMailboxData(ctx context.Context, tx pgx.Tx, mailbox *mailboxmodel.Record, now int64) error {
 	authStatus := strings.TrimSpace(mailbox.GetAuthStatus())
 	if authStatus == "" {
 		authStatus = authStatusOAuthPending

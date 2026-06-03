@@ -13,8 +13,7 @@ import {
   useQueryClient
 } from '@byte-v-forge/common-ui';
 import { normalizeUiEmail } from './email-utils';
-import type { ListEmailMailboxesResponse } from '../proto/email';
-import type { Mailbox, MailboxOperation } from './types';
+import type { ListEmailMailboxesResponse, Mailbox, MailboxOperation } from './types';
 
 const mailboxQueryKeys = {
   mailboxes: ['mailbox', 'mailboxes'] as const,

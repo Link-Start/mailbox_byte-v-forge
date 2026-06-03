@@ -6,6 +6,7 @@ import (
 
 	"github.com/byte-v-forge/common-lib/emailx"
 
+	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/pb"
 )
 
@@ -30,7 +31,7 @@ func (a *mailboxActivities) persistOAuthResults(ctx context.Context, results []*
 			existingRefreshToken = strings.TrimSpace(account.GetRefreshToken())
 		}
 		if result.GetSuccess() && refreshToken != "" {
-			if err := a.upsertMailbox(ctx, &pb.EmailMailbox{
+			if err := a.upsertMailbox(ctx, &mailboxmodel.Record{
 				EmailAddress: email,
 				Password:     password,
 				RefreshToken: refreshToken,

@@ -8,6 +8,7 @@ import (
 	"github.com/byte-v-forge/common-lib/accountmodel"
 	"github.com/byte-v-forge/common-lib/emailx"
 
+	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/pb"
 )
 
@@ -22,15 +23,12 @@ func (a *mailboxActivities) oauthAccounts(ctx context.Context, emailAddress stri
 	accounts := make([]*pb.MailboxRegistrationAccount, 0, selectedLimit)
 	cursor := ""
 	for page := 0; len(accounts) < selectedLimit && page < oauthAccountScanMaxPages; page++ {
-		resp, err := a.emailBackend.ListMailboxes(ctx, &pb.ListEmailMailboxesRequest{Limit: int32(selectedLimit), Cursor: cursor})
+		resp, err := a.mailboxStore.ListMailboxes(ctx, "", "", "", cursor, int32(selectedLimit))
 		if err != nil {
 			return nil, fmt.Errorf("list mailboxes: %s", safeMailboxError(err))
 		}
-		if resp == nil {
-			return nil, fmt.Errorf("email service returned empty mailbox list")
-		}
-		accounts = appendOAuthAccounts(accounts, resp.GetMailboxes(), "", onlyMissing, selectedLimit)
-		cursor = strings.TrimSpace(resp.GetNextCursor())
+		accounts = appendOAuthAccounts(accounts, resp.Mailboxes, "", onlyMissing, selectedLimit)
+		cursor = strings.TrimSpace(resp.NextCursor)
 		if cursor == "" {
 			break
 		}
@@ -42,21 +40,18 @@ func (a *mailboxActivities) oauthAccounts(ctx context.Context, emailAddress stri
 }
 
 func (a *mailboxActivities) oauthAccountByEmail(ctx context.Context, requestedEmail string, onlyMissing bool) ([]*pb.MailboxRegistrationAccount, error) {
-	resp, err := a.emailBackend.ListMailboxes(ctx, &pb.ListEmailMailboxesRequest{Limit: 1, EmailAddress: requestedEmail})
+	resp, err := a.mailboxStore.ListMailboxes(ctx, "", "", requestedEmail, "", 1)
 	if err != nil {
 		return nil, fmt.Errorf("list mailbox: %s", safeMailboxError(err))
 	}
-	if resp == nil {
-		return nil, fmt.Errorf("email service returned empty mailbox list")
-	}
-	accounts := appendOAuthAccounts(nil, resp.GetMailboxes(), requestedEmail, onlyMissing, 1)
+	accounts := appendOAuthAccounts(nil, resp.Mailboxes, requestedEmail, onlyMissing, 1)
 	if len(accounts) == 0 {
 		return nil, fmt.Errorf("mailbox not found or not eligible for OAuth: %s", emailx.Redact(requestedEmail))
 	}
 	return accounts, nil
 }
 
-func appendOAuthAccounts(accounts []*pb.MailboxRegistrationAccount, mailboxes []*pb.EmailMailbox, requestedEmail string, onlyMissing bool, limit int) []*pb.MailboxRegistrationAccount {
+func appendOAuthAccounts(accounts []*pb.MailboxRegistrationAccount, mailboxes []*mailboxmodel.Record, requestedEmail string, onlyMissing bool, limit int) []*pb.MailboxRegistrationAccount {
 	for _, mailbox := range mailboxes {
 		email := emailx.Normalize(mailbox.GetEmailAddress())
 		if email == "" {

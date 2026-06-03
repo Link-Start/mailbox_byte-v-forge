@@ -8,11 +8,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"
-	"mailboxapi/pb"
 )
 
-func mailboxProviderUpsert(ctx context.Context, tx pgx.Tx, provider string, mailbox *pb.EmailMailbox, now int64) error {
+func mailboxProviderUpsert(ctx context.Context, tx pgx.Tx, provider string, mailbox *mailboxmodel.Record, now int64) error {
 	if definition := providerStorageByKey(provider); definition != nil {
 		return definition.Upsert(ctx, tx, mailbox, now)
 	}
@@ -77,8 +77,8 @@ func mailboxProviderPruneInbound(ctx context.Context, tx pgx.Tx, provider string
 	return nil
 }
 
-func listMailboxProviderVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, query mailboxprovider.ListQuery) ([]*pb.EmailMailbox, error) {
-	out := []*pb.EmailMailbox{}
+func listMailboxProviderVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, query mailboxprovider.ListQuery) ([]*mailboxmodel.Record, error) {
+	out := []*mailboxmodel.Record{}
 	for _, definition := range mailboxProviderVirtualSources() {
 		if query.Provider != "" && query.Provider != definition.Key() {
 			continue
@@ -98,7 +98,7 @@ func listMailboxProviderVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool
 	return out, nil
 }
 
-func prepareMailboxProjection(mailbox *pb.EmailMailbox) {
+func prepareMailboxProjection(mailbox *mailboxmodel.Record) {
 	if mailbox == nil {
 		return
 	}

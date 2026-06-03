@@ -8,8 +8,6 @@ import (
 
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/byte-v-forge/common-lib/httpx"
-
-	"mailboxapi/pb"
 )
 
 func (s *dashboardServer) handleMailboxes(w http.ResponseWriter, r *http.Request) {
@@ -20,8 +18,8 @@ func (s *dashboardServer) handleMailboxes(w http.ResponseWriter, r *http.Request
 		if authStatus == "" {
 			authStatus = strings.TrimSpace(r.URL.Query().Get("status"))
 		}
-		resp, err := s.mailboxClient.ListMailboxes(r.Context(), &pb.ListEmailMailboxesRequest{
-			AuthStatus:   authStatus,
+		resp, err := s.mailboxClient.ListMailboxes(r.Context(), &mailboxv1.ListEmailMailboxesRequest{
+			AuthStatus:   publicMailboxAuthStatus(authStatus),
 			ProviderKey:  strings.TrimSpace(r.URL.Query().Get("provider_key")),
 			EmailAddress: strings.TrimSpace(r.URL.Query().Get("email_address")),
 			Cursor:       strings.TrimSpace(r.URL.Query().Get("cursor")),
@@ -33,7 +31,7 @@ func (s *dashboardServer) handleMailboxes(w http.ResponseWriter, r *http.Request
 		}
 		writeProtoJSON(w, http.StatusOK, resp)
 	case http.MethodPost:
-		var req pb.UpsertEmailMailboxRequest
+		var req mailboxv1.UpsertEmailMailboxRequest
 		if err := readProtoJSON(r, &req); err != nil {
 			writeError(w, http.StatusBadRequest, err)
 			return
@@ -79,7 +77,7 @@ func (s *dashboardServer) handleMailbox(w http.ResponseWriter, r *http.Request) 
 	}
 	switch r.Method {
 	case http.MethodDelete:
-		resp, err := s.mailboxClient.DeleteMailbox(r.Context(), &pb.DeleteMailboxRequest{EmailAddress: strings.TrimSpace(email)})
+		resp, err := s.mailboxClient.DeleteMailbox(r.Context(), &mailboxv1.DeleteMailboxRequest{EmailAddress: strings.TrimSpace(email)})
 		if err != nil {
 			writeError(w, http.StatusBadGateway, err)
 			return

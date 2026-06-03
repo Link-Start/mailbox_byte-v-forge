@@ -15,16 +15,15 @@ export function domainForEmail(email: string) {
 }
 
 export function tokenText(mailbox: Mailbox) {
-  if (mailbox.refresh_token && authStatus(mailbox) === 'AUTHORIZED') return 'Refresh 可用';
-  if (mailbox.refresh_token) return 'Refresh 待验证';
-  if (mailbox.access_token) return '仅 Access';
+  if (mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN) && authStatus(mailbox) === 'AUTHORIZED') return 'Refresh 可用';
+  if (mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN)) return 'Refresh 待验证';
+  if (mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN)) return '仅 Access';
   return '缺 Token';
 }
 
 export function authStatus(mailbox: Mailbox) {
   const value = normalizeAuthStatus(String(mailbox.auth_status || '').trim());
   if (value) return value;
-  if (mailbox.refresh_token) return 'AUTHORIZED';
   return 'OAUTH_PENDING';
 }
 
@@ -113,21 +112,15 @@ export function providerDisplayName(capability: MailboxProviderCapability | unde
 }
 
 function requiredCredentialsPresent(mailbox: Mailbox, credentials: MailboxCredentialKind[]) {
-  return credentials.every((credential) => credentialPresent(mailbox, credential));
+  return credentials.every((credential) => mailboxCredentialPresent(mailbox, credential));
 }
 
-function credentialPresent(mailbox: Mailbox, credential: MailboxCredentialKind) {
+export function mailboxCredentialPresent(mailbox: Mailbox, credential: MailboxCredentialKind) {
   switch (credential) {
     case MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_UNSPECIFIED:
       return true;
-    case MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD:
-      return !!String(mailbox.password || '').trim();
-    case MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN:
-      return !!String(mailbox.refresh_token || '').trim();
-    case MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN:
-      return !!String(mailbox.access_token || '').trim();
     default:
-      return false;
+      return (mailbox.credential_state?.present_credentials || []).includes(credential);
   }
 }
 

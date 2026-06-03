@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxmodel"
 )
 
 type Identity interface {
@@ -23,7 +23,7 @@ type CapabilityPlugin interface {
 	LoadDomains() []string
 	Domains([]string) []*mailboxv1.MailboxDomain
 	MatchesAddress(string, RuntimeContext) bool
-	PrepareProjection(*pb.EmailMailbox)
+	PrepareProjection(*mailboxmodel.Record)
 }
 
 type StorageExtension interface {
@@ -31,7 +31,7 @@ type StorageExtension interface {
 	SchemaStatements() []string
 	SelectJoin() string
 	SelectFields() SelectFields
-	Upsert(context.Context, pgx.Tx, *pb.EmailMailbox, int64) error
+	Upsert(context.Context, pgx.Tx, *mailboxmodel.Record, int64) error
 	AuthFilter(string, *[]any) (string, bool)
 	CanValidatePoll() bool
 	ValidatePoll(MailboxRecord) error
@@ -50,7 +50,7 @@ type InboxRetentionPolicy interface {
 type VirtualMailboxSource interface {
 	Identity
 	HasVirtualMailboxes() bool
-	VirtualMailboxes(context.Context, *pgxpool.Pool, ListQuery) ([]*pb.EmailMailbox, error)
+	VirtualMailboxes(context.Context, *pgxpool.Pool, ListQuery) ([]*mailboxmodel.Record, error)
 	IncludeVirtual(string) bool
 }
 
@@ -81,7 +81,7 @@ type Definition struct {
 	PruneInboundFunc      PruneInboundFunc
 	VirtualMailboxesFunc  VirtualMailboxesFunc
 	IncludeVirtualFunc    func(string) bool
-	PrepareProjectionFunc func(*pb.EmailMailbox)
+	PrepareProjectionFunc func(*mailboxmodel.Record)
 	PrepareLegacyDataFunc func() []string
 }
 
@@ -143,7 +143,7 @@ func (p definitionPlugin) MatchesAddress(email string, cfg RuntimeContext) bool 
 	return p.definition.MatchesAddressFunc != nil && p.definition.MatchesAddressFunc(email, cfg)
 }
 
-func (p definitionPlugin) Upsert(ctx context.Context, tx pgx.Tx, mailbox *pb.EmailMailbox, now int64) error {
+func (p definitionPlugin) Upsert(ctx context.Context, tx pgx.Tx, mailbox *mailboxmodel.Record, now int64) error {
 	if p.definition.UpsertFunc == nil {
 		return nil
 	}
@@ -184,7 +184,7 @@ func (p definitionPlugin) PruneInbound(ctx context.Context, tx pgx.Tx, retention
 
 func (p definitionPlugin) HasVirtualMailboxes() bool { return p.definition.VirtualMailboxesFunc != nil }
 
-func (p definitionPlugin) VirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, query ListQuery) ([]*pb.EmailMailbox, error) {
+func (p definitionPlugin) VirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, query ListQuery) ([]*mailboxmodel.Record, error) {
 	return p.definition.VirtualMailboxesFunc(ctx, pool, query)
 }
 
@@ -192,7 +192,7 @@ func (p definitionPlugin) IncludeVirtual(authStatus string) bool {
 	return p.definition.IncludeVirtualFunc == nil || p.definition.IncludeVirtualFunc(authStatus)
 }
 
-func (p definitionPlugin) PrepareProjection(mailbox *pb.EmailMailbox) {
+func (p definitionPlugin) PrepareProjection(mailbox *mailboxmodel.Record) {
 	if p.definition.PrepareProjectionFunc != nil {
 		p.definition.PrepareProjectionFunc(mailbox)
 	}

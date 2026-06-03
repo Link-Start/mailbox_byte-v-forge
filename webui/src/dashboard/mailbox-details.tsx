@@ -5,18 +5,16 @@ import {
   Card,
   ContentTabs,
   KVList,
+  MailboxCredentialKind,
   StatusBadge
 } from '@byte-v-forge/common-ui';
 import type { ActionButtonDescriptor, KVDescriptor } from '@byte-v-forge/common-ui';
-import {
-  mask,
-} from '@byte-v-forge/common-ui';
 import { maskEmail } from './email-utils';
 import { mailboxStatusText } from './labels';
 import { MailboxInboxSection } from './mailbox-inbox';
 import { MailboxOtpPanel } from './otp-panel';
 import { latestOtpForInboxResult } from './mailbox-signal-utils';
-import { authStatus, providerShowsCredentialState, tokenText } from './mailbox-utils';
+import { authStatus, mailboxCredentialPresent, providerShowsCredentialState, tokenText } from './mailbox-utils';
 import type { InboxResult, LatestOtp, Mailbox, MailboxProviderCapability } from './types';
 
 export function MailboxDetails({ mailbox, providerCapability, showSecrets, inboxResult, inboxLoading, canFetchInbox, onCopy, onFetchInbox, onDelete }: {
@@ -83,11 +81,8 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   if (showCredentialState) fields.push({
     id: 'password',
     label: '密码',
-    value: showSecrets ? mailbox.password : mask(mailbox.password),
-    copyValue: mailbox.password,
-    copyDisabled: !mailbox.password,
-    masked: !showSecrets,
-    mono: true,
+    value: credentialPresenceText(mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD)),
+    copyDisabled: true,
   }, {
     id: 'oauth',
     label: 'OAuth',
@@ -99,19 +94,13 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   }, {
     id: 'refresh-token',
     label: 'Refresh',
-    value: showSecrets ? mailbox.refresh_token : mask(mailbox.refresh_token),
-    copyValue: mailbox.refresh_token,
-    copyDisabled: !mailbox.refresh_token,
-    masked: !showSecrets,
-    mono: true,
+    value: credentialPresenceText(mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN)),
+    copyDisabled: true,
   }, {
     id: 'access-token',
     label: 'Access',
-    value: showSecrets ? mailbox.access_token : mask(mailbox.access_token),
-    copyValue: mailbox.access_token,
-    copyDisabled: !mailbox.access_token,
-    masked: !showSecrets,
-    mono: true,
+    value: credentialPresenceText(mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN)),
+    copyDisabled: true,
   });
   fields.push({
     id: 'latest-otp',
@@ -147,4 +136,8 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
       <ActionButtonGroup actions={actions} />
     </section>
   );
+}
+
+function credentialPresenceText(present?: boolean) {
+  return present ? '已保存' : '-';
 }

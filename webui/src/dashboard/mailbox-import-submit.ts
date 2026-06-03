@@ -1,22 +1,16 @@
-import { api, errorText, MailboxCredentialKind } from '@byte-v-forge/common-ui';
+import { api, errorText, MailboxAuthStatus, MailboxCredentialKind } from '@byte-v-forge/common-ui';
 import { parseMailboxBatch, type MailboxProviderTab } from './mailbox-utils';
-import type { UpsertEmailMailboxRequest, UpsertEmailMailboxResponse } from '../proto/email';
 import type { MailboxBatchImportFormState, MailboxImportFormState, MailboxImportPayloadInput } from './mailbox-import-types';
+import type { UpsertEmailMailboxRequest, UpsertEmailMailboxResponse } from './types';
 
 export function mailboxImportPayload({ provider, credentialKinds, email, password, values = {} }: MailboxImportPayloadInput): UpsertEmailMailboxRequest {
   return {
     mailbox: {
       email_address: email,
-      password: importCredentialValue(credentialKinds, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD, password),
-      refresh_token: importCredentialValue(credentialKinds, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN, values.refresh_token),
-      access_token: importCredentialValue(credentialKinds, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN, values.access_token),
       provider_key: provider,
-      auth_status: '',
+      credentials: importCredentials(credentialKinds, { password, refresh_token: values.refresh_token, access_token: values.access_token }),
+      auth_status: MailboxAuthStatus.MAILBOX_AUTH_STATUS_UNSPECIFIED,
       last_error: '',
-      created_at: 0,
-      updated_at: 0,
-      latest_signal: undefined,
-      domain: ''
     }
   };
 }
@@ -48,8 +42,19 @@ export async function importMailboxBatch(provider: MailboxProviderTab, credentia
   return `批量入池成功 ${success}${failures.length ? `，失败 ${failures.length}` : ''}`;
 }
 
-function importCredentialValue(kinds: MailboxCredentialKind[], kind: MailboxCredentialKind, value?: string) {
-  return kinds.includes(kind) ? String(value || '') : '';
+function importCredentials(kinds: MailboxCredentialKind[], values: { password?: string; refresh_token?: string; access_token?: string }) {
+  return [{
+    kind: MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD,
+    value: values.password,
+  }, {
+    kind: MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN,
+    value: values.refresh_token,
+  }, {
+    kind: MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN,
+    value: values.access_token,
+  }]
+    .filter((item) => kinds.includes(item.kind) && String(item.value || '').trim())
+    .map((item) => ({ kind: item.kind, value: String(item.value || '').trim() }));
 }
 
 function upsertMailbox(body: UpsertEmailMailboxRequest) {

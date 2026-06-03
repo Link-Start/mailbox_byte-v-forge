@@ -20,11 +20,11 @@ type server struct {
 }
 
 type emailBackend interface {
-	ListMailboxes(context.Context, *pb.ListEmailMailboxesRequest) (*pb.ListEmailMailboxesResponse, error)
-	UpsertMailbox(context.Context, *pb.UpsertEmailMailboxRequest) (*pb.UpsertEmailMailboxResponse, error)
-	DeleteMailbox(context.Context, *pb.DeleteMailboxRequest) (*pb.DeleteMailboxResponse, error)
+	ListMailboxes(context.Context, *mailboxv1.ListEmailMailboxesRequest) (*mailboxv1.ListEmailMailboxesResponse, error)
+	UpsertMailbox(context.Context, *mailboxv1.UpsertEmailMailboxRequest) (*mailboxv1.UpsertEmailMailboxResponse, error)
+	DeleteMailbox(context.Context, *mailboxv1.DeleteMailboxRequest) (*mailboxv1.DeleteMailboxResponse, error)
 	WaitForEmail(context.Context, *mailboxv1.WaitForMailboxEmailRequest) (*mailboxv1.WaitForMailboxEmailResponse, error)
 	ListInbox(context.Context, *mailboxv1.ListMailboxInboxRequest) (*mailboxv1.ListMailboxInboxResponse, error)
 	FetchInboxes(context.Context, *mailboxv1.FetchMailboxInboxesRequest) (*mailboxv1.FetchMailboxInboxesResponse, error)
-	MarkEmailAuthStatus(context.Context, *pb.MarkEmailAuthStatusRequest) (*pb.MarkEmailAuthStatusResponse, error)
+	MarkEmailAuthStatus(context.Context, *mailboxv1.MarkEmailAuthStatusRequest) (*mailboxv1.MarkEmailAuthStatusResponse, error)
 }

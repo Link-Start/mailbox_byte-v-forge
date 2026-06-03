@@ -18,8 +18,7 @@ import {
 } from '@byte-v-forge/common-ui';
 import { maskEmail, normalizeUiEmail } from './email-utils';
 import type { MailboxData } from './mailbox-data';
-import type { DeleteMailboxResponse } from '../proto/email';
-import type { InboxResponse, InboxResult, Mailbox } from './types';
+import type { DeleteMailboxResponse, InboxResponse, InboxResult, Mailbox } from './types';
 
 export const mailboxInboxQueryKey = (email: string) => ['mailbox', 'inbox', normalizeUiEmail(email)] as const;
 

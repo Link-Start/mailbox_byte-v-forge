@@ -8,11 +8,9 @@ import (
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"mailboxapi/pb"
 )
 
-func (s *server) ListMailboxes(ctx context.Context, req *pb.ListEmailMailboxesRequest) (*pb.ListEmailMailboxesResponse, error) {
+func (s *server) ListMailboxes(ctx context.Context, req *mailboxv1.ListEmailMailboxesRequest) (*mailboxv1.ListEmailMailboxesResponse, error) {
 	resp, err := s.emailBackend.ListMailboxes(ctx, req)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "list mailboxes: %s", safeMailboxError(err))
@@ -23,7 +21,7 @@ func (s *server) ListMailboxes(ctx context.Context, req *pb.ListEmailMailboxesRe
 	return resp, nil
 }
 
-func (s *server) UpsertMailbox(ctx context.Context, req *pb.UpsertEmailMailboxRequest) (*pb.UpsertEmailMailboxResponse, error) {
+func (s *server) UpsertMailbox(ctx context.Context, req *mailboxv1.UpsertEmailMailboxRequest) (*mailboxv1.UpsertEmailMailboxResponse, error) {
 	mailbox := req.GetMailbox()
 	if mailbox == nil || emailx.Normalize(mailbox.GetEmailAddress()) == "" {
 		return nil, status.Error(codes.InvalidArgument, "mailbox email_address is required")
@@ -56,12 +54,12 @@ func (s *server) ListMailboxProviderCapabilities(ctx context.Context, req *mailb
 	return s.providers.ListCapabilities(req), nil
 }
 
-func (s *server) DeleteMailbox(ctx context.Context, req *pb.DeleteMailboxRequest) (*pb.DeleteMailboxResponse, error) {
+func (s *server) DeleteMailbox(ctx context.Context, req *mailboxv1.DeleteMailboxRequest) (*mailboxv1.DeleteMailboxResponse, error) {
 	email := emailx.Normalize(req.GetEmailAddress())
 	if email == "" {
 		return nil, status.Error(codes.InvalidArgument, "email_address is required")
 	}
-	resp, err := s.emailBackend.DeleteMailbox(ctx, &pb.DeleteMailboxRequest{EmailAddress: email})
+	resp, err := s.emailBackend.DeleteMailbox(ctx, &mailboxv1.DeleteMailboxRequest{EmailAddress: email})
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "delete mailbox: %s", safeMailboxError(err))
 	}

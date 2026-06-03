@@ -12,14 +12,14 @@ import (
 	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/byte-v-forge/common-lib/pagex"
 
+	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"
-	"mailboxapi/pb"
 )
 
 var errInvalidMailboxListCursor = errors.New("invalid mailbox cursor")
 
 type mailboxListPage struct {
-	Mailboxes  []*pb.EmailMailbox
+	Mailboxes  []*mailboxmodel.Record
 	NextCursor string
 }
 
@@ -57,7 +57,7 @@ func newMailboxListQuery(authStatus string, provider string, emailAddress string
 	}, nil
 }
 
-func mailboxPageFromRows(rows []*pb.EmailMailbox, limit int) mailboxListPage {
+func mailboxPageFromRows(rows []*mailboxmodel.Record, limit int) mailboxListPage {
 	rows = uniqueMailboxRows(rows)
 	sort.SliceStable(rows, func(i, j int) bool {
 		if rows[i].GetUpdatedAt() == rows[j].GetUpdatedAt() {
@@ -65,15 +65,15 @@ func mailboxPageFromRows(rows []*pb.EmailMailbox, limit int) mailboxListPage {
 		}
 		return rows[i].GetUpdatedAt() > rows[j].GetUpdatedAt()
 	})
-	page := pagex.NewKeysetPage(rows, limit, func(mailbox *pb.EmailMailbox) pagex.KeysetCursor {
+	page := pagex.NewKeysetPage(rows, limit, func(mailbox *mailboxmodel.Record) pagex.KeysetCursor {
 		return pagex.KeysetCursorValue(time.Unix(mailbox.GetUpdatedAt(), 0).UTC(), mailbox.GetEmailAddress())
 	})
 	return mailboxListPage{Mailboxes: page.Items, NextCursor: page.NextCursor}
 }
 
-func uniqueMailboxRows(rows []*pb.EmailMailbox) []*pb.EmailMailbox {
+func uniqueMailboxRows(rows []*mailboxmodel.Record) []*mailboxmodel.Record {
 	seen := map[string]struct{}{}
-	out := make([]*pb.EmailMailbox, 0, len(rows))
+	out := make([]*mailboxmodel.Record, 0, len(rows))
 	for _, row := range rows {
 		email := emailx.Normalize(row.GetEmailAddress())
 		if email == "" {
@@ -88,7 +88,7 @@ func uniqueMailboxRows(rows []*pb.EmailMailbox) []*pb.EmailMailbox {
 	return out
 }
 
-func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxprovider.ListQuery) ([]*pb.EmailMailbox, error) {
+func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxprovider.ListQuery) ([]*mailboxmodel.Record, error) {
 	args := []any{}
 	query := mailboxSelectSQL() + ` WHERE 1=1`
 	if filter.AuthStatus != "" {
@@ -115,13 +115,13 @@ func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxpr
 	}
 	defer rows.Close()
 
-	out := []*pb.EmailMailbox{}
+	out := []*mailboxmodel.Record{}
 	for rows.Next() {
 		row, err := scanMailbox(rows)
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, row.toProto())
+		out = append(out, row.toRecord())
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxpr
 	return out, nil
 }
 
-func (s *MailboxStore) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*pb.EmailMailbox, error) {
+func (s *MailboxStore) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*mailboxmodel.Record, error) {
 	n := int(limit)
 	if n <= 0 {
 		n = 100
@@ -147,7 +147,7 @@ func (s *MailboxStore) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*
 	}
 	defer rows.Close()
 
-	out := []*pb.EmailMailbox{}
+	out := []*mailboxmodel.Record{}
 	for rows.Next() {
 		row, err := scanMailbox(rows)
 		if err != nil {
@@ -156,7 +156,7 @@ func (s *MailboxStore) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*
 		if mailboxProviderValidatePoll(row) != nil {
 			continue
 		}
-		out = append(out, row.toProto())
+		out = append(out, row.toRecord())
 	}
 	return out, rows.Err()
 }

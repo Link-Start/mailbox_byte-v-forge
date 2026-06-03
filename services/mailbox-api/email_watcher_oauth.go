@@ -7,10 +7,10 @@ import (
 
 	"github.com/byte-v-forge/common-lib/emailx"
 
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxmodel"
 )
 
-func (w *MailWatcher) fetchMailboxMessages(ctx context.Context, mailbox *pb.EmailMailbox, limit int, receivedAfterNs int64) ([]graphMessage, error) {
+func (w *MailWatcher) fetchMailboxMessages(ctx context.Context, mailbox *mailboxmodel.Record, limit int, receivedAfterNs int64) ([]graphMessage, error) {
 	manager := w.oauthManagerForMailbox(mailbox)
 	accessToken, err := manager.GetAccessToken(ctx)
 	if err != nil {
@@ -47,7 +47,7 @@ func (w *MailWatcher) fetchMailboxMessages(ctx context.Context, mailbox *pb.Emai
 	return messages, nil
 }
 
-func (w *MailWatcher) oauthManagerForMailbox(mailbox *pb.EmailMailbox) *OAuthManager {
+func (w *MailWatcher) oauthManagerForMailbox(mailbox *mailboxmodel.Record) *OAuthManager {
 	key := emailx.Normalize(mailbox.GetEmailAddress())
 	refreshToken := strings.TrimSpace(mailbox.GetRefreshToken())
 	w.mu.Lock()
@@ -60,7 +60,7 @@ func (w *MailWatcher) oauthManagerForMailbox(mailbox *pb.EmailMailbox) *OAuthMan
 	return entry.manager
 }
 
-func (w *MailWatcher) persistTokens(ctx context.Context, mailbox *pb.EmailMailbox, manager *OAuthManager) error {
+func (w *MailWatcher) persistTokens(ctx context.Context, mailbox *mailboxmodel.Record, manager *OAuthManager) error {
 	refreshToken, accessToken := manager.CurrentTokens()
 	if refreshToken != mailbox.GetRefreshToken() || accessToken != mailbox.GetAccessToken() {
 		return w.store.UpdateMailboxTokens(ctx, mailbox.GetEmailAddress(), refreshToken, accessToken)

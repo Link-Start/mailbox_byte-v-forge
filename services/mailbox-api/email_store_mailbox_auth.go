@@ -10,10 +10,10 @@ import (
 	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/jackc/pgx/v5"
 
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxmodel"
 )
 
-func (s *MailboxStore) MarkEmailAuthStatus(ctx context.Context, email string, authStatus string, lastError string) (*pb.EmailMailbox, error) {
+func (s *MailboxStore) MarkEmailAuthStatus(ctx context.Context, email string, authStatus string, lastError string) (*mailboxmodel.Record, error) {
 	email = emailx.Normalize(email)
 	authStatus = strings.TrimSpace(authStatus)
 	if email == "" {
@@ -49,7 +49,7 @@ func (s *MailboxStore) MarkEmailAuthStatus(ctx context.Context, email string, au
 	return s.FindMailbox(ctx, email)
 }
 
-func (s *MailboxStore) FindMailbox(ctx context.Context, email string) (*pb.EmailMailbox, error) {
+func (s *MailboxStore) FindMailbox(ctx context.Context, email string) (*mailboxmodel.Record, error) {
 	row, err := scanMailbox(s.pool.QueryRow(ctx, mailboxSelectSQL()+" WHERE m.email = $1", emailx.Normalize(email)))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("mailbox not found: %s", emailx.Redact(email))
@@ -57,11 +57,11 @@ func (s *MailboxStore) FindMailbox(ctx context.Context, email string) (*pb.Email
 	if err != nil {
 		return nil, err
 	}
-	mailbox := row.toProto()
+	mailbox := row.toRecord()
 	return mailbox, nil
 }
 
-func (s *MailboxStore) PollMailboxForEmail(ctx context.Context, email string) (*pb.EmailMailbox, error) {
+func (s *MailboxStore) PollMailboxForEmail(ctx context.Context, email string) (*mailboxmodel.Record, error) {
 	email = emailx.Normalize(email)
 	row, err := scanMailbox(s.pool.QueryRow(ctx, mailboxSelectSQL()+" WHERE m.email = $1", email))
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -80,7 +80,7 @@ func (s *MailboxStore) PollMailboxForEmail(ctx context.Context, email string) (*
 	if err := mailboxProviderValidatePoll(row); err != nil {
 		return nil, err
 	}
-	return row.toProto(), nil
+	return row.toRecord(), nil
 }
 
 func (s *MailboxStore) UpdateMailboxTokens(ctx context.Context, email string, refreshToken string, accessToken string) error {

@@ -9,10 +9,10 @@ import (
 	"github.com/byte-v-forge/common-lib/randx"
 	"github.com/jackc/pgx/v5"
 
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxmodel"
 )
 
-func (s *MailboxStore) UpsertMailbox(ctx context.Context, mailbox *pb.EmailMailbox) (*pb.EmailMailbox, error) {
+func (s *MailboxStore) UpsertMailbox(ctx context.Context, mailbox *mailboxmodel.Record) (*mailboxmodel.Record, error) {
 	if mailbox == nil {
 		return nil, errors.New("mailbox is required")
 	}

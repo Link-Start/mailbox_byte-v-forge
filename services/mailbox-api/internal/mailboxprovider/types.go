@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxmodel"
 )
 
 type RuntimeContext interface {
@@ -50,10 +50,10 @@ func (q ListQuery) HasCursor() bool {
 	return pagex.HasKeysetCursor(q.Cursor)
 }
 
-type UpsertFunc func(context.Context, pgx.Tx, *pb.EmailMailbox, int64) error
+type UpsertFunc func(context.Context, pgx.Tx, *mailboxmodel.Record, int64) error
 type AuthFilterFunc func(string, *[]any) string
 type ValidatePollFunc func(MailboxRecord) error
 type UpdateAuthFunc func(context.Context, pgx.Tx, string, string, string, int64) error
 type UpdateTokensFunc func(context.Context, *pgxpool.Pool, string, string, string) error
 type PruneInboundFunc func(context.Context, pgx.Tx, InboxRetention) error
-type VirtualMailboxesFunc func(context.Context, *pgxpool.Pool, ListQuery) ([]*pb.EmailMailbox, error)
+type VirtualMailboxesFunc func(context.Context, *pgxpool.Pool, ListQuery) ([]*mailboxmodel.Record, error)

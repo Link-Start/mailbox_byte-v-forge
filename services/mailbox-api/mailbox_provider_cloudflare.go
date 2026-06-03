@@ -11,8 +11,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"
-	"mailboxapi/pb"
 )
 
 func cloudflareMailboxProvider() mailboxprovider.Plugin {
@@ -72,7 +72,7 @@ func cloudflareMailboxProvider() mailboxprovider.Plugin {
 			return authStatus == ""
 		},
 		VirtualMailboxesFunc: listCloudflareVirtualMailboxes,
-		PrepareProjectionFunc: func(mailbox *pb.EmailMailbox) {
+		PrepareProjectionFunc: func(mailbox *mailboxmodel.Record) {
 			mailbox.AuthStatus = ""
 			mailbox.Password = ""
 			mailbox.RefreshToken = ""
@@ -82,7 +82,7 @@ func cloudflareMailboxProvider() mailboxprovider.Plugin {
 	})
 }
 
-func listCloudflareVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, filter mailboxprovider.ListQuery) ([]*pb.EmailMailbox, error) {
+func listCloudflareVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, filter mailboxprovider.ListQuery) ([]*mailboxmodel.Record, error) {
 	args := []any{emailProviderCloudflare}
 	where := ""
 	if filter.EmailAddress != "" {
@@ -115,13 +115,13 @@ func listCloudflareVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, fil
 	}
 	defer rows.Close()
 
-	out := []*pb.EmailMailbox{}
+	out := []*mailboxmodel.Record{}
 	for rows.Next() {
 		row, err := scanMailbox(rows)
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, row.toProto())
+		out = append(out, row.toRecord())
 	}
 	return out, rows.Err()
 }

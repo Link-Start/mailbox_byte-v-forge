@@ -10,7 +10,7 @@ import (
 	"github.com/byte-v-forge/common-lib/envx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxmodel"
 )
 
 type oauthEntry struct {
@@ -100,7 +100,7 @@ func (w *MailWatcher) PollForEmail(ctx context.Context, email string) error {
 	return nil
 }
 
-func (w *MailWatcher) FetchMailboxInbox(ctx context.Context, mailbox *pb.EmailMailbox, limit int32, receivedAfterUnix int64) ([]*mailboxv1.EmailInboxMessage, error) {
+func (w *MailWatcher) FetchMailboxInbox(ctx context.Context, mailbox *mailboxmodel.Record, limit int32, receivedAfterUnix int64) ([]*mailboxv1.EmailInboxMessage, error) {
 	watermark, err := w.store.InboxWatermark(ctx, mailbox.GetEmailAddress())
 	if err != nil {
 		return nil, err

@@ -2,15 +2,14 @@ syntax = "proto3";
 
 package mailbox;
 
-import "email.proto";
 import "byte/v/forge/contracts/mailbox/v1/mailbox.proto";
 
 option go_package = "./;pb";
 
 service MailboxService {
-  rpc ListMailboxes(email.ListEmailMailboxesRequest) returns (email.ListEmailMailboxesResponse);
-  rpc UpsertMailbox(email.UpsertEmailMailboxRequest) returns (email.UpsertEmailMailboxResponse);
-  rpc DeleteMailbox(email.DeleteMailboxRequest) returns (email.DeleteMailboxResponse);
+  rpc ListMailboxes(byte.v.forge.contracts.mailbox.v1.ListEmailMailboxesRequest) returns (byte.v.forge.contracts.mailbox.v1.ListEmailMailboxesResponse);
+  rpc UpsertMailbox(byte.v.forge.contracts.mailbox.v1.UpsertEmailMailboxRequest) returns (byte.v.forge.contracts.mailbox.v1.UpsertEmailMailboxResponse);
+  rpc DeleteMailbox(byte.v.forge.contracts.mailbox.v1.DeleteMailboxRequest) returns (byte.v.forge.contracts.mailbox.v1.DeleteMailboxResponse);
   rpc WaitForMailboxEmail(byte.v.forge.contracts.mailbox.v1.WaitForMailboxEmailRequest) returns (byte.v.forge.contracts.mailbox.v1.WaitForMailboxEmailResponse);
   rpc ListMailboxDomains(byte.v.forge.contracts.mailbox.v1.ListMailboxDomainsRequest) returns (byte.v.forge.contracts.mailbox.v1.ListMailboxDomainsResponse);
   rpc SyncMailboxDomains(byte.v.forge.contracts.mailbox.v1.SyncMailboxDomainsRequest) returns (byte.v.forge.contracts.mailbox.v1.SyncMailboxDomainsResponse);

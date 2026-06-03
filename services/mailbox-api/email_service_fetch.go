@@ -8,12 +8,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxmodel"
 )
 
 type inboxFetchTarget struct {
-	fetchMailbox  *pb.EmailMailbox
-	resultMailbox *pb.EmailMailbox
+	fetchMailbox  *mailboxmodel.Record
+	resultMailbox *mailboxmodel.Record
 }
 
 func (s *EmailService) FetchInboxes(ctx context.Context, request *mailboxv1.FetchMailboxInboxesRequest) (*mailboxv1.FetchMailboxInboxesResponse, error) {

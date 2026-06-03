@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxmodel"
 )
 
 func (s *EmailService) ListInbox(ctx context.Context, request *mailboxv1.ListMailboxInboxRequest) (*mailboxv1.ListMailboxInboxResponse, error) {
@@ -27,7 +27,7 @@ func (s *EmailService) ListInbox(ctx context.Context, request *mailboxv1.ListMai
 	if err != nil {
 		return nil, status.Error(codes.Internal, safeMailboxError(err))
 	}
-	resultMailbox := &pb.EmailMailbox{
+	resultMailbox := &mailboxmodel.Record{
 		EmailAddress: email,
 		ProviderKey:  s.providers.ProviderForInboxAddress(email, messages),
 		Domain:       domainForEmail(email),
