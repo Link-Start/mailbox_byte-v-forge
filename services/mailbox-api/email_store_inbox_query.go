@@ -5,35 +5,11 @@ import (
 
 	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
+
+	"mailboxapi/internal/mailboxpg"
 )
 
-const inboxMessageSelectSQL = `
-	SELECT message_id, mailbox_email, subject, from_address, body_preview,
-		received_at, recipients_json, provider, source_mailbox_email, body_text,
-		html_body, raw_size
-	FROM mailbox_inbox_messages
-`
-
-func scanInboxMessageRow(scanner rowScanner) (inboxMessageRow, error) {
-	var row inboxMessageRow
-	err := scanner.Scan(
-		&row.ID,
-		&row.MailboxEmail,
-		&row.Subject,
-		&row.FromAddress,
-		&row.BodyPreview,
-		&row.ReceivedAtUnix,
-		&row.RecipientsJSON,
-		&row.Provider,
-		&row.SourceEmail,
-		&row.BodyText,
-		&row.HTMLBody,
-		&row.RawSize,
-	)
-	return row, err
-}
-
-func inboxMessageToProtoLenient(row inboxMessageRow) *mailboxv1.EmailInboxMessage {
+func inboxMessageToProtoLenient(row mailboxpg.InboxMessageRow) *mailboxv1.EmailInboxMessage {
 	recipients := []string{}
 	if err := json.Unmarshal([]byte(row.RecipientsJSON), &recipients); err != nil {
 		recipients = []string{}

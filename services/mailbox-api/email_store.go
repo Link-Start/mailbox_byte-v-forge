@@ -15,48 +15,7 @@ import (
 	"mailboxapi/internal/mailboxprovider"
 )
 
-type inboxMessageRow struct {
-	ID             string
-	MailboxEmail   string
-	Subject        string
-	FromAddress    string
-	BodyPreview    string
-	ReceivedAtUnix int64
-	RecipientsJSON string
-	Provider       string
-	SourceEmail    string
-	BodyText       string
-	HTMLBody       string
-	RawSize        int64
-}
-
-type inboxPersistMessage struct {
-	key            string
-	id             string
-	mailboxEmail   string
-	subject        string
-	fromAddress    string
-	bodyPreview    string
-	receivedAtUnix int64
-	recipients     []string
-	provider       string
-	sourceEmail    string
-	bodyText       string
-	htmlBody       string
-	rawSize        int64
-}
-
-type inboxMessageKey struct {
-	provider     string
-	mailboxEmail string
-	messageKey   string
-}
-
-func (row inboxMessageRow) toProto() (*mailboxv1.EmailInboxMessage, error) {
-	return row.toProtoForProfile("")
-}
-
-func (row inboxMessageRow) toProtoForProfile(profile string) (*mailboxv1.EmailInboxMessage, error) {
+func inboxMessageRowToProtoForProfile(row mailboxpg.InboxMessageRow, profile string) (*mailboxv1.EmailInboxMessage, error) {
 	recipients := []string{}
 	if strings.TrimSpace(row.RecipientsJSON) != "" {
 		if err := json.Unmarshal([]byte(row.RecipientsJSON), &recipients); err != nil {
@@ -104,10 +63,6 @@ func mailboxArtifactContentType(purpose string) string {
 	return "text/plain"
 }
 
-type rowScanner interface {
-	Scan(dest ...any) error
-}
-
 type MailboxStore struct {
 	pool      *pgxpool.Pool
 	providers *mailboxprovider.Registry
@@ -133,7 +88,7 @@ func NewMailboxStore(ctx context.Context, dsn string, providers *mailboxprovider
 		return nil, err
 	}
 	store := &MailboxStore{pool: pool, providers: providers, mailboxes: mailboxes, recent: recent, secrets: secrets}
-	if err := store.ensureSchema(ctx); err != nil {
+	if err := mailboxes.EnsureSchema(ctx, mailboxPlatformEventOutboxTable); err != nil {
 		pool.Close()
 		return nil, err
 	}

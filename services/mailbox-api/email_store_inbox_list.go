@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
@@ -19,34 +18,18 @@ func (s *MailboxStore) ListInboxMessagesSince(ctx context.Context, email string,
 		return nil, errors.New("email_address is required")
 	}
 	n := messageLimitValue(limit, defaultMessageLimit)
-	args := []any{email}
-	query := inboxMessageSelectSQL + "WHERE mailbox_email = $1"
-	if receivedAfterUnix > 0 {
-		args = append(args, receivedAfterUnix)
-		query += fmt.Sprintf(" AND received_at > $%d", len(args))
-	}
-	args = append(args, n)
-	query += fmt.Sprintf(`
-		ORDER BY received_at DESC, updated_at DESC, message_key DESC
-		LIMIT $%d
-	`, len(args))
-	rows, err := s.pool.Query(ctx, query, args...)
+	rows, err := s.mailboxes.ListInboxRows(ctx, email, n, receivedAfterUnix)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	out := []*mailboxv1.EmailInboxMessage{}
-	for rows.Next() {
-		row, err := scanInboxMessageRow(rows)
-		if err != nil {
-			return nil, err
-		}
+	for _, row := range rows {
 		message := inboxMessageToProtoLenient(row)
 		if err := s.attachEmailSignalSecrets(ctx, message); err != nil {
 			logWarning("list mailbox email signal secret refresh failed email=%s: %v", emailx.Redact(email), err)
 		}
 		out = append(out, message)
 	}
-	return out, rows.Err()
+	return out, nil
 }

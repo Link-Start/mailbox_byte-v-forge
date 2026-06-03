@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/byte-v-forge/common-lib/emailx"
@@ -61,31 +59,13 @@ func (s *MailboxStore) latestMessageForMailbox(ctx context.Context, email string
 	if email == "" {
 		return nil, false, nil
 	}
-	args := []any{email}
-	query := inboxMessageSelectSQL + "WHERE mailbox_email = $1"
-	if issuedAfterUnix > 0 {
-		args = append(args, issuedAfterUnix)
-		query += fmt.Sprintf(" AND received_at >= $%d", len(args))
-	}
-	if keyword := strings.TrimSpace(subjectKeyword); keyword != "" {
-		args = append(args, "%"+keyword+"%")
-		query += fmt.Sprintf(" AND (subject ILIKE $%d OR body_preview ILIKE $%d OR body_text ILIKE $%d)", len(args), len(args), len(args))
-	}
-	args = append(args, 50)
-	query += fmt.Sprintf(" ORDER BY received_at DESC, updated_at DESC, message_key DESC LIMIT $%d", len(args))
-
-	rows, err := s.pool.Query(ctx, query, args...)
+	rows, err := s.mailboxes.LatestInboxRows(ctx, email, subjectKeyword, issuedAfterUnix, 50)
 	if err != nil {
 		return nil, false, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		row, err := scanInboxMessageRow(rows)
-		if err != nil {
-			return nil, false, err
-		}
-		msg, err := row.toProtoForProfile(parserProfile)
+	for _, row := range rows {
+		msg, err := inboxMessageRowToProtoForProfile(row, parserProfile)
 		if err != nil {
 			return nil, false, err
 		}
@@ -96,5 +76,5 @@ func (s *MailboxStore) latestMessageForMailbox(ctx context.Context, email string
 			return msg, true, nil
 		}
 	}
-	return nil, false, rows.Err()
+	return nil, false, nil
 }

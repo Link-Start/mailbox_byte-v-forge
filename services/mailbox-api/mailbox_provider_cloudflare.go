@@ -63,7 +63,7 @@ func cloudflareMailboxProvider() mailboxprovider.Plugin {
 		},
 		PruneInboundFunc: func(ctx context.Context, tx pgx.Tx, retention mailboxprovider.InboxRetention) error {
 			for domain := range retention.TouchedDomains {
-				if err := pruneDomainMessages(ctx, tx, emailProviderCloudflare, domain, envx.Int("MAILBOX_CLOUDFLARE_MAX_MESSAGES_PER_DOMAIN", defaultCloudflareMaxDomain)); err != nil {
+				if err := mailboxpg.PruneDomainMessages(ctx, tx, emailProviderCloudflare, domain, envx.Int("MAILBOX_CLOUDFLARE_MAX_MESSAGES_PER_DOMAIN", defaultCloudflareMaxDomain)); err != nil {
 					return err
 				}
 			}

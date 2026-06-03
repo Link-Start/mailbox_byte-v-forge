@@ -3,44 +3,26 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
+	"github.com/byte-v-forge/common-lib/hashx"
 	"github.com/byte-v-forge/common-lib/stringx"
 	"github.com/jackc/pgx/v5"
 
+	"mailboxapi/internal/mailboxpg"
 	"mailboxapi/internal/mailboxprovider"
 	"mailboxapi/pb"
 )
 
 func (s *MailboxStore) InboxWatermark(ctx context.Context, email string) (int64, error) {
-	email = emailx.Normalize(email)
-	if email == "" {
-		return 0, errors.New("email_address is required")
-	}
-	var watermark int64
-	err := s.pool.QueryRow(ctx, "SELECT last_inbox_received_at_ns FROM mailboxes WHERE email = $1", email).Scan(&watermark)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return 0, fmt.Errorf("mailbox not found: %s", emailx.Redact(email))
-	}
-	return watermark, err
+	return s.mailboxes.InboxWatermark(ctx, email)
 }
 
 func (s *MailboxStore) HasInboxMessages(ctx context.Context, email string) (bool, error) {
-	email = emailx.Normalize(email)
-	if email == "" {
-		return false, errors.New("email_address is required")
-	}
-	var exists bool
-	err := s.pool.QueryRow(ctx, `
-		SELECT EXISTS (
-			SELECT 1 FROM mailbox_inbox_messages WHERE mailbox_email = $1
-		)
-	`, email).Scan(&exists)
-	return exists, err
+	return s.mailboxes.HasInboxMessages(ctx, email)
 }
 
 func (s *MailboxStore) RecordInboundEmail(ctx context.Context, event *pb.InboundEmailWebhook) ([]*mailboxv1.EmailInboxMessage, error) {
@@ -122,7 +104,7 @@ func (s *MailboxStore) recordInboxMessages(ctx context.Context, provider string,
 				return nil, err
 			}
 			trackInboxWatermark(watermarks, mailboxEmail, persisted.GetReceivedAtUnix())
-			inserted, err := markInboxMessageSeen(ctx, tx, provider, mailboxEmail, key, now)
+			inserted, err := mailboxpg.MarkInboxMessageSeen(ctx, tx, provider, mailboxEmail, key, now)
 			if err != nil {
 				return nil, err
 			}
@@ -135,7 +117,7 @@ func (s *MailboxStore) recordInboxMessages(ctx context.Context, provider string,
 			}
 		}
 	}
-	if err := updateInboxWatermarks(ctx, tx, watermarks, now); err != nil {
+	if err := mailboxpg.UpdateInboxWatermarks(ctx, tx, watermarks, now); err != nil {
 		return nil, err
 	}
 	if err := s.providers.PruneInbound(ctx, tx, provider, mailboxprovider.InboxRetention{
@@ -187,36 +169,24 @@ func persistInboxMessage(ctx context.Context, tx pgx.Tx, provider string, mailbo
 		RawSize:            message.GetRawSize(),
 	}
 	bodyText := strings.TrimSpace(message.GetBodyPreview())
-	if err := insertInboxMessage(ctx, tx, inboxPersistMessage{
-		key:            key,
-		id:             messageID,
-		mailboxEmail:   mailboxEmail,
-		subject:        persisted.GetSubject(),
-		fromAddress:    persisted.GetFromAddress(),
-		bodyPreview:    persisted.GetBodyPreview(),
-		receivedAtUnix: receivedAt,
-		recipients:     persisted.GetRecipients(),
-		provider:       provider,
-		sourceEmail:    sourceEmail,
-		bodyText:       bodyText,
-		htmlBody:       "",
-		rawSize:        persisted.GetRawSize(),
+	if err := mailboxpg.InsertInboxMessage(ctx, tx, mailboxpg.PersistInboxMessage{
+		Key:            key,
+		ID:             messageID,
+		MailboxEmail:   mailboxEmail,
+		Subject:        persisted.GetSubject(),
+		FromAddress:    persisted.GetFromAddress(),
+		BodyPreview:    persisted.GetBodyPreview(),
+		ReceivedAtUnix: receivedAt,
+		Recipients:     persisted.GetRecipients(),
+		Provider:       provider,
+		SourceEmail:    sourceEmail,
+		BodyText:       bodyText,
+		HTMLBody:       "",
+		RawSize:        persisted.GetRawSize(),
 	}, now); err != nil {
 		return nil, "", err
 	}
 	return persisted, key, nil
-}
-
-func markInboxMessageSeen(ctx context.Context, tx pgx.Tx, provider string, mailboxEmail string, key string, now int64) (bool, error) {
-	tag, err := tx.Exec(ctx, `
-		INSERT INTO mailbox_inbox_seen (provider, mailbox_email, message_key, seen_at)
-		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (provider, mailbox_email, message_key) DO NOTHING
-	`, provider, mailboxEmail, key, now)
-	if err != nil {
-		return false, err
-	}
-	return tag.RowsAffected() > 0, nil
 }
 
 func trackInboxWatermark(watermarks map[string]int64, mailboxEmail string, receivedAtUnix int64) {
@@ -229,18 +199,16 @@ func trackInboxWatermark(watermarks map[string]int64, mailboxEmail string, recei
 	}
 }
 
-func updateInboxWatermarks(ctx context.Context, tx pgx.Tx, watermarks map[string]int64, now int64) error {
-	for mailboxEmail, watermark := range watermarks {
-		if watermark <= 0 {
-			continue
-		}
-		if _, err := tx.Exec(ctx, `
-			UPDATE mailboxes
-			SET last_inbox_received_at_ns = GREATEST(last_inbox_received_at_ns, $1), updated_at = $2
-			WHERE email = $3
-		`, watermark, now, mailboxEmail); err != nil {
-			return err
+func messageMailboxEmails(accountEmail string, recipients []string) []string {
+	items := []string{emailx.Normalize(accountEmail)}
+	for _, recipient := range recipients {
+		if email := emailx.Normalize(recipient); email != "" {
+			items = append(items, email)
 		}
 	}
-	return nil
+	return uniqueStrings(items)
+}
+
+func stableMessageKey(provider string, mailboxEmail string, value string) string {
+	return hashx.StableParts(normalizeEmailProvider(provider), emailx.Normalize(mailboxEmail), strings.TrimSpace(value))
 }
