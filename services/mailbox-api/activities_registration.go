@@ -17,7 +17,7 @@ func (a *mailboxActivities) runMailboxRegistration(ctx context.Context, input ma
 		return mailboxOperationResult{OperationID: operationID, ErrorMessage: safeMailboxError(err)}, err
 	}
 
-	resp, err := a.outlookRegistration.RunMailboxRegistration(ctx, &pb.RunMailboxRegistrationRequest{
+	resp, err := a.providerActions.RunRegistration(ctx, "", &pb.RunMailboxRegistrationRequest{
 		Enabled:    !input.ImportOnly,
 		ImportOnly: input.ImportOnly,
 	})

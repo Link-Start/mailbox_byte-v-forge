@@ -37,7 +37,7 @@ func (a *mailboxActivities) RunMailboxOAuthAccount(ctx context.Context, req *pb.
 			ErrorMessage: "mailbox OAuth account is required",
 		}}, nil
 	}
-	resp, err := a.outlookRegistration.RunMailboxOAuth(ctx, &pb.RunMailboxOAuthRequest{
+	resp, err := a.providerActions.RunOAuth(ctx, "", &pb.RunMailboxOAuthRequest{
 		EmailAddress: emailx.Normalize(account.GetEmailAddress()),
 		OnlyMissing:  false,
 		Limit:        1,

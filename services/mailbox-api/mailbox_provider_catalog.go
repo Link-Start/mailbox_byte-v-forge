@@ -7,9 +7,8 @@ import (
 )
 
 type mailboxProviderRuntimeConfig struct {
-	registry     *mailboxprovider.Registry
-	domainStore  *mailboxProviderDomainStore
-	registration outlookRegistrationConfig
+	registry    *mailboxprovider.Registry
+	domainStore *mailboxProviderDomainStore
 }
 
 type mailboxProviderDomainStore struct {
@@ -17,31 +16,17 @@ type mailboxProviderDomainStore struct {
 	byProvider map[string][]string
 }
 
-var (
-	defaultMailboxProvidersOnce  sync.Once
-	defaultMailboxProvidersValue *mailboxprovider.Registry
-	defaultMailboxProvidersErr   error
-)
-
-func defaultMailboxProviderRegistry() *mailboxprovider.Registry {
-	defaultMailboxProvidersOnce.Do(func() {
-		defaultMailboxProvidersValue, defaultMailboxProvidersErr = mailboxprovider.NewRegistry(
-			outlookMailboxProvider(),
-			cloudflareMailboxProvider(),
-		)
-	})
-	if defaultMailboxProvidersErr != nil {
-		panic(defaultMailboxProvidersErr)
-	}
-	return defaultMailboxProvidersValue
-}
-
 func loadMailboxProviderRuntimeConfig() mailboxProviderRuntimeConfig {
-	registry := defaultMailboxProviderRegistry()
+	registry, err := mailboxprovider.NewRegistry(
+		outlookMailboxProvider(),
+		cloudflareMailboxProvider(),
+	)
+	if err != nil {
+		panic(err)
+	}
 	cfg := mailboxProviderRuntimeConfig{
-		registry:     registry,
-		domainStore:  &mailboxProviderDomainStore{byProvider: map[string][]string{}},
-		registration: loadOutlookRegistrationConfig(),
+		registry:    registry,
+		domainStore: &mailboxProviderDomainStore{byProvider: map[string][]string{}},
 	}
 	for _, provider := range cfg.capabilityPlugins() {
 		cfg.domainStore.set(provider.Key(), provider.LoadDomains())
@@ -84,60 +69,4 @@ func (c mailboxProviderRuntimeConfig) capabilityPlugins() []mailboxprovider.Capa
 		return nil
 	}
 	return c.registry.CapabilityPlugins()
-}
-
-func defaultMailboxProvider() string {
-	return defaultMailboxProviderRegistry().DefaultKey()
-}
-
-func normalizeMailboxProviderInput(provider string) string {
-	value := mailboxprovider.NormalizeKey(provider)
-	if value == "" {
-		return ""
-	}
-	if definition := defaultMailboxProviderRegistry().ByKey(value); definition != nil {
-		return definition.Key()
-	}
-	return value
-}
-
-func normalizeMailboxProviderKey(provider string) string {
-	return mailboxprovider.NormalizeKey(provider)
-}
-
-func providerByKey(provider string) mailboxprovider.Plugin {
-	return defaultMailboxProviderRegistry().ByKey(provider)
-}
-
-func capabilityProviderByKey(provider string) mailboxprovider.CapabilityPlugin {
-	if plugin := providerByKey(provider); plugin != nil {
-		return plugin
-	}
-	return nil
-}
-
-func providerStorageByKey(provider string) mailboxprovider.StorageExtension {
-	if plugin := providerByKey(provider); plugin != nil {
-		return plugin
-	}
-	return nil
-}
-
-func providerRetentionByKey(provider string) mailboxprovider.InboxRetentionPolicy {
-	if plugin := providerByKey(provider); plugin != nil {
-		return plugin
-	}
-	return nil
-}
-
-func mailboxProviderCapabilityPlugins() []mailboxprovider.CapabilityPlugin {
-	return defaultMailboxProviderRegistry().CapabilityPlugins()
-}
-
-func mailboxProviderStorageExtensions() []mailboxprovider.StorageExtension {
-	return defaultMailboxProviderRegistry().StorageExtensions()
-}
-
-func mailboxProviderVirtualSources() []mailboxprovider.VirtualMailboxSource {
-	return defaultMailboxProviderRegistry().VirtualMailboxSources()
 }

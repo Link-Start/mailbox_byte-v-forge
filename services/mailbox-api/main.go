@@ -48,14 +48,14 @@ func main() {
 
 	recentCache := newRecentEmailCache(recentEmailClient, cfg.recentEmailCachePrefix, cfg.recentEmailCacheTTL, cfg.recentEmailCacheMax)
 	secretStore := newMailboxSecretStore(recentEmailClient, cfg.recentEmailCachePrefix+":secrets", cfg.recentEmailCacheTTL)
-	mailboxRepo, err := mailboxpg.OpenRepository(ctx, cfg.pgDSN, defaultMailboxProviderRegistry(), mailboxPlatformEventOutboxTable)
+	mailboxRepo, err := mailboxpg.OpenRepository(ctx, cfg.pgDSN, cfg.providers.registry, mailboxPlatformEventOutboxTable)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox repository: %s", safeMailboxError(err))
 	}
 	defer mailboxRepo.Close()
 	inboxService := inboxapp.NewService(inboxapp.Config{
 		Repository:  mailboxRepo,
-		Providers:   defaultMailboxProviderRegistry(),
+		Providers:   cfg.providers.registry,
 		Recent:      recentCache,
 		Secrets:     secretStore,
 		SecretTTL:   cfg.recentEmailCacheTTL,
@@ -97,7 +97,7 @@ func main() {
 		log.Fatalf("failed to initialize mailbox inbox fetch worker: %s", safeMailboxError(err))
 	}
 
-	activities := newMailboxActivitiesForProviders(cfg.providers, browserautomationv1.NewBrowserAutomationServiceClient(browserConn), emailBackend, mailboxRepo, operations, hotEvents)
+	activities := newMailboxActivitiesForProviders(cfg.providers, cfg.outlookRegistration, browserautomationv1.NewBrowserAutomationServiceClient(browserConn), emailBackend, mailboxRepo, operations, hotEvents)
 
 	registrationConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxRegistrationRequested, 2, 5*time.Minute)
 	if err != nil {

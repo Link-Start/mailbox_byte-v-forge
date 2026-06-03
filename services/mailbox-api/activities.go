@@ -10,9 +10,9 @@ const (
 )
 
 type mailboxActivities struct {
-	outlookRegistration *outlookRegistrationRunner
-	emailBackend        emailBackend
-	mailboxRepo         *mailboxpg.Repository
-	operations          *operationStore
-	hot                 *mailboxHotStream
+	providerActions *mailboxProviderActionRegistry
+	emailBackend    emailBackend
+	mailboxRepo     *mailboxpg.Repository
+	operations      *operationStore
+	hot             *mailboxHotStream
 }

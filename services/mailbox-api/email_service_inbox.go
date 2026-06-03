@@ -33,7 +33,7 @@ func (s *EmailService) ListInbox(ctx context.Context, request *mailboxv1.ListMai
 		ProviderKey:  s.providers.ProviderForInboxAddress(email, messages),
 		Domain:       domainForEmail(email),
 	}
-	prepareMailboxProjection(resultMailbox)
+	s.providers.prepareProjection(resultMailbox)
 	if mailbox, err := s.mailboxRepo.FindMailbox(ctx, email); err == nil {
 		resultMailbox = mailbox
 	}

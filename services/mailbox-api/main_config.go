@@ -26,6 +26,7 @@ type config struct {
 	inboxLockTTL           time.Duration
 	inboxLockRetry         time.Duration
 	providers              mailboxProviderRuntimeConfig
+	outlookRegistration    outlookRegistrationConfig
 }
 
 func loadConfig() config {
@@ -47,6 +48,7 @@ func loadConfig() config {
 		inboxLockTTL:           envx.PositiveDurationSeconds("MAILBOX_INBOX_LOCK_TTL_SECONDS", 10*time.Minute),
 		inboxLockRetry:         envx.PositiveDurationSeconds("MAILBOX_INBOX_LOCK_RETRY_SECONDS", time.Second),
 		providers:              loadMailboxProviderRuntimeConfig(),
+		outlookRegistration:    loadOutlookRegistrationConfig(),
 	}
 }
 

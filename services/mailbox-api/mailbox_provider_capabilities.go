@@ -37,7 +37,7 @@ func (c mailboxProviderRuntimeConfig) StoredInboxOnlyMailbox(email string) (*mai
 			ProviderKey:  provider.Key(),
 			Domain:       domainForEmail(email),
 		}
-		prepareMailboxProjection(mailbox)
+		c.prepareProjection(mailbox)
 		return mailbox, true
 	}
 	return nil, false
@@ -45,7 +45,7 @@ func (c mailboxProviderRuntimeConfig) StoredInboxOnlyMailbox(email string) (*mai
 
 func (c mailboxProviderRuntimeConfig) ProviderForInboxAddress(email string, messages []*mailboxv1.EmailInboxMessage) string {
 	for _, message := range messages {
-		if provider := normalizeEmailProvider(message.GetProviderKey()); provider != "" {
+		if provider := c.normalizeProviderInput(message.GetProviderKey()); provider != "" {
 			return provider
 		}
 	}
@@ -60,12 +60,16 @@ func (c mailboxProviderRuntimeConfig) IsStoredInboxOnlyAddress(email string) boo
 	return ok
 }
 
-func newMailboxActivitiesForProviders(cfg mailboxProviderRuntimeConfig, browserClient browserautomationv1.BrowserAutomationServiceClient, emailBackend emailBackend, mailboxRepo *mailboxpg.Repository, operations *operationStore, hot *mailboxHotStream) *mailboxActivities {
+func newMailboxActivitiesForProviders(cfg mailboxProviderRuntimeConfig, registrationCfg outlookRegistrationConfig, browserClient browserautomationv1.BrowserAutomationServiceClient, emailBackend emailBackend, mailboxRepo *mailboxpg.Repository, operations *operationStore, hot *mailboxHotStream) *mailboxActivities {
+	providerActions := newMailboxProviderActionRegistry(cfg.defaultProvider())
+	outlookRegistration := newOutlookRegistrationRunner(registrationCfg, browserClient, nil)
+	providerActions.RegisterRegistration(emailProviderOutlook, outlookRegistration)
+	providerActions.RegisterOAuth(emailProviderOutlook, outlookRegistration)
 	return &mailboxActivities{
-		outlookRegistration: newOutlookRegistrationRunner(cfg.registration, browserClient, nil),
-		emailBackend:        emailBackend,
-		mailboxRepo:         mailboxRepo,
-		operations:          operations,
-		hot:                 hot,
+		providerActions: providerActions,
+		emailBackend:    emailBackend,
+		mailboxRepo:     mailboxRepo,
+		operations:      operations,
+		hot:             hot,
 	}
 }
