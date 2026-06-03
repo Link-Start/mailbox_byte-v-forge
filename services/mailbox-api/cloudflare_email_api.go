@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/envx"
 	"github.com/byte-v-forge/common-lib/stringx"
 	cloudflare "github.com/cloudflare/cloudflare-go/v7"
 	"github.com/cloudflare/cloudflare-go/v7/dns"
@@ -17,11 +16,11 @@ import (
 	"mailboxapi/pb"
 )
 
-func fetchCloudflareEmailDomains(ctx context.Context, httpClient *http.Client, token string, cfg *pb.CloudflareEmailConfig) ([]string, error) {
+func fetchCloudflareEmailDomains(ctx context.Context, httpClient *http.Client, token string, baseURL string, cfg *pb.CloudflareEmailConfig) ([]string, error) {
 	if cfg == nil {
 		cfg = &pb.CloudflareEmailConfig{}
 	}
-	api := newCloudflareEmailAPI(httpClient, token, strings.TrimRight(envx.StringDefault("MAILBOX_CLOUDFLARE_API_BASE_URL", cfg.GetApiBaseUrl()), "/"))
+	api := newCloudflareEmailAPI(httpClient, token, strings.TrimRight(stringx.FirstNonEmpty(baseURL, cfg.GetApiBaseUrl()), "/"))
 	out := []string{}
 	seen := map[string]struct{}{}
 	zones, err := api.cloudflareEmailZones(ctx, cfg.GetZones())

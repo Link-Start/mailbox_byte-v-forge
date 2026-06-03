@@ -120,7 +120,7 @@ func main() {
 		return runMailboxRegistrationWorker(groupCtx, registrationConsumer, operations, activities)
 	})
 	group.Go(func() error { return runMailboxOAuthWorker(groupCtx, oauthConsumer, operations, activities) })
-	startWebhookServer(groupCtx, cfg.webhookHTTPAddr, inboxService, mailWatcher, inboxLock, errCh)
+	startWebhookServer(groupCtx, cfg.webhookHTTPAddr, cfg.webhook, inboxService, mailWatcher, inboxLock, errCh)
 
 	listener, err := net.Listen("tcp", cfg.listenAddr)
 	if err != nil {

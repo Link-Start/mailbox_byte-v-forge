@@ -1,15 +1,21 @@
 package main
 
-import "mailboxapi/internal/mailboxprovider"
+import (
+	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 
-func outlookMailboxProvider() mailboxprovider.Plugin {
+	"mailboxapi/internal/mailboxprovider"
+)
+
+func outlookMailboxProvider(maxMessages int) mailboxprovider.Plugin {
 	return mailboxprovider.NewDefinitionPlugin(mailboxprovider.Definition{
 		ProviderKey:          emailProviderOutlook,
 		AliasKeys:            []string{"microsoft", "graph"},
 		DisplayNameValue:     "Outlook",
 		SchemaStatementsFunc: outlookSchemaStatements,
-		CapabilitiesFunc:     outlookProviderCapabilities,
-		ValidatePollFunc:     validateOutlookPollableMailbox,
+		CapabilitiesFunc: func() *mailboxv1.MailboxProviderCapabilities {
+			return outlookProviderCapabilities(maxMessages)
+		},
+		ValidatePollFunc: validateOutlookPollableMailbox,
 		TokenFieldsValue: mailboxprovider.TokenFields{
 			Table:              "mailbox_outlook_accounts",
 			EmailColumn:        "mailbox_email",

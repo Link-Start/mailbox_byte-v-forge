@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/byte-v-forge/common-lib/envx"
@@ -14,19 +15,35 @@ import (
 
 const defaultCloudflareAPIBaseURL = "https://api.cloudflare.com/client/v4"
 
-func loadCloudflareEmailDomains() []string {
-	cfg := loadCloudflareEmailConfig()
-	token := envx.String("MAILBOX_CLOUDFLARE_API_TOKEN")
-	if token == "" {
+type cloudflareProviderConfig struct {
+	apiToken             string
+	apiBaseURL           string
+	apiTimeout           time.Duration
+	emailConfigFile      string
+	maxMessagesPerDomain int
+}
+
+func loadCloudflareProviderConfig() cloudflareProviderConfig {
+	return cloudflareProviderConfig{
+		apiToken:             envx.String("MAILBOX_CLOUDFLARE_API_TOKEN"),
+		apiBaseURL:           envx.StringDefault("MAILBOX_CLOUDFLARE_API_BASE_URL", ""),
+		apiTimeout:           positiveSeconds("MAILBOX_CLOUDFLARE_API_TIMEOUT_SECONDS", defaultHTTPTimeoutSeconds),
+		emailConfigFile:      envx.String("MAILBOX_CLOUDFLARE_EMAIL_CONFIG_FILE"),
+		maxMessagesPerDomain: envx.Int("MAILBOX_CLOUDFLARE_MAX_MESSAGES_PER_DOMAIN", defaultCloudflareMaxDomain),
+	}
+}
+
+func (c cloudflareProviderConfig) loadEmailDomains() []string {
+	cfg := loadCloudflareEmailConfig(c.emailConfigFile)
+	if c.apiToken == "" {
 		if cfg != nil && len(cfg.GetZones()) > 0 {
 			logWarning("MAILBOX_CLOUDFLARE_API_TOKEN is required to load Cloudflare email domains")
 		}
 		return nil
 	}
-	timeout := time.Duration(envx.Int("MAILBOX_CLOUDFLARE_API_TIMEOUT_SECONDS", defaultHTTPTimeoutSeconds)) * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), c.apiTimeout)
 	defer cancel()
-	domains, err := fetchCloudflareEmailDomains(ctx, &http.Client{Timeout: timeout}, token, cfg)
+	domains, err := fetchCloudflareEmailDomains(ctx, &http.Client{Timeout: c.apiTimeout}, c.apiToken, c.apiBaseURL, cfg)
 	if err != nil {
 		logWarning("fetch Cloudflare email config: %v", err)
 		return nil
@@ -39,8 +56,8 @@ func loadCloudflareEmailDomains() []string {
 	return domains
 }
 
-func loadCloudflareEmailConfig() *pb.CloudflareEmailConfig {
-	path := envx.String("MAILBOX_CLOUDFLARE_EMAIL_CONFIG_FILE")
+func loadCloudflareEmailConfig(path string) *pb.CloudflareEmailConfig {
+	path = strings.TrimSpace(path)
 	if path == "" {
 		return nil
 	}

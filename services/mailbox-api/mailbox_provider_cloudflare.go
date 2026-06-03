@@ -3,14 +3,13 @@ package main
 import (
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/envx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 
 	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"
 )
 
-func cloudflareMailboxProvider() mailboxprovider.Plugin {
+func cloudflareMailboxProvider(config cloudflareProviderConfig) mailboxprovider.Plugin {
 	return mailboxprovider.NewDefinitionPlugin(mailboxprovider.Definition{
 		ProviderKey:          emailProviderCloudflare,
 		AliasKeys:            []string{"cf", "cloudflare-email-relay"},
@@ -27,11 +26,11 @@ func cloudflareMailboxProvider() mailboxprovider.Plugin {
 				},
 				RetentionPolicy: &mailboxv1.MailboxMessageRetentionPolicy{
 					Scope:       mailboxv1.MailboxMessageRetentionScope_MAILBOX_MESSAGE_RETENTION_SCOPE_DOMAIN,
-					MaxMessages: int32(envx.Int("MAILBOX_CLOUDFLARE_MAX_MESSAGES_PER_DOMAIN", defaultCloudflareMaxDomain)),
+					MaxMessages: int32(config.maxMessagesPerDomain),
 				},
 			}
 		},
-		LoadDomainsFunc: loadCloudflareEmailDomains,
+		LoadDomainsFunc: config.loadEmailDomains,
 		DomainsFunc: func(configured []string) []*mailboxv1.MailboxDomain {
 			domains := make([]*mailboxv1.MailboxDomain, 0, len(configured))
 			for _, domain := range configured {
@@ -57,7 +56,7 @@ func cloudflareMailboxProvider() mailboxprovider.Plugin {
 		},
 		RetentionPolicyValue: mailboxprovider.MessageRetention{
 			Scope:       mailboxprovider.RetentionScopeDomain,
-			MaxMessages: envx.Int("MAILBOX_CLOUDFLARE_MAX_MESSAGES_PER_DOMAIN", defaultCloudflareMaxDomain),
+			MaxMessages: config.maxMessagesPerDomain,
 		},
 		IncludeVirtualFunc: func(authStatus string) bool {
 			return authStatus == ""

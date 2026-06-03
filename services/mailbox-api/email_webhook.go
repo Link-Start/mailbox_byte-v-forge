@@ -17,6 +17,7 @@ type graphWebhookHandler struct {
 	inbox       *inboxapp.Service
 	watcher     *MailWatcher
 	refreshLock *redisx.BestEffortLocker
+	config      emailWebhookConfig
 }
 
 type graphNotificationEnvelope struct {
@@ -30,7 +31,7 @@ type graphNotification struct {
 	ChangeType     string `json:"changeType"`
 }
 
-func startWebhookServer(ctx context.Context, addr string, inbox *inboxapp.Service, watcher *MailWatcher, refreshLock *redisx.BestEffortLocker, errCh chan<- error) {
+func startWebhookServer(ctx context.Context, addr string, config emailWebhookConfig, inbox *inboxapp.Service, watcher *MailWatcher, refreshLock *redisx.BestEffortLocker, errCh chan<- error) {
 	addr = strings.TrimSpace(addr)
 	if addr == "" {
 		return
@@ -40,6 +41,7 @@ func startWebhookServer(ctx context.Context, addr string, inbox *inboxapp.Servic
 		inbox:       inbox,
 		watcher:     watcher,
 		refreshLock: refreshLock,
+		config:      config,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/webhooks/email/cloudflare", handler.handleCloudflareEmail)

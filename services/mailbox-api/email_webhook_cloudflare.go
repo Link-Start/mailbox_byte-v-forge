@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/envx"
 	"github.com/byte-v-forge/common-lib/protojsonx"
 
 	"mailboxapi/pb"
@@ -17,7 +16,7 @@ func (h *graphWebhookHandler) handleCloudflareEmail(w http.ResponseWriter, r *ht
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	if !validWebhookToken(r) {
+	if !h.validWebhookToken(r) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -43,8 +42,8 @@ func (h *graphWebhookHandler) handleCloudflareEmail(w http.ResponseWriter, r *ht
 	w.WriteHeader(http.StatusAccepted)
 }
 
-func validWebhookToken(r *http.Request) bool {
-	expected := envx.String("MAILBOX_WEBHOOK_TOKEN")
+func (h *graphWebhookHandler) validWebhookToken(r *http.Request) bool {
+	expected := h.config.token
 	if expected == "" {
 		logWarning("MAILBOX_WEBHOOK_TOKEN is required for email webhook ingestion")
 		return false

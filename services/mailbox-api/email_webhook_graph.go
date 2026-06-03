@@ -9,13 +9,12 @@ import (
 	"time"
 
 	"github.com/byte-v-forge/common-lib/emailx"
-	"github.com/byte-v-forge/common-lib/envx"
 	"github.com/byte-v-forge/common-lib/redisx"
 )
 
 func (h *graphWebhookHandler) handleGraphNotification(w http.ResponseWriter, r *http.Request) {
 	if token := r.URL.Query().Get("validationToken"); token != "" {
-		if !validGraphWebhookRequestToken(r) {
+		if !h.validGraphWebhookRequestToken(r) {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -41,7 +40,7 @@ func (h *graphWebhookHandler) handleGraphNotification(w http.ResponseWriter, r *
 		w.WriteHeader(http.StatusAccepted)
 		return
 	}
-	if !validGraphWebhookClientState(envelope) {
+	if !h.validGraphWebhookClientState(envelope) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -50,8 +49,8 @@ func (h *graphWebhookHandler) handleGraphNotification(w http.ResponseWriter, r *
 	w.WriteHeader(http.StatusAccepted)
 }
 
-func validGraphWebhookClientState(envelope graphNotificationEnvelope) bool {
-	expected := webhookSecret()
+func (h *graphWebhookHandler) validGraphWebhookClientState(envelope graphNotificationEnvelope) bool {
+	expected := h.config.token
 	if expected == "" {
 		logWarning("MAILBOX_WEBHOOK_TOKEN is required for Graph webhook ingestion")
 		return false
@@ -67,8 +66,8 @@ func validGraphWebhookClientState(envelope graphNotificationEnvelope) bool {
 	return true
 }
 
-func validGraphWebhookRequestToken(r *http.Request) bool {
-	expected := webhookSecret()
+func (h *graphWebhookHandler) validGraphWebhookRequestToken(r *http.Request) bool {
+	expected := h.config.token
 	if expected == "" {
 		logWarning("MAILBOX_WEBHOOK_TOKEN is required for Graph webhook validation")
 		return false
@@ -85,10 +84,6 @@ func validGraphWebhookRequestToken(r *http.Request) bool {
 		token = strings.TrimPrefix(auth, "Bearer ")
 	}
 	return token == expected
-}
-
-func webhookSecret() string {
-	return envx.String("MAILBOX_WEBHOOK_TOKEN")
 }
 
 func (h *graphWebhookHandler) triggerRefresh() {
@@ -115,19 +110,10 @@ func (h *graphWebhookHandler) refreshMailboxes(lock *redisx.Lock) {
 		}
 	}()
 
-	timeout := envx.Int("OUTLOOK_WEBHOOK_FETCH_TIMEOUT_SECONDS", defaultWebhookTimeout)
-	if timeout <= 0 {
-		timeout = defaultWebhookTimeout
-	}
-	limit := envx.Int("OUTLOOK_WEBHOOK_MAX_MAILBOXES", defaultWebhookMaxMailboxes)
-	if limit <= 0 {
-		limit = defaultWebhookMaxMailboxes
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), h.config.outlookFetchTimeout)
 	defer cancel()
 
-	mailboxes, err := h.watcher.mailboxes.ListOAuthMailboxes(ctx, int32(limit))
+	mailboxes, err := h.watcher.mailboxes.ListOAuthMailboxes(ctx, int32(h.config.outlookRefreshMaxMailbox))
 	if err != nil {
 		logWarning("list OAuth mailboxes for webhook refresh: %v", err)
 		return
