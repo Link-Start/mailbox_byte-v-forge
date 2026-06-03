@@ -1,5 +1,7 @@
 package main
 
+import "mailboxapi/internal/mailboxpg"
+
 const (
 	emailAuthAuthorized              = "AUTHORIZED"
 	emailAuthOAuthPending            = "OAUTH_PENDING"
@@ -10,7 +12,7 @@ const (
 type mailboxActivities struct {
 	outlookRegistration *outlookRegistrationRunner
 	emailBackend        emailBackend
-	mailboxStore        *MailboxStore
+	mailboxRepo         *mailboxpg.Repository
 	operations          *operationStore
 	hot                 *mailboxHotStream
 }

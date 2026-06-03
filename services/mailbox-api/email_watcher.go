@@ -11,6 +11,7 @@ import (
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 
 	"mailboxapi/internal/mailboxmodel"
+	"mailboxapi/internal/mailboxpg"
 )
 
 type oauthEntry struct {
@@ -20,6 +21,7 @@ type oauthEntry struct {
 
 type MailWatcher struct {
 	store        *MailboxStore
+	mailboxes    *mailboxpg.Repository
 	messageLimit int
 	pollInterval int
 	inboxOverlap int
@@ -52,7 +54,7 @@ func (e *GraphFetchError) Retryable() bool {
 	return e.StatusCode == http.StatusTooManyRequests || e.StatusCode >= http.StatusInternalServerError
 }
 
-func NewMailWatcher(store *MailboxStore, events *mailboxHotStream) *MailWatcher {
+func NewMailWatcher(store *MailboxStore, mailboxes *mailboxpg.Repository, events *mailboxHotStream) *MailWatcher {
 	messageLimit := envx.Int("OUTLOOK_MESSAGE_LIMIT", defaultMessageLimit)
 	if messageLimit < 1 {
 		messageLimit = 1
@@ -74,6 +76,7 @@ func NewMailWatcher(store *MailboxStore, events *mailboxHotStream) *MailWatcher 
 	}
 	return &MailWatcher{
 		store:         store,
+		mailboxes:     mailboxes,
 		messageLimit:  messageLimit,
 		pollInterval:  pollInterval,
 		inboxOverlap:  inboxOverlap,
@@ -84,7 +87,7 @@ func NewMailWatcher(store *MailboxStore, events *mailboxHotStream) *MailWatcher 
 }
 
 func (w *MailWatcher) PollForEmail(ctx context.Context, email string) error {
-	mailbox, err := w.store.PollMailboxForEmail(ctx, email)
+	mailbox, err := w.mailboxes.PollMailboxForEmail(ctx, email)
 	if err != nil {
 		return err
 	}

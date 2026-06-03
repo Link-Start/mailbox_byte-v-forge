@@ -6,6 +6,7 @@ import (
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 
 	"mailboxapi/internal/mailboxmodel"
+	"mailboxapi/internal/mailboxpg"
 )
 
 func (c mailboxProviderRuntimeConfig) ListCapabilities(req *mailboxv1.ListMailboxProviderCapabilitiesRequest) *mailboxv1.ListMailboxProviderCapabilitiesResponse {
@@ -59,11 +60,11 @@ func (c mailboxProviderRuntimeConfig) IsStoredInboxOnlyAddress(email string) boo
 	return ok
 }
 
-func newMailboxActivitiesForProviders(cfg mailboxProviderRuntimeConfig, browserClient browserautomationv1.BrowserAutomationServiceClient, emailBackend emailBackend, mailboxStore *MailboxStore, operations *operationStore, hot *mailboxHotStream) *mailboxActivities {
+func newMailboxActivitiesForProviders(cfg mailboxProviderRuntimeConfig, browserClient browserautomationv1.BrowserAutomationServiceClient, emailBackend emailBackend, mailboxRepo *mailboxpg.Repository, operations *operationStore, hot *mailboxHotStream) *mailboxActivities {
 	return &mailboxActivities{
 		outlookRegistration: newOutlookRegistrationRunner(cfg.registration, browserClient, nil),
 		emailBackend:        emailBackend,
-		mailboxStore:        mailboxStore,
+		mailboxRepo:         mailboxRepo,
 		operations:          operations,
 		hot:                 hot,
 	}

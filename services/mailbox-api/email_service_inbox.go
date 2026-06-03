@@ -34,7 +34,7 @@ func (s *EmailService) ListInbox(ctx context.Context, request *mailboxv1.ListMai
 		Domain:       domainForEmail(email),
 	}
 	prepareMailboxProjection(resultMailbox)
-	if mailbox, err := s.store.FindMailbox(ctx, email); err == nil {
+	if mailbox, err := s.mailboxRepo.FindMailbox(ctx, email); err == nil {
 		resultMailbox = mailbox
 	}
 	return &mailboxv1.ListMailboxInboxResponse{Result: &mailboxv1.FetchMailboxInboxResult{

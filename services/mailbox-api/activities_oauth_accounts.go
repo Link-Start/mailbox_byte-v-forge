@@ -23,7 +23,7 @@ func (a *mailboxActivities) oauthAccounts(ctx context.Context, emailAddress stri
 	accounts := make([]*pb.MailboxRegistrationAccount, 0, selectedLimit)
 	cursor := ""
 	for page := 0; len(accounts) < selectedLimit && page < oauthAccountScanMaxPages; page++ {
-		resp, err := a.mailboxStore.ListMailboxes(ctx, "", "", "", cursor, int32(selectedLimit))
+		resp, err := a.mailboxRepo.ListMailboxes(ctx, "", "", "", cursor, int32(selectedLimit))
 		if err != nil {
 			return nil, fmt.Errorf("list mailboxes: %s", safeMailboxError(err))
 		}
@@ -40,7 +40,7 @@ func (a *mailboxActivities) oauthAccounts(ctx context.Context, emailAddress stri
 }
 
 func (a *mailboxActivities) oauthAccountByEmail(ctx context.Context, requestedEmail string, onlyMissing bool) ([]*pb.MailboxRegistrationAccount, error) {
-	resp, err := a.mailboxStore.ListMailboxes(ctx, "", "", requestedEmail, "", 1)
+	resp, err := a.mailboxRepo.ListMailboxes(ctx, "", "", requestedEmail, "", 1)
 	if err != nil {
 		return nil, fmt.Errorf("list mailbox: %s", safeMailboxError(err))
 	}

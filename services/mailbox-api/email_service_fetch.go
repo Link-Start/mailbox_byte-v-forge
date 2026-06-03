@@ -35,7 +35,7 @@ func (s *EmailService) inboxFetchTargets(ctx context.Context, request *mailboxv1
 	targets := []inboxFetchTarget{}
 	requestedEmail := emailx.Normalize(request.GetEmailAddress())
 	if requestedEmail == "" {
-		mailboxes, err := s.store.ListOAuthMailboxes(ctx, request.GetMaxMailboxes())
+		mailboxes, err := s.mailboxRepo.ListOAuthMailboxes(ctx, request.GetMaxMailboxes())
 		if err != nil {
 			return nil, nil, status.Error(codes.Internal, safeMailboxError(err))
 		}
@@ -48,12 +48,12 @@ func (s *EmailService) inboxFetchTargets(ctx context.Context, request *mailboxv1
 	if response, ok, err := s.storedOnlyInboxResponse(ctx, requestedEmail, request); ok || err != nil {
 		return nil, response, err
 	}
-	fetchMailbox, err := s.store.PollMailboxForEmail(ctx, requestedEmail)
+	fetchMailbox, err := s.mailboxRepo.PollMailboxForEmail(ctx, requestedEmail)
 	if err != nil {
 		return nil, nil, status.Error(codes.InvalidArgument, safeMailboxError(err))
 	}
 	resultMailbox := fetchMailbox
-	if mailbox, err := s.store.FindMailbox(ctx, requestedEmail); err == nil {
+	if mailbox, err := s.mailboxRepo.FindMailbox(ctx, requestedEmail); err == nil {
 		resultMailbox = mailbox
 	}
 	return append(targets, inboxFetchTarget{fetchMailbox: fetchMailbox, resultMailbox: resultMailbox}), nil, nil
@@ -64,7 +64,7 @@ func (s *EmailService) storedOnlyInboxResponse(ctx context.Context, email string
 	if !ok {
 		return nil, false, nil
 	}
-	if mailbox, err := s.store.FindMailbox(ctx, email); err == nil {
+	if mailbox, err := s.mailboxRepo.FindMailbox(ctx, email); err == nil {
 		resultMailbox = mailbox
 	}
 	messages, err := s.store.ListInboxMessagesSince(ctx, email, request.GetLimitPerMailbox(), request.GetReceivedAfterUnix())

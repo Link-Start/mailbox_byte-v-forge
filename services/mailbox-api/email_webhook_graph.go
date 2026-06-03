@@ -127,7 +127,7 @@ func (h *graphWebhookHandler) refreshMailboxes(lock *redisx.Lock) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
-	mailboxes, err := h.watcher.store.ListOAuthMailboxes(ctx, int32(limit))
+	mailboxes, err := h.watcher.mailboxes.ListOAuthMailboxes(ctx, int32(limit))
 	if err != nil {
 		logWarning("list OAuth mailboxes for webhook refresh: %v", err)
 		return

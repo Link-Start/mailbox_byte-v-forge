@@ -11,6 +11,7 @@ import (
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"mailboxapi/internal/mailboxpg"
 	"mailboxapi/internal/mailboxprovider"
 )
 
@@ -110,6 +111,7 @@ type rowScanner interface {
 type MailboxStore struct {
 	pool      *pgxpool.Pool
 	providers *mailboxprovider.Registry
+	mailboxes *mailboxpg.Repository
 	recent    *recentEmailCache
 	secrets   *mailboxSecretStore
 }
@@ -125,7 +127,12 @@ func NewMailboxStore(ctx context.Context, dsn string, providers *mailboxprovider
 	if err != nil {
 		return nil, err
 	}
-	store := &MailboxStore{pool: pool, providers: providers, recent: recent, secrets: secrets}
+	mailboxes, err := mailboxpg.NewRepository(pool, providers)
+	if err != nil {
+		pool.Close()
+		return nil, err
+	}
+	store := &MailboxStore{pool: pool, providers: providers, mailboxes: mailboxes, recent: recent, secrets: secrets}
 	if err := store.ensureSchema(ctx); err != nil {
 		pool.Close()
 		return nil, err

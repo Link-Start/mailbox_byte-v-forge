@@ -14,18 +14,18 @@ func (w *MailWatcher) fetchMailboxMessages(ctx context.Context, mailbox *mailbox
 	manager := w.oauthManagerForMailbox(mailbox)
 	accessToken, err := manager.GetAccessToken(ctx)
 	if err != nil {
-		w.store.MarkAuthFailed(ctx, mailbox.GetEmailAddress(), err)
+		w.markAuthFailed(ctx, mailbox.GetEmailAddress(), err)
 		return nil, err
 	}
 	if err := w.persistTokens(ctx, mailbox, manager); err != nil {
-		w.store.MarkAuthFailed(ctx, mailbox.GetEmailAddress(), err)
+		w.markAuthFailed(ctx, mailbox.GetEmailAddress(), err)
 		return nil, err
 	}
 	messages, err := w.fetchRecentMessages(ctx, accessToken, limit, receivedAfterNs)
 	if err != nil {
 		var graphErr *GraphFetchError
 		if !errors.As(err, &graphErr) {
-			w.store.MarkAuthFailed(ctx, mailbox.GetEmailAddress(), err)
+			w.markAuthFailed(ctx, mailbox.GetEmailAddress(), err)
 			return nil, err
 		}
 		if !graphErr.IsAuth() {
@@ -40,7 +40,7 @@ func (w *MailWatcher) fetchMailboxMessages(ctx context.Context, mailbox *mailbox
 			messages, err = w.fetchRecentMessages(ctx, accessToken, limit, receivedAfterNs)
 		}
 		if err != nil {
-			w.store.MarkAuthFailed(ctx, mailbox.GetEmailAddress(), err)
+			w.markAuthFailed(ctx, mailbox.GetEmailAddress(), err)
 			return nil, err
 		}
 	}
@@ -63,7 +63,13 @@ func (w *MailWatcher) oauthManagerForMailbox(mailbox *mailboxmodel.Record) *OAut
 func (w *MailWatcher) persistTokens(ctx context.Context, mailbox *mailboxmodel.Record, manager *OAuthManager) error {
 	refreshToken, accessToken := manager.CurrentTokens()
 	if refreshToken != mailbox.GetRefreshToken() || accessToken != mailbox.GetAccessToken() {
-		return w.store.UpdateMailboxTokens(ctx, mailbox.GetEmailAddress(), refreshToken, accessToken)
+		return w.mailboxes.UpdateMailboxTokens(ctx, mailbox.GetEmailAddress(), refreshToken, accessToken)
 	}
 	return nil
+}
+
+func (w *MailWatcher) markAuthFailed(ctx context.Context, email string, cause error) {
+	if _, err := w.mailboxes.MarkEmailAuthStatus(ctx, email, mailboxmodel.AuthStatusAuthFailed, safeMailboxError(cause)); err != nil {
+		logWarning("failed to mark mailbox auth failed for %s: %v", emailx.Redact(email), err)
+	}
 }

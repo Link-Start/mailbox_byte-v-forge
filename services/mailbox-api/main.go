@@ -51,6 +51,7 @@ func main() {
 		log.Fatalf("failed to initialize mailbox store: %s", safeMailboxError(err))
 	}
 	defer mailboxStore.Close()
+	mailboxRepo := mailboxStore.mailboxes
 	inboxLock := redisx.NewBestEffortLocker(coordinationClient, cfg.inboxLockPrefix, cfg.inboxLockTTL, cfg.inboxLockRetry)
 	platformEventBus, closePlatformEventBus, err := newPlatformEventBus(ctx, cfg)
 	if err != nil {
@@ -66,14 +67,14 @@ func main() {
 	}
 	hotEvents := newMailboxHotStream(hotBus)
 	platformEmailEvents := newMailboxPlatformEvents(platformEventBus)
-	mailWatcher := NewMailWatcher(mailboxStore, hotEvents)
+	mailWatcher := NewMailWatcher(mailboxStore, mailboxRepo, hotEvents)
 
 	operations, err := newOperationStore(cfg.pgDSN)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox operation store: %s", safeMailboxError(err))
 	}
 	workDispatcher := newMailboxWorkDispatcher(operations.db, "mailbox-api")
-	emailBackend := &EmailService{store: mailboxStore, mailboxes: mailboxapp.NewService(mailboxStore), watcher: mailWatcher, providers: cfg.providers, inboxLock: inboxLock, work: workDispatcher}
+	emailBackend := &EmailService{store: mailboxStore, mailboxRepo: mailboxRepo, mailboxes: mailboxapp.NewService(mailboxRepo), watcher: mailWatcher, providers: cfg.providers, inboxLock: inboxLock, work: workDispatcher}
 
 	pollConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, eventcatalog.MailboxEmailPollRequested, 10, 60*time.Second)
 	if err != nil {
@@ -85,7 +86,7 @@ func main() {
 		log.Fatalf("failed to initialize mailbox inbox fetch worker: %s", safeMailboxError(err))
 	}
 
-	activities := newMailboxActivitiesForProviders(cfg.providers, browserautomationv1.NewBrowserAutomationServiceClient(browserConn), emailBackend, mailboxStore, operations, hotEvents)
+	activities := newMailboxActivitiesForProviders(cfg.providers, browserautomationv1.NewBrowserAutomationServiceClient(browserConn), emailBackend, mailboxRepo, operations, hotEvents)
 
 	registrationConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxRegistrationRequested, 2, 5*time.Minute)
 	if err != nil {
