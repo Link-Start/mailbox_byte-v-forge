@@ -20,10 +20,10 @@ func (s *MailboxStore) UpsertMailbox(ctx context.Context, mailbox *mailboxmodel.
 	if email == "" {
 		return nil, errors.New("email_address is required")
 	}
-	requestedProvider := s.normalizeMailboxProviderInput(mailbox.GetProviderKey())
+	requestedProvider := s.providers.NormalizeProviderInput(mailbox.GetProviderKey())
 	insertProvider := requestedProvider
 	if insertProvider == "" {
-		insertProvider = s.defaultMailboxProvider()
+		insertProvider = s.providers.DefaultKey()
 	}
 	rowID, err := randx.Hex(16)
 	if err != nil {
@@ -47,7 +47,7 @@ func (s *MailboxStore) UpsertMailbox(ctx context.Context, mailbox *mailboxmodel.
 	`, rowID, email, insertProvider, now, requestedProvider).Scan(&persistedProvider); err != nil {
 		return nil, err
 	}
-	if err := s.mailboxProviderUpsert(ctx, tx, persistedProvider, mailbox, now); err != nil {
+	if err := s.providers.Upsert(ctx, tx, persistedProvider, mailbox, now); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {

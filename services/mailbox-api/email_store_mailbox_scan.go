@@ -6,6 +6,7 @@ import (
 	"github.com/byte-v-forge/common-lib/emailx"
 
 	"mailboxapi/internal/mailboxmodel"
+	"mailboxapi/internal/mailboxprovider"
 )
 
 func scanMailbox(scanner rowScanner) (*mailboxRow, error) {
@@ -33,7 +34,19 @@ func (m *mailboxRow) toRecord() *mailboxmodel.Record {
 }
 
 func (s *MailboxStore) recordFromMailboxRow(row *mailboxRow) *mailboxmodel.Record {
-	return mailboxRecordFromRow(row, s.normalizeMailboxProviderInput, s.prepareMailboxProjection)
+	return mailboxRecordFromRow(row, s.providers.NormalizeProviderInput, s.providers.PrepareProjection)
+}
+
+func (m *mailboxRow) toProviderRecord() mailboxprovider.MailboxRecord {
+	if m == nil {
+		return mailboxprovider.MailboxRecord{}
+	}
+	return mailboxprovider.MailboxRecord{
+		Email:        m.Email,
+		Provider:     m.Provider,
+		RefreshToken: m.RefreshToken,
+		AuthStatus:   m.AuthStatus,
+	}
 }
 
 func mailboxRecordFromRow(row *mailboxRow, normalizeProvider func(string) string, prepareProjection func(*mailboxmodel.Record)) *mailboxmodel.Record {

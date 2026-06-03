@@ -12,24 +12,24 @@ func (s *MailboxStore) ensureSchema(ctx context.Context) error {
 		`CREATE TABLE IF NOT EXISTS mailboxes (
 			id TEXT PRIMARY KEY,
 			email TEXT NOT NULL UNIQUE,
-			provider TEXT NOT NULL DEFAULT '` + s.defaultMailboxProvider() + `',
+			provider TEXT NOT NULL DEFAULT '` + s.providers.DefaultKey() + `',
 			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
 			updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
 			last_inbox_received_at_ns BIGINT NOT NULL DEFAULT 0
 		)`,
-		`ALTER TABLE mailboxes ADD COLUMN IF NOT EXISTS provider TEXT NOT NULL DEFAULT '` + s.defaultMailboxProvider() + `'`,
+		`ALTER TABLE mailboxes ADD COLUMN IF NOT EXISTS provider TEXT NOT NULL DEFAULT '` + s.providers.DefaultKey() + `'`,
 		`ALTER TABLE mailboxes ADD COLUMN IF NOT EXISTS created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT`,
 		`ALTER TABLE mailboxes ADD COLUMN IF NOT EXISTS updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT`,
 		`ALTER TABLE mailboxes ADD COLUMN IF NOT EXISTS last_inbox_received_at_ns BIGINT NOT NULL DEFAULT 0`,
 		`CREATE TABLE IF NOT EXISTS mailbox_inbox_seen (
-			provider TEXT NOT NULL DEFAULT '` + s.defaultMailboxProvider() + `',
+			provider TEXT NOT NULL DEFAULT '` + s.providers.DefaultKey() + `',
 			mailbox_email TEXT NOT NULL,
 			message_key TEXT NOT NULL,
 			seen_at BIGINT NOT NULL,
 			PRIMARY KEY (provider, mailbox_email, message_key)
 		)`,
 		`CREATE TABLE IF NOT EXISTS mailbox_inbox_messages (
-			provider TEXT NOT NULL DEFAULT '` + s.defaultMailboxProvider() + `',
+			provider TEXT NOT NULL DEFAULT '` + s.providers.DefaultKey() + `',
 			mailbox_email TEXT NOT NULL,
 			message_key TEXT NOT NULL,
 			message_id TEXT NOT NULL DEFAULT '',
@@ -46,8 +46,8 @@ func (s *MailboxStore) ensureSchema(ctx context.Context) error {
 			updated_at BIGINT NOT NULL,
 			PRIMARY KEY (provider, mailbox_email, message_key)
 		)`,
-		`ALTER TABLE mailbox_inbox_seen ADD COLUMN IF NOT EXISTS provider TEXT NOT NULL DEFAULT '` + s.defaultMailboxProvider() + `'`,
-		`ALTER TABLE mailbox_inbox_messages ADD COLUMN IF NOT EXISTS provider TEXT NOT NULL DEFAULT '` + s.defaultMailboxProvider() + `'`,
+		`ALTER TABLE mailbox_inbox_seen ADD COLUMN IF NOT EXISTS provider TEXT NOT NULL DEFAULT '` + s.providers.DefaultKey() + `'`,
+		`ALTER TABLE mailbox_inbox_messages ADD COLUMN IF NOT EXISTS provider TEXT NOT NULL DEFAULT '` + s.providers.DefaultKey() + `'`,
 		`ALTER TABLE mailbox_inbox_messages ADD COLUMN IF NOT EXISTS body_text TEXT NOT NULL DEFAULT ''`,
 		`ALTER TABLE mailbox_inbox_messages ADD COLUMN IF NOT EXISTS html_body TEXT NOT NULL DEFAULT ''`,
 		`ALTER TABLE mailbox_inbox_messages ADD COLUMN IF NOT EXISTS raw_size BIGINT NOT NULL DEFAULT 0`,
@@ -102,8 +102,8 @@ func (s *MailboxStore) ensureSchema(ctx context.Context) error {
 		return err
 	}
 	statements = append(statements, outboxStatements...)
-	statements = insertSchemaStatementsAfter(statements, "ALTER TABLE mailboxes ADD COLUMN IF NOT EXISTS last_inbox_received_at_ns", s.mailboxProviderSchemaStatements())
-	statements = insertSchemaStatementsAfter(statements, "ALTER TABLE mailboxes DROP COLUMN IF EXISTS assigned_account_id", s.mailboxProviderLegacyStatements())
+	statements = insertSchemaStatementsAfter(statements, "ALTER TABLE mailboxes ADD COLUMN IF NOT EXISTS last_inbox_received_at_ns", s.providers.SchemaStatements())
+	statements = insertSchemaStatementsAfter(statements, "ALTER TABLE mailboxes DROP COLUMN IF EXISTS assigned_account_id", s.providers.LegacyStatements())
 	for _, statement := range statements {
 		if _, err := s.pool.Exec(ctx, statement); err != nil {
 			return err

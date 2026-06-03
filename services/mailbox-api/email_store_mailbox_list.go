@@ -25,7 +25,7 @@ func (s *MailboxStore) ListMailboxes(ctx context.Context, authStatus string, pro
 		return mailboxmodel.ListPage{}, err
 	}
 	rows := stored
-	virtual, err := s.listMailboxProviderVirtualMailboxes(ctx, s.pool, query)
+	virtual, err := s.providers.VirtualMailboxes(ctx, s.pool, query)
 	if err != nil {
 		return mailboxmodel.ListPage{}, err
 	}
@@ -42,7 +42,7 @@ func (s *MailboxStore) newMailboxListQuery(authStatus string, provider string, e
 	}
 	return mailboxprovider.ListQuery{
 		AuthStatus:   strings.TrimSpace(authStatus),
-		Provider:     s.normalizeMailboxProviderInput(provider),
+		Provider:     s.providers.NormalizeProviderInput(provider),
 		EmailAddress: emailx.Normalize(emailAddress),
 		Cursor:       cursor,
 		Limit:        accountmodel.NormalizePageLimit(int(limit)),
@@ -82,9 +82,9 @@ func uniqueMailboxRows(rows []*mailboxmodel.Record) []*mailboxmodel.Record {
 
 func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxprovider.ListQuery) ([]*mailboxmodel.Record, error) {
 	args := []any{}
-	query := s.mailboxSelectSQL() + ` WHERE 1=1`
+	query := s.providers.MailboxSelectSQL() + ` WHERE 1=1`
 	if filter.AuthStatus != "" {
-		query += " AND " + s.mailboxProviderAuthFilter(filter.Provider, filter.AuthStatus, &args)
+		query += " AND " + s.providers.AuthFilter(filter.Provider, filter.AuthStatus, &args)
 	}
 	if filter.Provider != "" {
 		args = append(args, filter.Provider)
@@ -130,7 +130,7 @@ func (s *MailboxStore) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*
 		n = 500
 	}
 	args := []any{}
-	query := s.mailboxSelectSQL() + " WHERE " + s.mailboxProviderAuthFilter("", mailboxmodel.AuthStatusAuthorized, &args)
+	query := s.providers.MailboxSelectSQL() + " WHERE " + s.providers.AuthFilter("", mailboxmodel.AuthStatusAuthorized, &args)
 	args = append(args, n)
 	query += fmt.Sprintf(" ORDER BY m.updated_at DESC, m.email DESC LIMIT $%d", len(args))
 	rows, err := s.pool.Query(ctx, query, args...)
@@ -145,7 +145,7 @@ func (s *MailboxStore) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*
 		if err != nil {
 			return nil, err
 		}
-		if s.mailboxProviderValidatePoll(row) != nil {
+		if s.providers.ValidatePoll(row.toProviderRecord()) != nil {
 			continue
 		}
 		out = append(out, s.recordFromMailboxRow(row))
