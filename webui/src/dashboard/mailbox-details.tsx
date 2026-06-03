@@ -14,7 +14,7 @@ import { mailboxStatusText } from './labels';
 import { MailboxInboxSection } from './mailbox-inbox';
 import { MailboxOtpPanel } from './otp-panel';
 import { latestOtpForInboxResult } from './mailbox-signal-utils';
-import { authStatus, mailboxCredentialPresent, providerShowsCredentialState, tokenText } from './mailbox-utils';
+import { authStatus, mailboxCredentialValue, providerShowsCredentialState, tokenText } from './mailbox-utils';
 import type { InboxResult, LatestOtp, Mailbox, MailboxProviderCapability } from './types';
 
 export function MailboxDetails({ mailbox, providerCapability, showSecrets, inboxResult, inboxLoading, canFetchInbox, onCopy, onFetchInbox, onDelete }: {
@@ -81,8 +81,7 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   if (showCredentialState) fields.push({
     id: 'password',
     label: '密码',
-    value: credentialPresenceText(mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD)),
-    copyDisabled: true,
+    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD, showSecrets),
   }, {
     id: 'oauth',
     label: 'OAuth',
@@ -94,13 +93,11 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   }, {
     id: 'refresh-token',
     label: 'Refresh',
-    value: credentialPresenceText(mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN)),
-    copyDisabled: true,
+    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN, showSecrets),
   }, {
     id: 'access-token',
     label: 'Access',
-    value: credentialPresenceText(mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN)),
-    copyDisabled: true,
+    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN, showSecrets),
   });
   fields.push({
     id: 'latest-otp',
@@ -138,6 +135,13 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   );
 }
 
-function credentialPresenceText(present?: boolean) {
-  return present ? '已保存' : '-';
+function credentialDisplay(mailbox: Mailbox, kind: MailboxCredentialKind, showSecrets: boolean): Pick<KVDescriptor, 'value' | 'copyValue' | 'copyDisabled' | 'masked' | 'mono'> {
+  const value = mailboxCredentialValue(mailbox, kind);
+  return {
+    value: value || '-',
+    copyValue: value,
+    copyDisabled: !showSecrets || !value,
+    masked: !!value && !showSecrets,
+    mono: true,
+  };
 }

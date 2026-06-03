@@ -37,6 +37,7 @@ func publicMailbox(mailbox *mailboxmodel.Record) *mailboxv1.EmailMailbox {
 		LatestSignal:    mailbox.GetLatestSignal(),
 		Domain:          mailbox.GetDomain(),
 		CredentialState: publicMailboxCredentialState(mailbox),
+		Credentials:     publicMailboxCredentials(mailbox),
 	}
 }
 
@@ -72,6 +73,23 @@ func publicMailboxCredentialState(mailbox *mailboxmodel.Record) *mailboxv1.Mailb
 		OauthAccessTokenPresent:  accessTokenPresent,
 		PresentCredentials:       present,
 	}
+}
+
+func publicMailboxCredentials(mailbox *mailboxmodel.Record) []*mailboxv1.MailboxCredentialValue {
+	if mailbox == nil {
+		return nil
+	}
+	values := []*mailboxv1.MailboxCredentialValue{}
+	appendValue := func(kind mailboxv1.MailboxCredentialKind, value string) {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			values = append(values, &mailboxv1.MailboxCredentialValue{Kind: kind, Value: value})
+		}
+	}
+	appendValue(mailboxv1.MailboxCredentialKind_MAILBOX_CREDENTIAL_KIND_PASSWORD, mailbox.GetPassword())
+	appendValue(mailboxv1.MailboxCredentialKind_MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN, mailbox.GetRefreshToken())
+	appendValue(mailboxv1.MailboxCredentialKind_MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN, mailbox.GetAccessToken())
+	return values
 }
 
 func mailboxRecordFromCredentialInput(input *mailboxv1.MailboxCredentialInput) *mailboxmodel.Record {
