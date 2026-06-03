@@ -49,24 +49,48 @@ func mailboxPlatformEventRecords(source string, messages []*mailboxv1.EmailInbox
 			return nil, fmt.Errorf("prepare mailbox platform event record: %w", err)
 		}
 		records = append(records, record)
+		for _, signal := range message.GetSignals() {
+			if signal == nil || signal.GetKind() == mailboxv1.EmailSignalKind_EMAIL_SIGNAL_KIND_UNSPECIFIED {
+				continue
+			}
+			record, err := mailboxEmailSignalReceivedEventRecord(source, message, signal)
+			if err != nil {
+				return nil, fmt.Errorf("prepare mailbox platform signal event record: %w", err)
+			}
+			records = append(records, record)
+		}
 	}
 	return records, nil
 }
 
 func mailboxEmailReceivedEventRecord(source string, message *mailboxv1.EmailInboxMessage) (eventoutbox.Record, error) {
-	eventCtx := mailboxPlatformEventContext(source, eventcatalog.MailboxEmailReceived.EventName, emailReceivedEventID(message), message)
+	metadata := mailboxPlatformEventMetadata(source, eventcatalog.MailboxEmailReceived.EventName, eventcatalog.MailboxEmailReceived.Subject, emailReceivedEventID(message), message)
 	return eventoutbox.NewRecordFor(
 		eventcatalog.MailboxEmailReceived,
 		&mailboxv1.MailboxEmailReceivedEvent{
-			Context: eventCtx,
-			Message: proto.Clone(message).(*mailboxv1.EmailInboxMessage),
+			Metadata: metadata,
+			Message:  proto.Clone(message).(*mailboxv1.EmailInboxMessage),
 		},
-		eventCtx,
+		metadata,
 		emailAttributes(message, nil),
 	)
 }
 
-func mailboxPlatformEventContext(source string, eventName string, eventID string, message *mailboxv1.EmailInboxMessage) *commonv1.EventContext {
+func mailboxEmailSignalReceivedEventRecord(source string, message *mailboxv1.EmailInboxMessage, signal *mailboxv1.EmailSignal) (eventoutbox.Record, error) {
+	metadata := mailboxPlatformEventMetadata(source, eventcatalog.MailboxEmailSignalReceived.EventName, eventcatalog.MailboxEmailSignalReceived.Subject, emailSignalEventID(message, signal), message)
+	return eventoutbox.NewRecordFor(
+		eventcatalog.MailboxEmailSignalReceived,
+		&mailboxv1.MailboxEmailSignalReceivedEvent{
+			Metadata: metadata,
+			Message:  proto.Clone(message).(*mailboxv1.EmailInboxMessage),
+			Signal:   proto.Clone(signal).(*mailboxv1.EmailSignal),
+		},
+		metadata,
+		emailAttributes(message, signal),
+	)
+}
+
+func mailboxPlatformEventMetadata(source string, eventName string, subject string, eventID string, message *mailboxv1.EmailInboxMessage) *commonv1.EventMetadata {
 	occurredAt := time.Now()
 	if message.GetReceivedAtUnix() > 0 {
 		occurredAt = time.Unix(message.GetReceivedAtUnix(), 0)
@@ -75,12 +99,13 @@ func mailboxPlatformEventContext(source string, eventName string, eventID string
 	if source == "" {
 		source = mailboxPlatformEventSource
 	}
-	return eventbus.NewEventContext(eventbus.EventContextConfig{
+	return eventbus.NewEventMetadata(eventbus.EventMetadataConfig{
 		EventID:       eventID,
 		EventName:     eventName,
 		EventVersion:  mailboxPlatformEventVersion,
 		OccurredAt:    occurredAt,
 		SourceService: source,
+		Subject:       subject,
 		CorrelationID: message.GetMailboxEmail(),
 	})
 }
@@ -102,7 +127,7 @@ func emailSignalEventID(message *mailboxv1.EmailInboxMessage, signal *mailboxv1.
 		signal.GetKind().String(),
 		signal.GetProfile(),
 		signal.GetParser(),
-		signal.GetCode(),
+		signal.GetSecretRef().GetSecretId(),
 		fmt.Sprintf("%d", message.GetReceivedAtUnix()),
 	)
 }

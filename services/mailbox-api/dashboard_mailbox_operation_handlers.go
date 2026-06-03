@@ -16,8 +16,8 @@ func (s *dashboardServer) handleMailboxOperations(w http.ResponseWriter, r *http
 	}
 	resp, err := s.mailboxClient.ListMailboxOperations(r.Context(), &mailboxv1.ListMailboxOperationsRequest{
 		Limit:        int32(httpx.QueryInt(r, "limit", 50)),
-		Status:       strings.TrimSpace(r.URL.Query().Get("status")),
-		Action:       strings.TrimSpace(r.URL.Query().Get("action")),
+		Status:       publicOperationStatus(strings.ToUpper(strings.TrimSpace(r.URL.Query().Get("status")))),
+		Action:       publicOperationAction(strings.ToUpper(strings.TrimSpace(r.URL.Query().Get("action")))),
 		EmailAddress: strings.TrimSpace(r.URL.Query().Get("email_address")),
 	})
 	if err != nil {

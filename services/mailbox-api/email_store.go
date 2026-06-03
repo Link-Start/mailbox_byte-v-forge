@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/byte-v-forge/common-lib/emailx"
+	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -82,10 +83,35 @@ func (row inboxMessageRow) toProtoForProfile(profile string) (*mailboxv1.EmailIn
 		Recipients:         uniqueStrings(recipients),
 		ProviderKey:        normalizeEmailProvider(row.Provider),
 		SourceMailboxEmail: emailx.Normalize(row.SourceEmail),
-		BodyText:           row.BodyText,
-		HtmlBody:           row.HTMLBody,
+		BodyArtifactRef:    inboxArtifactRef(row.Provider, row.MailboxEmail, row.ID, "body_text", int64(len(row.BodyText))),
+		HtmlArtifactRef:    inboxArtifactRef(row.Provider, row.MailboxEmail, row.ID, "html_body", int64(len(row.HTMLBody))),
 		RawSize:            row.RawSize,
 	}, profile), nil
+}
+
+func inboxArtifactRef(provider string, mailboxEmail string, messageID string, purpose string, sizeBytes int64) *commonv1.ArtifactRef {
+	provider = normalizeEmailProvider(provider)
+	mailboxEmail = emailx.Normalize(mailboxEmail)
+	messageID = strings.TrimSpace(messageID)
+	purpose = strings.TrimSpace(purpose)
+	if provider == "" || mailboxEmail == "" || messageID == "" || purpose == "" || sizeBytes <= 0 {
+		return nil
+	}
+	artifactID := strings.Join([]string{"mailbox", provider, mailboxEmail, messageID, purpose}, ":")
+	return &commonv1.ArtifactRef{
+		ArtifactId:  artifactID,
+		Uri:         "mailbox://inbox/" + artifactID,
+		ContentType: mailboxArtifactContentType(purpose),
+		SizeBytes:   sizeBytes,
+		Purpose:     purpose,
+	}
+}
+
+func mailboxArtifactContentType(purpose string) string {
+	if purpose == "html_body" {
+		return "text/html"
+	}
+	return "text/plain"
 }
 
 type rowScanner interface {

@@ -69,8 +69,8 @@ type operationUpdate struct {
 
 type operationListFilter struct {
 	Limit        int
-	Status       string
-	Action       string
+	Status       mailboxv1.MailboxOperationStatus
+	Action       mailboxv1.MailboxOperationAction
 	EmailAddress string
 }
 

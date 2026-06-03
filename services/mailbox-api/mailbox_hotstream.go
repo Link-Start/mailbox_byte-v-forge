@@ -83,19 +83,21 @@ func (p *mailboxHotStream) PublishOperation(ctx context.Context, operation *mail
 	if p == nil || p.publisher == nil || operation == nil {
 		return
 	}
+	action := operationActionValue(operation.GetAction())
+	status := operationStatusValue(operation.GetStatus())
 	p.publish(ctx, hotstream.NewEvent(hotstream.EventConfig{
-		EventID:       eventbus.StableEventID("mailbox-operation-", operation.GetOperationId(), operation.GetStatus(), fmt.Sprintf("%d", operation.GetUpdatedAt())),
+		EventID:       eventbus.StableEventID("mailbox-operation-", operation.GetOperationId(), status, fmt.Sprintf("%d", operation.GetUpdatedAt())),
 		EventType:     mailboxEventOperationUpdated,
 		SourceService: mailboxHotStreamSource,
 		ResourceType:  mailboxResourceOperation,
 		ResourceID:    operation.GetOperationId(),
-		Scope:         operation.GetAction(),
+		Scope:         action,
 		OccurredAt:    time.Unix(operation.GetUpdatedAt(), 0),
 		CorrelationID: operation.GetOperationId(),
 		Attributes: map[string]string{
 			"operation_id":  operation.GetOperationId(),
-			"action":        operation.GetAction(),
-			"status":        operation.GetStatus(),
+			"action":        action,
+			"status":        status,
 			"email_address": operation.GetEmailAddress(),
 		},
 	}))
@@ -103,7 +105,7 @@ func (p *mailboxHotStream) PublishOperation(ctx context.Context, operation *mail
 
 func (p *mailboxHotStream) publish(ctx context.Context, event *observabilityv1.HotStreamEvent) {
 	if err := p.publisher.Publish(context.WithoutCancel(ctx), event); err != nil {
-		logWarning("publish mailbox hotstream event failed type=%s resource=%s: %v", event.GetEventType(), event.GetResourceId(), err)
+		logWarning("publish mailbox hotstream event failed type=%s resource=%s: %v", event.GetMetadata().GetType(), event.GetResourceId(), err)
 	}
 }
 

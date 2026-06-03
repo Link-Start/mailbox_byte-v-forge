@@ -4,7 +4,9 @@ import (
 	"regexp"
 	"strings"
 
+	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
+	"github.com/byte-v-forge/common-lib/hashx"
 )
 
 var (
@@ -23,13 +25,17 @@ func emailMessageWithSignals(message *mailboxv1.EmailInboxMessage, _ string) *ma
 		return message
 	}
 	signal := &mailboxv1.EmailSignal{
-		Kind:       mailboxv1.EmailSignalKind_EMAIL_SIGNAL_KIND_OTP,
-		Code:       normalizeEmailOTP(code),
-		Label:      "verification_code",
-		Profile:    "generic",
-		Parser:     "mailbox-email-otp",
-		Confidence: 70,
-		Evidence:   evidence,
+		Kind: mailboxv1.EmailSignalKind_EMAIL_SIGNAL_KIND_OTP,
+		SecretRef: &commonv1.SecretRef{
+			SecretId: "mailbox-email-otp-" + hashx.SHA256Hex(normalizeEmailOTP(code)),
+			Provider: "mailbox",
+			Purpose:  "email_otp",
+		},
+		Label:           "verification_code",
+		Profile:         "generic",
+		Parser:          "mailbox-email-otp",
+		Confidence:      70,
+		EvidencePreview: evidence,
 	}
 	message.Signals = []*mailboxv1.EmailSignal{signal}
 	message.PrimarySignal = signal
@@ -43,11 +49,11 @@ func messageHasSignal(message *mailboxv1.EmailInboxMessage, kind mailboxv1.Email
 	if kind == mailboxv1.EmailSignalKind_EMAIL_SIGNAL_KIND_UNSPECIFIED {
 		return true
 	}
-	if signal := message.GetPrimarySignal(); signal.GetKind() == kind && signal.GetCode() != "" {
+	if signal := message.GetPrimarySignal(); signal.GetKind() == kind && signal.GetSecretRef().GetSecretId() != "" {
 		return true
 	}
 	for _, signal := range message.GetSignals() {
-		if signal.GetKind() == kind && signal.GetCode() != "" {
+		if signal.GetKind() == kind && signal.GetSecretRef().GetSecretId() != "" {
 			return true
 		}
 	}
@@ -62,8 +68,6 @@ func extractEmailOTP(message *mailboxv1.EmailInboxMessage) (string, string) {
 		message.GetSubject(),
 		message.GetFromAddress(),
 		message.GetBodyPreview(),
-		message.GetBodyText(),
-		message.GetHtmlBody(),
 	}, "\n")
 	if match := emailOTPContextPattern.FindStringSubmatch(text); len(match) >= 2 {
 		return normalizeEmailOTP(match[1]), strings.TrimSpace(match[0])

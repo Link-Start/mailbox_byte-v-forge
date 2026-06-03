@@ -19,16 +19,22 @@ func outlookProviderCapabilities() *mailboxv1.MailboxProviderCapabilities {
 				RequiredCredentials: []mailboxv1.MailboxCredentialKind{
 					mailboxv1.MailboxCredentialKind_MAILBOX_CREDENTIAL_KIND_PASSWORD,
 				},
-				RequiredAuthStatuses: []string{authStatusOAuthPending, authStatusAuthFailed, authStatusNeedsManualVerify},
-				BulkSupported:        true,
+				RequiredAuthStatuses: []mailboxv1.MailboxAuthStatus{
+					mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_OAUTH_PENDING,
+					mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_AUTH_FAILED,
+					mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_NEEDS_MANUAL_VERIFICATION,
+				},
+				BulkSupported: true,
 			},
 			{
 				Action: mailboxv1.MailboxProviderAction_MAILBOX_PROVIDER_ACTION_FETCH_INBOX,
 				RequiredCredentials: []mailboxv1.MailboxCredentialKind{
 					mailboxv1.MailboxCredentialKind_MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN,
 				},
-				RequiredAuthStatuses: []string{authStatusAuthorized},
-				BulkSupported:        true,
+				RequiredAuthStatuses: []mailboxv1.MailboxAuthStatus{
+					mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_AUTHORIZED,
+				},
+				BulkSupported: true,
 			},
 		},
 		RetentionPolicy: &mailboxv1.MailboxMessageRetentionPolicy{

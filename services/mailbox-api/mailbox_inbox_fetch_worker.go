@@ -32,7 +32,7 @@ func (w *mailboxInboxFetchWorker) handle(ctx context.Context, request *pb.Mailbo
 		return eventbus.TermResult("terminate mailbox inbox fetch request without operation_id")
 	}
 	if operation, err := w.operations.get(ctx, operationID); err == nil {
-		if operation.GetStatus() == operationStatusSucceeded || operation.GetStatus() == operationStatusFailed {
+		if operationStatusFinal(operation.GetStatus()) {
 			return eventbus.AckResult("ack finalized mailbox inbox fetch request")
 		}
 	}

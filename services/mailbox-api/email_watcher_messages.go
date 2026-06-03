@@ -37,7 +37,6 @@ func inboxMessage(mailboxEmail string, msg graphMessage) *mailboxv1.EmailInboxMe
 		Recipients:         uniqueStrings(messageAddresses(msg)),
 		ProviderKey:        emailProviderOutlook,
 		SourceMailboxEmail: emailx.Normalize(mailboxEmail),
-		BodyText:           compactMessageText(body, 5000),
 	}
 }
 

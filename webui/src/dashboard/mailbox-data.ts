@@ -45,9 +45,9 @@ export function useMailboxData(selectedEmail: string) {
     ]
   });
   const mailboxes = mailboxesQuery.items;
-  const runningOperations = Array.isArray(runningOperationsQuery.data?.operations) ? runningOperationsQuery.data.operations : [];
+  const runningOperations = runningOperationsQuery.data?.operations;
   const selected = mailboxes.find((mailbox) => mailbox.email_address === selectedEmail) || null;
-  const runningOperationByEmail = useMemo(() => latestOperationByEmail(runningOperations), [runningOperations]);
+  const runningOperationByEmail = useMemo(() => latestOperationByEmail(Array.isArray(runningOperations) ? runningOperations : []), [runningOperations]);
 
   return {
     mailboxes,

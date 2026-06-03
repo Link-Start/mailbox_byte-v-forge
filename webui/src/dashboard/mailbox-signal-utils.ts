@@ -30,7 +30,7 @@ export function messageSignals(message: InboxMessage): EmailSignal[] {
   if (message.primary_signal && !signals.some((signal) => signal === message.primary_signal)) signals.unshift(message.primary_signal);
   const seen = new Set<string>();
   return signals.filter((signal) => {
-    const key = `${signalKindName(signal.kind)}:${signal.code || ''}:${signal.label || ''}`;
+    const key = `${signalKindName(signal.kind)}:${signalSecretID(signal)}:${signal.label || ''}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return signalKindName(signal.kind) !== 'unknown';
@@ -56,5 +56,9 @@ export function signalLabel(signal: EmailSignal): string {
 
 function signalCode(signal: EmailSignal | undefined, expectedKind: 'otp') {
   if (!signal || signalKindName(signal.kind) !== expectedKind) return '';
-  return String(signal.code || '').trim();
+  return signalSecretID(signal);
+}
+
+export function signalSecretID(signal: EmailSignal | undefined) {
+  return String(signal?.secret_ref?.secret_id || '').trim();
 }

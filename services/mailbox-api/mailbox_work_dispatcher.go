@@ -50,8 +50,8 @@ func (d *mailboxWorkDispatcher) publishOperationRequested(ctx context.Context, d
 	if operationID == "" {
 		return fmt.Errorf("operation_id is required")
 	}
-	eventCtx := d.context(definition.EventName, eventbus.StableEventID(eventPrefix, operationID), operationID)
-	record, err := eventoutbox.NewRecordFor(definition, request, eventCtx, eventbus.Attributes("operation_id", operationID))
+	metadata := d.metadata(definition.EventName, definition.Subject, eventbus.StableEventID(eventPrefix, operationID), operationID)
+	record, err := eventoutbox.NewRecordFor(definition, request, metadata, eventbus.Attributes("operation_id", operationID))
 	if err != nil {
 		return err
 	}
@@ -63,15 +63,16 @@ func (d *mailboxWorkDispatcher) PublishEmailPollRequested(ctx context.Context, r
 		return nil
 	}
 	request.EmailAddress = emailx.Normalize(request.GetEmailAddress())
-	eventCtx := d.context(
+	metadata := d.metadata(
 		eventcatalog.MailboxEmailPollRequested.EventName,
+		eventcatalog.MailboxEmailPollRequested.Subject,
 		eventbus.StableEventID("mailbox-email-poll-", request.GetEmailAddress(), request.GetSubjectKeyword(), request.GetParserProfile(), request.GetSignalKind().String(), fmt.Sprintf("%d", request.GetIssuedAfterUnix()), fmt.Sprintf("%d", request.GetDeadlineUnix())),
 		request.GetEmailAddress(),
 	)
 	record, err := eventoutbox.NewRecordFor(
 		eventcatalog.MailboxEmailPollRequested,
 		request,
-		eventCtx,
+		metadata,
 		eventbus.Attributes(
 			"email_address", request.GetEmailAddress(),
 			"signal_kind", request.GetSignalKind().String(),
@@ -95,14 +96,14 @@ func (d *mailboxWorkDispatcher) PublishInboxFetchRequested(ctx context.Context, 
 	if request == nil {
 		request = &mailboxv1.FetchMailboxInboxesRequest{}
 	}
-	eventCtx := d.context(mailboxInboxFetchRequested.EventName, eventbus.StableEventID("mailbox-inbox-fetch-", operationID), operationID)
+	metadata := d.metadata(mailboxInboxFetchRequested.EventName, mailboxInboxFetchRequested.Subject, eventbus.StableEventID("mailbox-inbox-fetch-", operationID), operationID)
 	record, err := eventoutbox.NewRecordFor(
 		mailboxInboxFetchRequested,
 		&pb.MailboxInboxFetchRequest{
 			OperationId: operationID,
 			Request:     proto.Clone(request).(*mailboxv1.FetchMailboxInboxesRequest),
 		},
-		eventCtx,
+		metadata,
 		eventbus.Attributes(
 			"operation_id", operationID,
 			"email_address", emailx.Normalize(request.GetEmailAddress()),
@@ -114,12 +115,13 @@ func (d *mailboxWorkDispatcher) PublishInboxFetchRequested(ctx context.Context, 
 	return d.enqueue(ctx, record)
 }
 
-func (d *mailboxWorkDispatcher) context(eventName string, eventID string, correlationID string) *commonv1.EventContext {
-	return eventbus.NewEventContext(eventbus.EventContextConfig{
+func (d *mailboxWorkDispatcher) metadata(eventName string, subject string, eventID string, correlationID string) *commonv1.EventMetadata {
+	return eventbus.NewEventMetadata(eventbus.EventMetadataConfig{
 		EventID:       eventID,
 		EventName:     eventName,
 		EventVersion:  mailboxPlatformEventVersion,
 		SourceService: d.source,
+		Subject:       subject,
 		CorrelationID: correlationID,
 	})
 }

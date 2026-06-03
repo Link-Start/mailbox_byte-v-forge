@@ -34,12 +34,12 @@ func (r *outlookRegistrationRunner) startSession(ctx context.Context, email stri
 			ExtraHttpHeaders: map[string]string{
 				"Accept-Language": r.cfg.acceptLanguage,
 			},
-			Labels: map[string]string{
-				"domain":     "mailbox",
-				"provider":   "outlook",
-				"workflow":   "oauth",
-				"email_hash": hashLabel(email),
-			},
+		},
+		Labels: map[string]string{
+			"domain":     "mailbox",
+			"provider":   "outlook",
+			"workflow":   "oauth",
+			"email_hash": hashLabel(email),
 		},
 		Ttl: durationpb.New(r.cfg.sessionTTL),
 	})
@@ -134,6 +134,7 @@ func evaluateCommand(commandID, expression string, args map[string]any, timeout 
 				Expression: expression,
 				Args:       structArgs,
 				Timeout:    durationpb.New(timeout),
+				Trusted:    true,
 			},
 		},
 	}

@@ -51,10 +51,10 @@ func (s *operationStore) list(ctx context.Context, filter operationListFilter) (
 		limit = 50
 	}
 	query := s.db.WithContext(ctx).Model(&mailboxOperationRow{})
-	if value := strings.ToUpper(strings.TrimSpace(filter.Status)); value != "" {
+	if value := operationStatusValue(filter.Status); value != "" {
 		query = query.Where("status = ?", value)
 	}
-	if value := strings.ToUpper(strings.TrimSpace(filter.Action)); value != "" {
+	if value := operationActionValue(filter.Action); value != "" {
 		query = query.Where("action = ?", value)
 	}
 	if value := emailx.Normalize(filter.EmailAddress); value != "" {
@@ -78,8 +78,8 @@ func operationRowToProto(row *mailboxOperationRow) *mailboxv1.MailboxOperation {
 	}
 	return &mailboxv1.MailboxOperation{
 		OperationId:  row.OperationID,
-		Action:       row.Action,
-		Status:       row.Status,
+		Action:       publicOperationAction(row.Action),
+		Status:       publicOperationStatus(row.Status),
 		EmailAddress: row.EmailAddress,
 		LastStep:     row.LastStep,
 		ErrorMessage: row.ErrorMessage,

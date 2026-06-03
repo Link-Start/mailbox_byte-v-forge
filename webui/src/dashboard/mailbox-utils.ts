@@ -1,4 +1,4 @@
-import { MailboxCredentialKind, MailboxProviderAction } from '@byte-v-forge/common-ui';
+import { MailboxAuthStatus, MailboxCredentialKind, MailboxProviderAction } from '@byte-v-forge/common-ui';
 import { normalizeUiEmail } from './email-utils';
 import { mailboxProviderConfig, mailboxProviderConfigs, mailboxProviderMatches, mailboxProviderTabFor, mailboxProviderValue, type MailboxProviderTab } from './mailbox-provider-config';
 import type { Mailbox, MailboxProviderActionCapability, MailboxProviderCapability } from './types';
@@ -29,10 +29,31 @@ export function mailboxProviderText(provider: string) {
 }
 
 export function authStatus(mailbox: Mailbox) {
-  const value = String(mailbox.auth_status || '').trim();
+  const value = normalizeAuthStatus(String(mailbox.auth_status || '').trim());
   if (value) return value;
   if (mailbox.refresh_token) return 'AUTHORIZED';
   return 'OAUTH_PENDING';
+}
+
+export function authStatusEnum(mailbox: Mailbox) {
+  switch (authStatus(mailbox)) {
+    case 'AUTHORIZED':
+      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_AUTHORIZED;
+    case 'OAUTH_PENDING':
+      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_OAUTH_PENDING;
+    case 'AUTH_FAILED':
+      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_AUTH_FAILED;
+    case 'NEEDS_MANUAL_VERIFICATION':
+      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_NEEDS_MANUAL_VERIFICATION;
+    case 'PASSWORD_ONLY':
+      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_PASSWORD_ONLY;
+    case 'WEBHOOK_ONLY':
+      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_WEBHOOK_ONLY;
+    case 'DISABLED':
+      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_DISABLED;
+    default:
+      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_UNKNOWN;
+  }
 }
 
 export function parseMailboxBatch(value: string, provider: string) {
@@ -82,7 +103,7 @@ export function canRunMailboxAction(mailbox: Mailbox, action: MailboxProviderAct
   if (!action) return false;
   if (!requiredCredentialsPresent(mailbox, action.required_credentials || [])) return false;
   const statuses = action.required_auth_statuses || [];
-  return statuses.length === 0 || statuses.includes(authStatus(mailbox));
+  return statuses.length === 0 || statuses.includes(authStatusEnum(mailbox));
 }
 
 export function bulkMailboxActionCount(mailboxes: Mailbox[], action: MailboxProviderActionCapability | undefined) {
@@ -111,5 +132,36 @@ function credentialPresent(mailbox: Mailbox, credential: MailboxCredentialKind) 
       return !!String(mailbox.access_token || '').trim();
     default:
       return false;
+  }
+}
+
+function normalizeAuthStatus(value: string) {
+  switch (value) {
+    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_AUTHORIZED:
+    case 'AUTHORIZED':
+      return 'AUTHORIZED';
+    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_OAUTH_PENDING:
+    case 'OAUTH_PENDING':
+      return 'OAUTH_PENDING';
+    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_AUTH_FAILED:
+    case 'AUTH_FAILED':
+      return 'AUTH_FAILED';
+    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_NEEDS_MANUAL_VERIFICATION:
+    case 'NEEDS_MANUAL_VERIFICATION':
+      return 'NEEDS_MANUAL_VERIFICATION';
+    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_PASSWORD_ONLY:
+    case 'PASSWORD_ONLY':
+      return 'PASSWORD_ONLY';
+    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_WEBHOOK_ONLY:
+    case 'WEBHOOK_ONLY':
+      return 'WEBHOOK_ONLY';
+    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_DISABLED:
+    case 'DISABLED':
+      return 'DISABLED';
+    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_UNKNOWN:
+    case 'UNKNOWN':
+      return 'UNKNOWN';
+    default:
+      return '';
   }
 }

@@ -145,6 +145,5 @@ func recentEmailMatches(message *mailboxv1.EmailInboxMessage, subjectKeyword str
 
 func recentEmailContainsKeyword(message *mailboxv1.EmailInboxMessage, keyword string) bool {
 	return strings.Contains(strings.ToLower(message.GetSubject()), keyword) ||
-		strings.Contains(strings.ToLower(message.GetBodyPreview()), keyword) ||
-		strings.Contains(strings.ToLower(message.GetBodyText()), keyword)
+		strings.Contains(strings.ToLower(message.GetBodyPreview()), keyword)
 }

@@ -77,8 +77,6 @@ func (s *MailboxStore) RecordInboundEmail(ctx context.Context, event *pb.Inbound
 			Recipients:         recipients,
 			ProviderKey:        provider,
 			SourceMailboxEmail: recipient,
-			BodyText:           body,
-			HtmlBody:           strings.TrimSpace(event.GetHtmlBody()),
 			RawSize:            event.GetRawSize(),
 		})
 	}
@@ -180,10 +178,10 @@ func persistInboxMessage(ctx context.Context, tx pgx.Tx, provider string, mailbo
 		Recipients:         uniqueStrings(message.GetRecipients()),
 		ProviderKey:        provider,
 		SourceMailboxEmail: sourceEmail,
-		BodyText:           strings.TrimSpace(message.GetBodyText()),
-		HtmlBody:           strings.TrimSpace(message.GetHtmlBody()),
+		BodyArtifactRef:    inboxArtifactRef(provider, mailboxEmail, messageID, "body_text", int64(len(message.GetBodyPreview()))),
 		RawSize:            message.GetRawSize(),
 	}
+	bodyText := strings.TrimSpace(message.GetBodyPreview())
 	if err := insertInboxMessage(ctx, tx, inboxPersistMessage{
 		key:            key,
 		id:             messageID,
@@ -195,8 +193,8 @@ func persistInboxMessage(ctx context.Context, tx pgx.Tx, provider string, mailbo
 		recipients:     persisted.GetRecipients(),
 		provider:       provider,
 		sourceEmail:    sourceEmail,
-		bodyText:       persisted.GetBodyText(),
-		htmlBody:       persisted.GetHtmlBody(),
+		bodyText:       bodyText,
+		htmlBody:       "",
 		rawSize:        persisted.GetRawSize(),
 	}, now); err != nil {
 		return nil, "", err

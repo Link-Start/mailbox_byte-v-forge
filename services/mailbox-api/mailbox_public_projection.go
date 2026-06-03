@@ -29,7 +29,7 @@ func publicMailbox(mailbox *pb.EmailMailbox) *mailboxv1.EmailMailbox {
 		LastError:       mailbox.GetLastError(),
 		CreatedAt:       mailbox.GetCreatedAt(),
 		UpdatedAt:       mailbox.GetUpdatedAt(),
-		AuthStatus:      mailbox.GetAuthStatus(),
+		AuthStatus:      publicMailboxAuthStatus(mailbox.GetAuthStatus()),
 		ProviderKey:     mailbox.GetProviderKey(),
 		LatestSignal:    mailbox.GetLatestSignal(),
 		Domain:          mailbox.GetDomain(),

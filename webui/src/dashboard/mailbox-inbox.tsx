@@ -15,7 +15,7 @@ import {
   maskPreview
 } from '@byte-v-forge/common-ui';
 import { formatEmailList, maskEmail } from './email-utils';
-import { messageSignals, signalKindName, signalLabel, verificationCodeForMessage } from './mailbox-signal-utils';
+import { messageSignals, signalKindName, signalLabel, signalSecretID, verificationCodeForMessage } from './mailbox-signal-utils';
 import type { InboxMessage, InboxResult, Mailbox } from './types';
 
 export function MailboxInboxSection({ mailbox, result, showSecrets, loading, canFetch, onFetch }: {
@@ -91,9 +91,10 @@ function MessageSignalStrip({ message, showSecrets }: {
     <span className="flex shrink-0 items-center gap-1">
       {signals.map((signal, index) => {
         const kind = signalKindName(signal.kind);
-        const code = kind === 'otp' && signal.code ? ` ${showSecrets ? signal.code : mask(signal.code)}` : '';
+        const secretID = signalSecretID(signal);
+        const code = kind === 'otp' && secretID ? ` ${showSecrets ? secretID : mask(secretID)}` : '';
         return (
-          <Badge variant="secondary" key={`${kind}-${signal.code || signal.label || index}`}>
+          <Badge variant="secondary" key={`${kind}-${secretID || signal.label || index}`}>
             {signalLabel(signal)}{code}
           </Badge>
         );

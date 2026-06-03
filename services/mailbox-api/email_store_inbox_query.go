@@ -48,8 +48,8 @@ func inboxMessageToProtoLenient(row inboxMessageRow) *mailboxv1.EmailInboxMessag
 		Recipients:         uniqueStrings(recipients),
 		ProviderKey:        normalizeEmailProvider(row.Provider),
 		SourceMailboxEmail: emailx.Normalize(row.SourceEmail),
-		BodyText:           row.BodyText,
-		HtmlBody:           row.HTMLBody,
+		BodyArtifactRef:    inboxArtifactRef(row.Provider, row.MailboxEmail, row.ID, "body_text", int64(len(row.BodyText))),
+		HtmlArtifactRef:    inboxArtifactRef(row.Provider, row.MailboxEmail, row.ID, "html_body", int64(len(row.HTMLBody))),
 		RawSize:            row.RawSize,
 	}, "")
 }

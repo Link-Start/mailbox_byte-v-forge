@@ -36,7 +36,7 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSe
   });
   const runner = useAsyncActionRunner();
 
-  useEffect(() => { if (data.loadError) toast.showError(data.loadError); }, [data.loadError, toast.showError]);
+  useEffect(() => { if (data.loadError) toast.showError(data.loadError); }, [data.loadError, toast]);
 
 
   async function runOAuth(emailAddress = '') {
