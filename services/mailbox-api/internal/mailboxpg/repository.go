@@ -96,7 +96,7 @@ func (r *Repository) MarkEmailAuthStatus(ctx context.Context, email string, auth
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	row, err := ScanMailbox(tx.QueryRow(ctx, r.providers.MailboxSelectSQL()+" WHERE m.email = $1 FOR UPDATE", email))
+	provider, err := lockStoredMailbox(ctx, tx, email)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("mailbox not found: %s", emailx.Redact(email))
 	}
@@ -104,7 +104,7 @@ func (r *Repository) MarkEmailAuthStatus(ctx context.Context, email string, auth
 		return nil, err
 	}
 	now := time.Now().Unix()
-	if err := r.updateProviderAuth(ctx, tx, row.Provider, email, authStatus, safeText(lastError), now); err != nil {
+	if err := r.updateProviderAuth(ctx, tx, provider, email, authStatus, safeText(lastError), now); err != nil {
 		return nil, err
 	}
 	if _, err := tx.Exec(ctx, "UPDATE mailboxes SET updated_at = $1 WHERE email = $2", now, email); err != nil {
@@ -117,7 +117,7 @@ func (r *Repository) MarkEmailAuthStatus(ctx context.Context, email string, auth
 }
 
 func (r *Repository) FindMailbox(ctx context.Context, email string) (*mailboxmodel.Record, error) {
-	row, err := ScanMailbox(r.pool.QueryRow(ctx, r.providers.MailboxSelectSQL()+" WHERE m.email = $1", emailx.Normalize(email)))
+	row, err := r.newMailboxSelectQuery().WhereEmail(email).ScanOne(ctx, r.pool)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("mailbox not found: %s", emailx.Redact(email))
 	}
@@ -129,11 +129,11 @@ func (r *Repository) FindMailbox(ctx context.Context, email string) (*mailboxmod
 
 func (r *Repository) PollMailboxForEmail(ctx context.Context, email string) (*mailboxmodel.Record, error) {
 	email = emailx.Normalize(email)
-	row, err := ScanMailbox(r.pool.QueryRow(ctx, r.providers.MailboxSelectSQL()+" WHERE m.email = $1", email))
+	row, err := r.newMailboxSelectQuery().WhereEmail(email).ScanOne(ctx, r.pool)
 	if errors.Is(err, pgx.ErrNoRows) {
 		canonical := emailx.CanonicalPlusAlias(email)
 		if canonical != "" && canonical != email {
-			row, err = ScanMailbox(r.pool.QueryRow(ctx, r.providers.MailboxSelectSQL()+" WHERE m.email = $1", canonical))
+			row, err = r.newMailboxSelectQuery().WhereEmail(canonical).ScanOne(ctx, r.pool)
 		}
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -150,7 +150,7 @@ func (r *Repository) PollMailboxForEmail(ctx context.Context, email string) (*ma
 
 func (r *Repository) UpdateMailboxTokens(ctx context.Context, email string, refreshToken string, accessToken string) error {
 	email = emailx.Normalize(email)
-	row, err := ScanMailbox(r.pool.QueryRow(ctx, r.providers.MailboxSelectSQL()+" WHERE m.email = $1", email))
+	row, err := r.newMailboxSelectQuery().WhereEmail(email).ScanOne(ctx, r.pool)
 	if err != nil {
 		return err
 	}
@@ -189,11 +189,11 @@ func (r *Repository) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*ma
 	if n > 500 {
 		n = 500
 	}
-	args := []any{}
-	query := r.providers.MailboxSelectSQL() + " WHERE " + r.providers.AuthFilter("", mailboxmodel.AuthStatusAuthorized, &args)
-	args = append(args, n)
-	query += fmt.Sprintf(" ORDER BY m.updated_at DESC, m.email DESC LIMIT $%d", len(args))
-	rows, err := r.pool.Query(ctx, query, args...)
+	rows, err := r.newMailboxSelectQuery().
+		WhereAuthStatus("", mailboxmodel.AuthStatusAuthorized).
+		OrderByUpdatedDesc().
+		Limit(n).
+		Query(ctx, r.pool)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func (r *Repository) DeleteMailbox(ctx context.Context, email string) (bool, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	row, err := ScanMailbox(tx.QueryRow(ctx, r.providers.MailboxSelectSQL()+" WHERE m.email = $1 FOR UPDATE", email))
+	_, err = lockStoredMailbox(ctx, tx, email)
 	if errors.Is(err, pgx.ErrNoRows) {
 		deleted, deleteErr := deleteMailboxInbox(ctx, tx, []string{email})
 		if deleteErr != nil {
@@ -239,7 +239,7 @@ func (r *Repository) DeleteMailbox(ctx context.Context, email string) (bool, err
 		return false, err
 	}
 
-	deleteEmails := []string{row.Email}
+	deleteEmails := []string{email}
 	if _, err := deleteMailboxInbox(ctx, tx, deleteEmails); err != nil {
 		return false, err
 	}
@@ -269,27 +269,20 @@ func (r *Repository) newMailboxListQuery(authStatus string, provider string, ema
 }
 
 func (r *Repository) listStoredMailboxes(ctx context.Context, filter mailboxprovider.ListQuery) ([]*mailboxmodel.Record, error) {
-	args := []any{}
-	query := r.providers.MailboxSelectSQL() + ` WHERE 1=1`
+	query := r.newMailboxSelectQuery()
 	if filter.AuthStatus != "" {
-		query += " AND " + r.providers.AuthFilter(filter.Provider, filter.AuthStatus, &args)
+		query.WhereAuthStatus(filter.Provider, filter.AuthStatus)
 	}
 	if filter.Provider != "" {
-		args = append(args, filter.Provider)
-		query += fmt.Sprintf(" AND m.provider = $%d", len(args))
+		query.WhereProvider(filter.Provider)
 	}
 	if filter.EmailAddress != "" {
-		args = append(args, filter.EmailAddress)
-		query += fmt.Sprintf(" AND m.email = $%d", len(args))
+		query.WhereEmail(filter.EmailAddress)
 	}
 	if filter.HasCursor() {
-		args = append(args, filter.Cursor.UpdatedAt.Unix(), emailx.Normalize(filter.Cursor.ID))
-		query += fmt.Sprintf(" AND (m.updated_at < $%d OR (m.updated_at = $%d AND m.email < $%d))", len(args)-1, len(args)-1, len(args))
+		query.WhereCursor(filter.Cursor)
 	}
-	args = append(args, filter.ScanLimit())
-	query += fmt.Sprintf(" ORDER BY m.updated_at DESC, m.email DESC LIMIT $%d", len(args))
-
-	rows, err := r.pool.Query(ctx, query, args...)
+	rows, err := query.OrderByUpdatedDesc().Limit(filter.ScanLimit()).Query(ctx, r.pool)
 	if err != nil {
 		return nil, err
 	}
