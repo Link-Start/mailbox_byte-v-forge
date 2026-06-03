@@ -28,9 +28,9 @@ func (s *server) UpsertMailbox(ctx context.Context, req *mailboxv1.UpsertEmailMa
 	}
 	mailbox.EmailAddress = emailx.Normalize(mailbox.GetEmailAddress())
 	if mailbox.GetProviderKey() == "" {
-		mailbox.ProviderKey = defaultMailboxProvider()
+		mailbox.ProviderKey = s.providers.defaultProvider()
 	} else {
-		mailbox.ProviderKey = normalizeMailboxProviderInput(mailbox.GetProviderKey())
+		mailbox.ProviderKey = s.providers.normalizeProviderInput(mailbox.GetProviderKey())
 	}
 	resp, err := s.emailBackend.UpsertMailbox(ctx, req)
 	if err != nil {

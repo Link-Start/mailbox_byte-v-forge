@@ -67,5 +67,5 @@ func requestProviderKey(r *http.Request) string {
 	if r == nil {
 		return ""
 	}
-	return normalizeMailboxProviderInput(strings.TrimSpace(r.URL.Query().Get("provider_key")))
+	return strings.TrimSpace(r.URL.Query().Get("provider_key"))
 }

@@ -23,7 +23,7 @@ func (s *mailboxProviderDomainStore) get(provider string) []string {
 	}
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return append([]string{}, s.byProvider[normalizeMailboxProviderInput(provider)]...)
+	return append([]string{}, s.byProvider[mailboxprovider.NormalizeKey(provider)]...)
 }
 
 func (s *mailboxProviderDomainStore) set(provider string, domains []string) {
@@ -32,12 +32,12 @@ func (s *mailboxProviderDomainStore) set(provider string, domains []string) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.byProvider[normalizeMailboxProviderInput(provider)] = append([]string{}, domains...)
+	s.byProvider[mailboxprovider.NormalizeKey(provider)] = append([]string{}, domains...)
 }
 
 func (c mailboxProviderRuntimeConfig) ListDomains(req *mailboxv1.ListMailboxDomainsRequest) *mailboxv1.ListMailboxDomainsResponse {
-	providerKey := normalizeMailboxProviderInput(req.GetProviderKey())
-	provider := capabilityProviderByKey(providerKey)
+	providerKey := c.normalizeProviderInput(req.GetProviderKey())
+	provider := c.capabilityProviderByKey(providerKey)
 	if providerKey != "" {
 		if provider == nil {
 			return &mailboxv1.ListMailboxDomainsResponse{Domains: []*mailboxv1.MailboxDomain{}}
@@ -45,19 +45,19 @@ func (c mailboxProviderRuntimeConfig) ListDomains(req *mailboxv1.ListMailboxDoma
 		return &mailboxv1.ListMailboxDomainsResponse{Domains: provider.Domains(c.DomainsForProvider(provider.Key()))}
 	}
 	domains := []*mailboxv1.MailboxDomain{}
-	for _, provider := range mailboxProviderCapabilityPlugins() {
+	for _, provider := range c.capabilityPlugins() {
 		domains = append(domains, provider.Domains(c.DomainsForProvider(provider.Key()))...)
 	}
 	return &mailboxv1.ListMailboxDomainsResponse{Domains: domains}
 }
 
 func (c mailboxProviderRuntimeConfig) SyncDomains(req *mailboxv1.SyncMailboxDomainsRequest) *mailboxv1.SyncMailboxDomainsResponse {
-	providerKey := normalizeMailboxProviderInput(req.GetProviderKey())
-	provider := capabilityProviderByKey(providerKey)
+	providerKey := c.normalizeProviderInput(req.GetProviderKey())
+	provider := c.capabilityProviderByKey(providerKey)
 	if providerKey != "" && provider == nil {
 		return &mailboxv1.SyncMailboxDomainsResponse{ErrorMessage: "provider cannot sync domains"}
 	}
-	providers := mailboxProviderCapabilityPlugins()
+	providers := c.capabilityPlugins()
 	if provider != nil {
 		providers = []mailboxprovider.CapabilityPlugin{provider}
 	}

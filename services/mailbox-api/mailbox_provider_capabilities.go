@@ -10,8 +10,8 @@ import (
 
 func (c mailboxProviderRuntimeConfig) ListCapabilities(req *mailboxv1.ListMailboxProviderCapabilitiesRequest) *mailboxv1.ListMailboxProviderCapabilitiesResponse {
 	providers := []*mailboxv1.MailboxProviderCapabilities{}
-	providerKey := normalizeMailboxProviderInput(req.GetProviderKey())
-	for _, provider := range mailboxProviderCapabilityPlugins() {
+	providerKey := c.normalizeProviderInput(req.GetProviderKey())
+	for _, provider := range c.capabilityPlugins() {
 		if providerKey != "" && providerKey != provider.Key() {
 			continue
 		}
@@ -27,7 +27,7 @@ func (c mailboxProviderRuntimeConfig) StoredInboxOnlyMailbox(email string) (*mai
 	if email == "" {
 		return nil, false
 	}
-	for _, provider := range mailboxProviderCapabilityPlugins() {
+	for _, provider := range c.capabilityPlugins() {
 		if !provider.StoredInboxOnly() || !provider.MatchesAddress(email, c) {
 			continue
 		}
@@ -51,7 +51,7 @@ func (c mailboxProviderRuntimeConfig) ProviderForInboxAddress(email string, mess
 	if mailbox, ok := c.StoredInboxOnlyMailbox(email); ok {
 		return mailbox.GetProviderKey()
 	}
-	return defaultMailboxProvider()
+	return c.defaultProvider()
 }
 
 func (c mailboxProviderRuntimeConfig) IsStoredInboxOnlyAddress(email string) bool {
