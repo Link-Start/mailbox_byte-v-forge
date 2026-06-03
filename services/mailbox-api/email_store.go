@@ -2,76 +2,21 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/emailx"
-	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
-	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"mailboxapi/internal/mailboxpg"
 	"mailboxapi/internal/mailboxprovider"
 )
 
-func inboxMessageRowToProtoForProfile(row mailboxpg.InboxMessageRow, profile string) (*mailboxv1.EmailInboxMessage, error) {
-	recipients := []string{}
-	if strings.TrimSpace(row.RecipientsJSON) != "" {
-		if err := json.Unmarshal([]byte(row.RecipientsJSON), &recipients); err != nil {
-			return nil, err
-		}
-	}
-	return emailMessageWithSignals(&mailboxv1.EmailInboxMessage{
-		Id:                 row.ID,
-		MailboxEmail:       emailx.Normalize(row.MailboxEmail),
-		Subject:            row.Subject,
-		FromAddress:        row.FromAddress,
-		BodyPreview:        row.BodyPreview,
-		ReceivedAtUnix:     row.ReceivedAtUnix,
-		Recipients:         uniqueStrings(recipients),
-		ProviderKey:        normalizeEmailProvider(row.Provider),
-		SourceMailboxEmail: emailx.Normalize(row.SourceEmail),
-		BodyArtifactRef:    inboxArtifactRef(row.Provider, row.MailboxEmail, row.ID, "body_text", int64(len(row.BodyText))),
-		HtmlArtifactRef:    inboxArtifactRef(row.Provider, row.MailboxEmail, row.ID, "html_body", int64(len(row.HTMLBody))),
-		RawSize:            row.RawSize,
-	}, profile), nil
-}
-
-func inboxArtifactRef(provider string, mailboxEmail string, messageID string, purpose string, sizeBytes int64) *commonv1.ArtifactRef {
-	provider = normalizeEmailProvider(provider)
-	mailboxEmail = emailx.Normalize(mailboxEmail)
-	messageID = strings.TrimSpace(messageID)
-	purpose = strings.TrimSpace(purpose)
-	if provider == "" || mailboxEmail == "" || messageID == "" || purpose == "" || sizeBytes <= 0 {
-		return nil
-	}
-	artifactID := strings.Join([]string{"mailbox", provider, mailboxEmail, messageID, purpose}, ":")
-	return &commonv1.ArtifactRef{
-		ArtifactId:  artifactID,
-		Uri:         "mailbox://inbox/" + artifactID,
-		ContentType: mailboxArtifactContentType(purpose),
-		SizeBytes:   sizeBytes,
-		Purpose:     purpose,
-	}
-}
-
-func mailboxArtifactContentType(purpose string) string {
-	if purpose == "html_body" {
-		return "text/html"
-	}
-	return "text/plain"
-}
-
 type MailboxStore struct {
 	pool      *pgxpool.Pool
-	providers *mailboxprovider.Registry
 	mailboxes *mailboxpg.Repository
-	recent    *recentEmailCache
-	secrets   *mailboxSecretStore
 }
 
-func NewMailboxStore(ctx context.Context, dsn string, providers *mailboxprovider.Registry, recent *recentEmailCache, secrets *mailboxSecretStore) (*MailboxStore, error) {
+func NewMailboxStore(ctx context.Context, dsn string, providers *mailboxprovider.Registry) (*MailboxStore, error) {
 	if strings.TrimSpace(dsn) == "" {
 		return nil, errors.New("PG_DSN is required")
 	}
@@ -87,7 +32,7 @@ func NewMailboxStore(ctx context.Context, dsn string, providers *mailboxprovider
 		pool.Close()
 		return nil, err
 	}
-	store := &MailboxStore{pool: pool, providers: providers, mailboxes: mailboxes, recent: recent, secrets: secrets}
+	store := &MailboxStore{pool: pool, mailboxes: mailboxes}
 	if err := mailboxes.EnsureSchema(ctx, mailboxPlatformEventOutboxTable); err != nil {
 		pool.Close()
 		return nil, err

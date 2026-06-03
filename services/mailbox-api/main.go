@@ -18,6 +18,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
+	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxapp"
 	"mailboxapi/pb"
 )
@@ -46,12 +47,22 @@ func main() {
 
 	recentCache := newRecentEmailCache(recentEmailClient, cfg.recentEmailCachePrefix, cfg.recentEmailCacheTTL, cfg.recentEmailCacheMax)
 	secretStore := newMailboxSecretStore(recentEmailClient, cfg.recentEmailCachePrefix+":secrets", cfg.recentEmailCacheTTL)
-	mailboxStore, err := NewMailboxStore(ctx, cfg.pgDSN, defaultMailboxProviderRegistry(), recentCache, secretStore)
+	mailboxStore, err := NewMailboxStore(ctx, cfg.pgDSN, defaultMailboxProviderRegistry())
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox store: %s", safeMailboxError(err))
 	}
 	defer mailboxStore.Close()
 	mailboxRepo := mailboxStore.mailboxes
+	inboxService := inboxapp.NewService(inboxapp.Config{
+		Repository:  mailboxRepo,
+		Providers:   defaultMailboxProviderRegistry(),
+		Recent:      recentCache,
+		Secrets:     secretStore,
+		SecretTTL:   cfg.recentEmailCacheTTL,
+		OutboxTable: mailboxPlatformEventOutboxTable,
+		EventSource: mailboxPlatformEventSource,
+		Logf:        logWarning,
+	})
 	inboxLock := redisx.NewBestEffortLocker(coordinationClient, cfg.inboxLockPrefix, cfg.inboxLockTTL, cfg.inboxLockRetry)
 	platformEventBus, closePlatformEventBus, err := newPlatformEventBus(ctx, cfg)
 	if err != nil {
@@ -67,14 +78,14 @@ func main() {
 	}
 	hotEvents := newMailboxHotStream(hotBus)
 	platformEmailEvents := newMailboxPlatformEvents(platformEventBus)
-	mailWatcher := NewMailWatcher(mailboxStore, mailboxRepo, hotEvents)
+	mailWatcher := NewMailWatcher(inboxService, mailboxRepo, hotEvents)
 
 	operations, err := newOperationStore(cfg.pgDSN)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox operation store: %s", safeMailboxError(err))
 	}
 	workDispatcher := newMailboxWorkDispatcher(operations.db, "mailbox-api")
-	emailBackend := &EmailService{store: mailboxStore, mailboxRepo: mailboxRepo, mailboxes: mailboxapp.NewService(mailboxRepo), watcher: mailWatcher, providers: cfg.providers, inboxLock: inboxLock, work: workDispatcher}
+	emailBackend := &EmailService{mailboxRepo: mailboxRepo, mailboxes: mailboxapp.NewService(mailboxRepo), inbox: inboxService, watcher: mailWatcher, providers: cfg.providers, inboxLock: inboxLock, work: workDispatcher}
 
 	pollConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, eventcatalog.MailboxEmailPollRequested, 10, 60*time.Second)
 	if err != nil {
@@ -107,7 +118,7 @@ func main() {
 		return runMailboxRegistrationWorker(groupCtx, registrationConsumer, operations, activities)
 	})
 	group.Go(func() error { return runMailboxOAuthWorker(groupCtx, oauthConsumer, operations, activities) })
-	startWebhookServer(groupCtx, cfg.webhookHTTPAddr, mailboxStore, mailWatcher, inboxLock, errCh)
+	startWebhookServer(groupCtx, cfg.webhookHTTPAddr, inboxService, mailWatcher, inboxLock, errCh)
 
 	listener, err := net.Listen("tcp", cfg.listenAddr)
 	if err != nil {

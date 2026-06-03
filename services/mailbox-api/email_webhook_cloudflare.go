@@ -32,7 +32,7 @@ func (h *graphWebhookHandler) handleCloudflareEmail(w http.ResponseWriter, r *ht
 		return
 	}
 	event.ProviderKey = emailProviderCloudflare
-	messages, err := h.store.RecordInboundEmail(r.Context(), &event)
+	messages, err := h.inbox.RecordInboundEmail(r.Context(), &event)
 	if err != nil {
 		logWarning("record Cloudflare email webhook: %v", err)
 		http.Error(w, "record email event failed", http.StatusInternalServerError)

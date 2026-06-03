@@ -15,6 +15,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
 
+	"mailboxapi/internal/inboxapp"
 	"mailboxapi/pb"
 )
 
@@ -119,7 +120,7 @@ func (d *mailboxWorkDispatcher) metadata(eventName string, subject string, event
 	return eventbus.NewEventMetadata(eventbus.EventMetadataConfig{
 		EventID:       eventID,
 		EventName:     eventName,
-		EventVersion:  mailboxPlatformEventVersion,
+		EventVersion:  inboxapp.EventVersion,
 		SourceService: d.source,
 		Subject:       subject,
 		CorrelationID: correlationID,

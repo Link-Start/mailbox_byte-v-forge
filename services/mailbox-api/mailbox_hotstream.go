@@ -9,6 +9,8 @@ import (
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	observabilityv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/observability/v1"
 	"github.com/byte-v-forge/common-lib/hotstream"
+
+	"mailboxapi/internal/inboxapp"
 )
 
 const (
@@ -40,7 +42,7 @@ func (p *mailboxHotStream) PublishEmailMessages(ctx context.Context, messages []
 			continue
 		}
 		p.publish(ctx, hotstream.NewEvent(hotstream.EventConfig{
-			EventID:       emailReceivedEventID(message),
+			EventID:       inboxapp.EmailReceivedEventID(message),
 			EventType:     mailboxEventEmailReceived,
 			SourceService: mailboxHotStreamSource,
 			ResourceType:  mailboxResourceEmail,
@@ -59,7 +61,7 @@ func (p *mailboxHotStream) PublishEmailMessages(ctx context.Context, messages []
 				continue
 			}
 			p.publish(ctx, hotstream.NewEvent(hotstream.EventConfig{
-				EventID:       emailSignalEventID(message, signal),
+				EventID:       inboxapp.EmailSignalEventID(message, signal),
 				EventType:     mailboxEventSignalReceived,
 				SourceService: mailboxHotStreamSource,
 				ResourceType:  mailboxResourceEmail,

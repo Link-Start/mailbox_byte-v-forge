@@ -8,6 +8,8 @@ import (
 
 	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/jackc/pgx/v5"
+
+	"mailboxapi/internal/inboxapp"
 )
 
 func (r *Repository) InboxWatermark(ctx context.Context, email string) (int64, error) {
@@ -37,7 +39,7 @@ func (r *Repository) HasInboxMessages(ctx context.Context, email string) (bool, 
 	return exists, err
 }
 
-func (r *Repository) ListInboxRows(ctx context.Context, email string, limit int, receivedAfterUnix int64) ([]InboxMessageRow, error) {
+func (r *Repository) ListInboxRows(ctx context.Context, email string, limit int, receivedAfterUnix int64) ([]inboxapp.MessageRow, error) {
 	email = emailx.Normalize(email)
 	if email == "" {
 		return nil, errors.New("email_address is required")
@@ -57,7 +59,7 @@ func (r *Repository) ListInboxRows(ctx context.Context, email string, limit int,
 	return r.queryInboxRows(ctx, query, args...)
 }
 
-func (r *Repository) LatestInboxRows(ctx context.Context, email string, subjectKeyword string, issuedAfterUnix int64, limit int) ([]InboxMessageRow, error) {
+func (r *Repository) LatestInboxRows(ctx context.Context, email string, subjectKeyword string, issuedAfterUnix int64, limit int) ([]inboxapp.MessageRow, error) {
 	email = emailx.Normalize(email)
 	if email == "" {
 		return nil, errors.New("email_address is required")
@@ -77,14 +79,14 @@ func (r *Repository) LatestInboxRows(ctx context.Context, email string, subjectK
 	return r.queryInboxRows(ctx, query, args...)
 }
 
-func (r *Repository) queryInboxRows(ctx context.Context, query string, args ...any) ([]InboxMessageRow, error) {
+func (r *Repository) queryInboxRows(ctx context.Context, query string, args ...any) ([]inboxapp.MessageRow, error) {
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	out := []InboxMessageRow{}
+	out := []inboxapp.MessageRow{}
 	for rows.Next() {
 		row, err := scanInboxMessageRow(rows)
 		if err != nil {

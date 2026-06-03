@@ -67,7 +67,7 @@ func (s *EmailService) storedOnlyInboxResponse(ctx context.Context, email string
 	if mailbox, err := s.mailboxRepo.FindMailbox(ctx, email); err == nil {
 		resultMailbox = mailbox
 	}
-	messages, err := s.store.ListInboxMessagesSince(ctx, email, request.GetLimitPerMailbox(), request.GetReceivedAfterUnix())
+	messages, err := s.inbox.ListMessagesSince(ctx, email, request.GetLimitPerMailbox(), request.GetReceivedAfterUnix())
 	if err != nil {
 		return nil, true, status.Error(codes.Internal, safeMailboxError(err))
 	}
@@ -98,7 +98,7 @@ func (s *EmailService) fetchInboxTargets(ctx context.Context, request *mailboxv1
 		messages, err := s.watcher.FetchMailboxInbox(ctx, target.fetchMailbox, request.GetLimitPerMailbox(), request.GetReceivedAfterUnix())
 		if err != nil {
 			result.ErrorMessage = safeMailboxError(err)
-			if cached, cacheErr := s.store.ListInboxMessagesSince(ctx, target.fetchMailbox.GetEmailAddress(), request.GetLimitPerMailbox(), request.GetReceivedAfterUnix()); cacheErr == nil {
+			if cached, cacheErr := s.inbox.ListMessagesSince(ctx, target.fetchMailbox.GetEmailAddress(), request.GetLimitPerMailbox(), request.GetReceivedAfterUnix()); cacheErr == nil {
 				result.Messages = cached
 				resp.MessageCount += int32(len(cached))
 			}

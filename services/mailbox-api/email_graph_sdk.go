@@ -6,6 +6,8 @@ import (
 
 	abs "github.com/microsoft/kiota-abstractions-go"
 	graphusers "github.com/microsoftgraph/msgraph-sdk-go/users"
+
+	"mailboxapi/internal/inboxapp"
 )
 
 func (w *MailWatcher) fetchOnceWithGraphSDK(ctx context.Context, accessToken string, limit int, receivedAfterNs int64) ([]graphMessage, error) {
@@ -13,7 +15,7 @@ func (w *MailWatcher) fetchOnceWithGraphSDK(ctx context.Context, accessToken str
 	if err != nil {
 		return nil, err
 	}
-	top := int32(messageLimitValue(int32(limit), w.messageLimit))
+	top := int32(inboxapp.MessageLimitValue(int32(limit), w.messageLimit))
 	filter := ""
 	if receivedAfterNs > 0 {
 		filter = "receivedDateTime gt " + time.Unix(0, receivedAfterNs).UTC().Format(time.RFC3339Nano)

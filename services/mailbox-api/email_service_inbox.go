@@ -24,7 +24,7 @@ func (s *EmailService) ListInbox(ctx context.Context, request *mailboxv1.ListMai
 	if limit > 100 {
 		limit = 100
 	}
-	messages, err := s.store.ListInboxMessages(ctx, email, limit)
+	messages, err := s.inbox.ListMessages(ctx, email, limit)
 	if err != nil {
 		return nil, status.Error(codes.Internal, safeMailboxError(err))
 	}

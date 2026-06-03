@@ -25,8 +25,7 @@ const (
 )
 
 var (
-	emailPattern   = regexp.MustCompile(`(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}`)
-	htmlTagPattern = regexp.MustCompile(`<[^>]+>`)
+	emailPattern = regexp.MustCompile(`(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}`)
 )
 
 func logInfo(format string, args ...any) {

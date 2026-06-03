@@ -9,10 +9,12 @@ import (
 	"time"
 
 	"github.com/byte-v-forge/common-lib/redisx"
+
+	"mailboxapi/internal/inboxapp"
 )
 
 type graphWebhookHandler struct {
-	store       *MailboxStore
+	inbox       *inboxapp.Service
 	watcher     *MailWatcher
 	refreshLock *redisx.BestEffortLocker
 }
@@ -28,14 +30,14 @@ type graphNotification struct {
 	ChangeType     string `json:"changeType"`
 }
 
-func startWebhookServer(ctx context.Context, addr string, store *MailboxStore, watcher *MailWatcher, refreshLock *redisx.BestEffortLocker, errCh chan<- error) {
+func startWebhookServer(ctx context.Context, addr string, inbox *inboxapp.Service, watcher *MailWatcher, refreshLock *redisx.BestEffortLocker, errCh chan<- error) {
 	addr = strings.TrimSpace(addr)
 	if addr == "" {
 		return
 	}
 
 	handler := &graphWebhookHandler{
-		store:       store,
+		inbox:       inbox,
 		watcher:     watcher,
 		refreshLock: refreshLock,
 	}

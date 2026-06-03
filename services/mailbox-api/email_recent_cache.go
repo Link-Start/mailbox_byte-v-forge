@@ -12,6 +12,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	"mailboxapi/internal/inboxapp"
 )
 
 type recentEmailCache struct {
@@ -127,7 +129,7 @@ func decodeRecentEmailMessage(payload string, parserProfile string) (*mailboxv1.
 	if err := (protojson.UnmarshalOptions{DiscardUnknown: true}).Unmarshal([]byte(payload), message); err != nil {
 		return nil, false
 	}
-	return emailMessageWithSignals(message, parserProfile), true
+	return inboxapp.MessageWithSignals(message, parserProfile), true
 }
 
 func recentEmailMatches(message *mailboxv1.EmailInboxMessage, subjectKeyword string, issuedAfterUnix int64, signalKind mailboxv1.EmailSignalKind) bool {
@@ -140,7 +142,7 @@ func recentEmailMatches(message *mailboxv1.EmailInboxMessage, subjectKeyword str
 	if keyword := strings.ToLower(strings.TrimSpace(subjectKeyword)); keyword != "" && !recentEmailContainsKeyword(message, keyword) {
 		return false
 	}
-	return messageHasSignal(message, signalKind)
+	return inboxapp.MessageHasSignal(message, signalKind)
 }
 
 func recentEmailContainsKeyword(message *mailboxv1.EmailInboxMessage, keyword string) bool {

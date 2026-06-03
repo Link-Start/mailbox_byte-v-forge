@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"html"
 	"strings"
 	"time"
 
@@ -11,6 +10,8 @@ import (
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/byte-v-forge/common-lib/hashx"
 	"github.com/byte-v-forge/common-lib/timex"
+
+	"mailboxapi/internal/inboxapp"
 )
 
 func inboxMessages(mailboxEmail string, messages []graphMessage) []*mailboxv1.EmailInboxMessage {
@@ -24,73 +25,19 @@ func inboxMessages(mailboxEmail string, messages []graphMessage) []*mailboxv1.Em
 func inboxMessage(mailboxEmail string, msg graphMessage) *mailboxv1.EmailInboxMessage {
 	bodyPreview := strings.TrimSpace(msg.BodyPreview)
 	if bodyPreview == "" {
-		bodyPreview = compactMessageText(msg.Body.Content, 500)
+		bodyPreview = inboxapp.CompactMessageText(msg.Body.Content, 500)
 	}
 	return &mailboxv1.EmailInboxMessage{
 		Id:                 msg.ID,
 		MailboxEmail:       emailx.Normalize(mailboxEmail),
 		Subject:            strings.TrimSpace(msg.Subject),
 		FromAddress:        strings.TrimSpace(msg.From.EmailAddress.Address),
-		BodyPreview:        compactMessageText(bodyPreview, 500),
+		BodyPreview:        inboxapp.CompactMessageText(bodyPreview, 500),
 		ReceivedAtUnix:     int64(timex.UnixFloat(msg.ReceivedDateTime)),
-		Recipients:         uniqueStrings(messageAddresses(msg)),
+		Recipients:         inboxapp.UniqueEmails(messageAddresses(msg)),
 		ProviderKey:        emailProviderOutlook,
 		SourceMailboxEmail: emailx.Normalize(mailboxEmail),
 	}
-}
-
-func compactMessageText(value string, limit int) string {
-	text := htmlTagPattern.ReplaceAllString(html.UnescapeString(value), " ")
-	text = strings.Join(strings.Fields(strings.ReplaceAll(text, "\u00a0", " ")), " ")
-	if limit > 0 && len(text) > limit {
-		runes := []rune(text)
-		if len(runes) > limit {
-			return string(runes[:limit])
-		}
-	}
-	return text
-}
-
-func uniqueStrings(values []string) []string {
-	seen := map[string]struct{}{}
-	out := []string{}
-	for _, value := range values {
-		trimmed := emailx.Normalize(value)
-		if trimmed == "" {
-			continue
-		}
-		if _, ok := seen[trimmed]; ok {
-			continue
-		}
-		seen[trimmed] = struct{}{}
-		out = append(out, trimmed)
-	}
-	return out
-}
-
-func messageLimitValue(limit int32, fallback int) int {
-	n := int(limit)
-	if n <= 0 {
-		n = fallback
-	}
-	if n <= 0 {
-		n = defaultMessageLimit
-	}
-	if n > 100 {
-		n = 100
-	}
-	return n
-}
-
-func inboxReceivedAfter(watermarkNs int64, overlapSeconds int) int64 {
-	if watermarkNs <= 0 {
-		return 0
-	}
-	after := watermarkNs - int64(overlapSeconds)*int64(time.Second)
-	if after < 0 {
-		return 0
-	}
-	return after
 }
 
 func messageKey(msg graphMessage) string {
