@@ -2,9 +2,6 @@ package mailboxpg
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/byte-v-forge/common-lib/emailx"
 
 	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"
@@ -21,33 +18,14 @@ func (r *Repository) listStoredInboxOnlyVirtualMailboxes(ctx context.Context, pr
 	if prepareProjection == nil {
 		prepareProjection = func(*mailboxmodel.Record) {}
 	}
-	args := []any{provider}
-	where := ""
+	query := newVirtualMailboxQuery(provider)
 	if filter.EmailAddress != "" {
-		args = append(args, filter.EmailAddress)
-		where += fmt.Sprintf(" AND msg.mailbox_email = $%d", len(args))
+		query.WhereEmail(filter.EmailAddress)
 	}
-	query := fmt.Sprintf(`
-		SELECT $1 || ':' || v.mailbox_email, v.mailbox_email,
-			$1, '', '', '', '', '', v.created_at, v.updated_at
-		FROM (
-			SELECT msg.mailbox_email, MIN(msg.created_at) AS created_at, MAX(msg.updated_at) AS updated_at
-			FROM mailbox_inbox_messages msg
-			WHERE msg.provider = $1
-			  AND NOT EXISTS (SELECT 1 FROM mailboxes m WHERE m.email = msg.mailbox_email)
-			  %s
-			GROUP BY msg.mailbox_email
-		) v
-		WHERE 1=1
-	`, where)
 	if filter.HasCursor() {
-		args = append(args, filter.Cursor.UpdatedAt.Unix(), emailx.Normalize(filter.Cursor.ID))
-		query += fmt.Sprintf(" AND (v.updated_at < $%d OR (v.updated_at = $%d AND v.mailbox_email < $%d))", len(args)-1, len(args)-1, len(args))
+		query.WhereCursor(filter.Cursor)
 	}
-	args = append(args, filter.ScanLimit())
-	query += fmt.Sprintf(" ORDER BY v.updated_at DESC, v.mailbox_email DESC LIMIT $%d", len(args))
-
-	rows, err := r.pool.Query(ctx, query, args...)
+	rows, err := query.Limit(filter.ScanLimit()).Query(ctx, r.pool)
 	if err != nil {
 		return nil, err
 	}

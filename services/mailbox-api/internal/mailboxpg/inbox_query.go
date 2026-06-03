@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/jackc/pgx/v5"
@@ -44,19 +43,16 @@ func (r *Repository) ListInboxRows(ctx context.Context, email string, limit int,
 	if email == "" {
 		return nil, errors.New("email_address is required")
 	}
-	n := normalizeInboxRowLimit(limit)
-	args := []any{email}
-	query := inboxMessageSelectSQL + "WHERE mailbox_email = $1"
-	if receivedAfterUnix > 0 {
-		args = append(args, receivedAfterUnix)
-		query += fmt.Sprintf(" AND received_at > $%d", len(args))
+	rows, err := newInboxMessageQuery().
+		WhereMailbox(email).
+		WhereReceivedAfter(receivedAfterUnix).
+		OrderByLatest().
+		Limit(normalizeInboxRowLimit(limit)).
+		Query(ctx, r.pool)
+	if err != nil {
+		return nil, err
 	}
-	args = append(args, n)
-	query += fmt.Sprintf(`
-		ORDER BY received_at DESC, updated_at DESC, message_key DESC
-		LIMIT $%d
-	`, len(args))
-	return r.queryInboxRows(ctx, query, args...)
+	return scanInboxRows(rows)
 }
 
 func (r *Repository) LatestInboxRows(ctx context.Context, email string, subjectKeyword string, issuedAfterUnix int64, limit int) ([]inboxapp.MessageRow, error) {
@@ -64,26 +60,20 @@ func (r *Repository) LatestInboxRows(ctx context.Context, email string, subjectK
 	if email == "" {
 		return nil, errors.New("email_address is required")
 	}
-	args := []any{email}
-	query := inboxMessageSelectSQL + "WHERE mailbox_email = $1"
-	if issuedAfterUnix > 0 {
-		args = append(args, issuedAfterUnix)
-		query += fmt.Sprintf(" AND received_at >= $%d", len(args))
-	}
-	if keyword := strings.TrimSpace(subjectKeyword); keyword != "" {
-		args = append(args, "%"+keyword+"%")
-		query += fmt.Sprintf(" AND (subject ILIKE $%d OR body_preview ILIKE $%d OR body_text ILIKE $%d)", len(args), len(args), len(args))
-	}
-	args = append(args, normalizeInboxRowLimit(limit))
-	query += fmt.Sprintf(" ORDER BY received_at DESC, updated_at DESC, message_key DESC LIMIT $%d", len(args))
-	return r.queryInboxRows(ctx, query, args...)
-}
-
-func (r *Repository) queryInboxRows(ctx context.Context, query string, args ...any) ([]inboxapp.MessageRow, error) {
-	rows, err := r.pool.Query(ctx, query, args...)
+	rows, err := newInboxMessageQuery().
+		WhereMailbox(email).
+		WhereReceivedAtOrAfter(issuedAfterUnix).
+		WhereKeyword(subjectKeyword).
+		OrderByLatest().
+		Limit(normalizeInboxRowLimit(limit)).
+		Query(ctx, r.pool)
 	if err != nil {
 		return nil, err
 	}
+	return scanInboxRows(rows)
+}
+
+func scanInboxRows(rows pgx.Rows) ([]inboxapp.MessageRow, error) {
 	defer rows.Close()
 
 	out := []inboxapp.MessageRow{}
