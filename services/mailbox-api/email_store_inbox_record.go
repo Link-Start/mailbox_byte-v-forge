@@ -126,7 +126,11 @@ func (s *MailboxStore) recordInboxMessages(ctx context.Context, provider string,
 				return nil, err
 			}
 			if inserted {
-				unseen = append(unseen, emailMessageWithSignals(persisted, ""))
+				persisted = emailMessageWithSignals(persisted, "")
+				if err := s.attachEmailSignalSecrets(ctx, persisted); err != nil {
+					return nil, err
+				}
+				unseen = append(unseen, persisted)
 			}
 		}
 	}

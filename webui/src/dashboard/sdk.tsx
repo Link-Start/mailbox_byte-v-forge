@@ -5,10 +5,12 @@ export { mergeInboxMessage, useMailboxEmailEventCache } from './mailbox-events';
 export { mailboxProviderValue } from './mailbox-provider-config';
 export {
   latestOtpForInboxResult,
+  messageHasVerificationSignal,
   messageSignals,
+  signalHasSecretRef,
   signalKindName,
   signalLabel,
-  verificationCodeForMessage
+  verificationRefForMessage
 } from './mailbox-signal-utils';
 export type { MailboxEmailEventCacheOptions } from './mailbox-events';
 export type {

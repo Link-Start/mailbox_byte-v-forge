@@ -3,10 +3,9 @@ package main
 import (
 	"regexp"
 	"strings"
+	"time"
 
-	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/byte-v-forge/common-lib/hashx"
 )
 
 var (
@@ -25,12 +24,8 @@ func emailMessageWithSignals(message *mailboxv1.EmailInboxMessage, _ string) *ma
 		return message
 	}
 	signal := &mailboxv1.EmailSignal{
-		Kind: mailboxv1.EmailSignalKind_EMAIL_SIGNAL_KIND_OTP,
-		SecretRef: &commonv1.SecretRef{
-			SecretId: "mailbox-email-otp-" + hashx.SHA256Hex(normalizeEmailOTP(code)),
-			Provider: "mailbox",
-			Purpose:  "email_otp",
-		},
+		Kind:            mailboxv1.EmailSignalKind_EMAIL_SIGNAL_KIND_OTP,
+		SecretRef:       emailOTPSecretRef(message, time.Time{}),
 		Label:           "verification_code",
 		Profile:         "generic",
 		Parser:          "mailbox-email-otp",

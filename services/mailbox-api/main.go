@@ -44,7 +44,8 @@ func main() {
 	defer func() { _ = recentEmailClient.Close() }()
 
 	recentCache := newRecentEmailCache(recentEmailClient, cfg.recentEmailCachePrefix, cfg.recentEmailCacheTTL, cfg.recentEmailCacheMax)
-	mailboxStore, err := NewMailboxStore(ctx, cfg.pgDSN, recentCache)
+	secretStore := newMailboxSecretStore(recentEmailClient, cfg.recentEmailCachePrefix+":secrets", cfg.recentEmailCacheTTL)
+	mailboxStore, err := NewMailboxStore(ctx, cfg.pgDSN, recentCache, secretStore)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox store: %s", safeMailboxError(err))
 	}

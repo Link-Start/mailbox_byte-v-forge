@@ -24,7 +24,8 @@ export type MailboxProviderCapability = MailboxProviderCapabilities;
 export type Mailbox = EmailMailbox;
 
 export type LatestOtp = {
-  otp: string;
+  captured: boolean;
+  ref_id: string;
   subject: string;
   received_at_unix: number;
 };

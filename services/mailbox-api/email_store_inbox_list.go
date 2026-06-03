@@ -42,7 +42,11 @@ func (s *MailboxStore) ListInboxMessagesSince(ctx context.Context, email string,
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, inboxMessageToProtoLenient(row))
+		message := inboxMessageToProtoLenient(row)
+		if err := s.attachEmailSignalSecrets(ctx, message); err != nil {
+			logWarning("list mailbox email signal secret refresh failed email=%s: %v", emailx.Redact(email), err)
+		}
+		out = append(out, message)
 	}
 	return out, rows.Err()
 }

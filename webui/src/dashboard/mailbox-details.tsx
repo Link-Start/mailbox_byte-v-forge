@@ -114,11 +114,11 @@ function MailboxOverview({ mailbox, showSecrets, latestOtp, onCopy, onDelete }: 
   fields.push({
     id: 'latest-otp',
     label: '验证码',
-    value: showSecrets ? (latestOtp?.otp || '-') : mask(latestOtp?.otp || ''),
-    copyValue: latestOtp?.otp || '',
-    copyDisabled: !latestOtp?.otp,
-    masked: !showSecrets,
-    mono: true,
+    value: latestOtp?.captured ? '已捕获' : '-',
+    copyValue: '',
+    copyDisabled: true,
+    masked: false,
+    mono: false,
   });
   const actions: ActionButtonDescriptor[] = [{
     id: 'delete-mailbox',

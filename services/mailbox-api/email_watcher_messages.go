@@ -26,7 +26,6 @@ func inboxMessage(mailboxEmail string, msg graphMessage) *mailboxv1.EmailInboxMe
 	if bodyPreview == "" {
 		bodyPreview = compactMessageText(msg.Body.Content, 500)
 	}
-	body := msg.BodyPreview + "\n" + msg.Body.Content
 	return &mailboxv1.EmailInboxMessage{
 		Id:                 msg.ID,
 		MailboxEmail:       emailx.Normalize(mailboxEmail),

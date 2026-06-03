@@ -11,11 +11,10 @@ import {
   ItemTitle,
   compactToast,
   formatUnix,
-  mask,
   maskPreview
 } from '@byte-v-forge/common-ui';
 import { formatEmailList, maskEmail } from './email-utils';
-import { messageSignals, signalKindName, signalLabel, signalSecretID, verificationCodeForMessage } from './mailbox-signal-utils';
+import { messageHasVerificationSignal, messageSignals, signalHasSecretRef, signalKindName, signalLabel } from './mailbox-signal-utils';
 import type { InboxMessage, InboxResult, Mailbox } from './types';
 
 export function MailboxInboxSection({ mailbox, result, showSecrets, loading, canFetch, onFetch }: {
@@ -66,7 +65,7 @@ function InboxMessageRow({ message, showSecrets }: {
         </ItemTitle>
         <ItemDescription className="flex items-center justify-between gap-2">
           <span className="truncate">发件人 {showSecrets ? (message.from_address || '-') : maskEmail(message.from_address)}</span>
-          <MessageSignalStrip message={message} showSecrets={showSecrets} />
+          <MessageSignalStrip message={message} />
         </ItemDescription>
         <ItemDescription className="line-clamp-1" title={formatEmailList(message.recipients, true)}>
           收件人 {formatEmailList(message.recipients, showSecrets)}
@@ -77,25 +76,23 @@ function InboxMessageRow({ message, showSecrets }: {
   );
 }
 
-function MessageSignalStrip({ message, showSecrets }: {
+function MessageSignalStrip({ message }: {
   message: InboxMessage;
-  showSecrets: boolean;
 }) {
   const signals = messageSignals(message);
-  const fallbackCode = verificationCodeForMessage(message);
-  if (signals.length === 0 && fallbackCode) {
-    return <Badge variant="outline" className="border-emerald-200 bg-emerald-50 font-mono text-emerald-700">验证码 {showSecrets ? fallbackCode : mask(fallbackCode)}</Badge>;
+  const fallbackSignal = messageHasVerificationSignal(message);
+  if (signals.length === 0 && fallbackSignal) {
+    return <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">验证码 已捕获</Badge>;
   }
   if (signals.length === 0) return null;
   return (
     <span className="flex shrink-0 items-center gap-1">
       {signals.map((signal, index) => {
         const kind = signalKindName(signal.kind);
-        const secretID = signalSecretID(signal);
-        const code = kind === 'otp' && secretID ? ` ${showSecrets ? secretID : mask(secretID)}` : '';
+        const captured = kind === 'otp' && signalHasSecretRef(signal, 'otp');
         return (
-          <Badge variant="secondary" key={`${kind}-${secretID || signal.label || index}`}>
-            {signalLabel(signal)}{code}
+          <Badge variant="secondary" key={`${kind}-${signal.label || index}`}>
+            {signalLabel(signal)}{captured ? ' 已捕获' : ''}
           </Badge>
         );
       })}

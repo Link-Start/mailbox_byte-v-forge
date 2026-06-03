@@ -119,11 +119,12 @@ type rowScanner interface {
 }
 
 type MailboxStore struct {
-	pool   *pgxpool.Pool
-	recent *recentEmailCache
+	pool    *pgxpool.Pool
+	recent  *recentEmailCache
+	secrets *mailboxSecretStore
 }
 
-func NewMailboxStore(ctx context.Context, dsn string, recent *recentEmailCache) (*MailboxStore, error) {
+func NewMailboxStore(ctx context.Context, dsn string, recent *recentEmailCache, secrets *mailboxSecretStore) (*MailboxStore, error) {
 	if strings.TrimSpace(dsn) == "" {
 		return nil, errors.New("PG_DSN is required")
 	}
@@ -131,7 +132,7 @@ func NewMailboxStore(ctx context.Context, dsn string, recent *recentEmailCache) 
 	if err != nil {
 		return nil, err
 	}
-	store := &MailboxStore{pool: pool, recent: recent}
+	store := &MailboxStore{pool: pool, recent: recent, secrets: secrets}
 	if err := store.ensureSchema(ctx); err != nil {
 		pool.Close()
 		return nil, err

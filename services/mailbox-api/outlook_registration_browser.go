@@ -131,10 +131,9 @@ func evaluateCommand(commandID, expression string, args map[string]any, timeout 
 		Timeout:    durationpb.New(timeout),
 		Operation: &browserautomationv1.BrowserCommand_Evaluate{
 			Evaluate: &browserautomationv1.EvaluateCommand{
-				Expression: expression,
-				Args:       structArgs,
-				Timeout:    durationpb.New(timeout),
-				Trusted:    true,
+				InlineExpression: expression,
+				Args:             structArgs,
+				Timeout:          durationpb.New(timeout),
 			},
 		},
 	}

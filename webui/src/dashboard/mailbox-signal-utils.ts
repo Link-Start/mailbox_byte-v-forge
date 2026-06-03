@@ -8,21 +8,25 @@ export function latestOtpForInboxResult(result: InboxResult | null, email: strin
   for (const message of result.messages || []) {
     const matchesTarget = normalizeUiEmail(message.mailbox_email) === target ||
       (message.recipients || []).some((recipient) => normalizeUiEmail(recipient) === target);
-    const code = verificationCodeForMessage(message);
-    if (matchesTarget && code) candidates.push({ otp: code, subject: message.subject, received_at_unix: message.received_at_unix });
+    const refID = verificationRefForMessage(message);
+    if (matchesTarget && refID) candidates.push({ captured: true, ref_id: refID, subject: message.subject, received_at_unix: message.received_at_unix });
   }
   candidates.sort((a, b) => b.received_at_unix - a.received_at_unix);
   return candidates[0] || null;
 }
 
-export function verificationCodeForMessage(message: InboxMessage): string {
-  const primary = signalCode(message.primary_signal, 'otp');
+export function verificationRefForMessage(message: InboxMessage): string {
+  const primary = signalSecretID(message.primary_signal, 'otp');
   if (primary) return primary;
   for (const signal of message.signals || []) {
-    const code = signalCode(signal, 'otp');
-    if (code) return code;
+    const refID = signalSecretID(signal, 'otp');
+    if (refID) return refID;
   }
   return '';
+}
+
+export function messageHasVerificationSignal(message: InboxMessage): boolean {
+  return verificationRefForMessage(message) !== '';
 }
 
 export function messageSignals(message: InboxMessage): EmailSignal[] {
@@ -54,11 +58,11 @@ export function signalLabel(signal: EmailSignal): string {
   return '-';
 }
 
-function signalCode(signal: EmailSignal | undefined, expectedKind: 'otp') {
-  if (!signal || signalKindName(signal.kind) !== expectedKind) return '';
-  return signalSecretID(signal);
+export function signalSecretID(signal: EmailSignal | undefined, expectedKind?: 'otp') {
+  if (expectedKind && (!signal || signalKindName(signal.kind) !== expectedKind)) return '';
+  return String(signal?.secret_ref?.secret_id || '').trim();
 }
 
-export function signalSecretID(signal: EmailSignal | undefined) {
-  return String(signal?.secret_ref?.secret_id || '').trim();
+export function signalHasSecretRef(signal: EmailSignal | undefined, expectedKind?: 'otp'): boolean {
+  return signalSecretID(signal, expectedKind) !== '';
 }

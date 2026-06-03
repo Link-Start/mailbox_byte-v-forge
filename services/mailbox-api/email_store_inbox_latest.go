@@ -23,6 +23,9 @@ func (s *MailboxStore) LatestMessageWithSignal(ctx context.Context, email string
 			break
 		}
 		if ok {
+			if err := s.attachEmailSignalSecrets(ctx, msg); err != nil {
+				logWarning("latest mailbox email signal secret refresh failed email=%s: %v", emailx.Redact(candidate), err)
+			}
 			return msg, true, nil
 		}
 	}
@@ -85,6 +88,9 @@ func (s *MailboxStore) latestMessageForMailbox(ctx context.Context, email string
 		msg, err := row.toProtoForProfile(parserProfile)
 		if err != nil {
 			return nil, false, err
+		}
+		if err := s.attachEmailSignalSecrets(ctx, msg); err != nil {
+			logWarning("latest mailbox email signal secret refresh failed email=%s: %v", emailx.Redact(email), err)
 		}
 		if messageHasSignal(msg, signalKind) {
 			return msg, true, nil
