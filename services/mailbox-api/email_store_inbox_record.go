@@ -47,7 +47,7 @@ func (s *MailboxStore) RecordInboundEmail(ctx context.Context, event *pb.Inbound
 	if event == nil {
 		return nil, errors.New("email event is required")
 	}
-	provider := normalizeEmailProvider(event.GetProviderKey())
+	provider := s.normalizeMailboxProviderInput(event.GetProviderKey())
 	if provider == "" {
 		return nil, errors.New("email event provider is required")
 	}
@@ -93,7 +93,7 @@ func (s *MailboxStore) RecordInboxMessages(ctx context.Context, sourceEmail stri
 }
 
 func (s *MailboxStore) recordInboxMessages(ctx context.Context, provider string, messages []*mailboxv1.EmailInboxMessage, expandRecipients bool) ([]*mailboxv1.EmailInboxMessage, error) {
-	provider = normalizeEmailProvider(provider)
+	provider = s.normalizeMailboxProviderInput(provider)
 	if provider == "" {
 		return nil, errors.New("email provider is required")
 	}
@@ -138,7 +138,7 @@ func (s *MailboxStore) recordInboxMessages(ctx context.Context, provider string,
 	if err := updateInboxWatermarks(ctx, tx, watermarks, now); err != nil {
 		return nil, err
 	}
-	if err := mailboxProviderPruneInbound(ctx, tx, provider, mailboxprovider.InboxRetention{
+	if err := s.mailboxProviderPruneInbound(ctx, tx, provider, mailboxprovider.InboxRetention{
 		TouchedMailboxes: touchedMailboxes,
 		TouchedDomains:   touchedDomains,
 	}); err != nil {

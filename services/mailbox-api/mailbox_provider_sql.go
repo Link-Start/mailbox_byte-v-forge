@@ -7,26 +7,26 @@ import (
 	"mailboxapi/internal/mailboxprovider"
 )
 
-func mailboxProviderSchemaStatements() []string {
+func (s *MailboxStore) mailboxProviderSchemaStatements() []string {
 	statements := []string{}
-	for _, provider := range mailboxProviderStorageExtensions() {
+	for _, provider := range s.mailboxProviderStorageExtensions() {
 		statements = append(statements, provider.SchemaStatements()...)
 	}
 	return statements
 }
 
-func mailboxProviderLegacyStatements() []string {
+func (s *MailboxStore) mailboxProviderLegacyStatements() []string {
 	statements := []string{}
-	for _, provider := range mailboxProviderStorageExtensions() {
+	for _, provider := range s.mailboxProviderStorageExtensions() {
 		statements = append(statements, provider.PrepareLegacyData()...)
 	}
 	return statements
 }
 
-func mailboxSelectSQL() string {
-	fields := mailboxProviderFieldExpressions()
+func (s *MailboxStore) mailboxSelectSQL() string {
+	fields := s.mailboxProviderFieldExpressions()
 	joins := ""
-	for _, provider := range mailboxProviderStorageExtensions() {
+	for _, provider := range s.mailboxProviderStorageExtensions() {
 		if join := strings.TrimSpace(provider.SelectJoin()); join != "" {
 			joins += "\n" + join
 		}
@@ -43,7 +43,7 @@ func mailboxSelectSQL() string {
 `, fields.Password, fields.RefreshToken, fields.AccessToken, fields.AuthStatus, fields.LastError, joins)
 }
 
-func mailboxProviderFieldExpressions() mailboxprovider.SelectFields {
+func (s *MailboxStore) mailboxProviderFieldExpressions() mailboxprovider.SelectFields {
 	expressions := mailboxprovider.SelectFields{
 		Password:     "''",
 		RefreshToken: "''",
@@ -51,7 +51,7 @@ func mailboxProviderFieldExpressions() mailboxprovider.SelectFields {
 		AuthStatus:   "''",
 		LastError:    "''",
 	}
-	for _, provider := range mailboxProviderStorageExtensions() {
+	for _, provider := range s.mailboxProviderStorageExtensions() {
 		fields := provider.SelectFields()
 		expressions.Password = coalesceProviderField(expressions.Password, fields.Password)
 		expressions.RefreshToken = coalesceProviderField(expressions.RefreshToken, fields.RefreshToken)

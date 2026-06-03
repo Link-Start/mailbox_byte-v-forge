@@ -16,7 +16,7 @@ import (
 )
 
 func (s *MailboxStore) ListMailboxes(ctx context.Context, authStatus string, provider string, emailAddress string, cursorValue string, limit int32) (mailboxmodel.ListPage, error) {
-	query, err := newMailboxListQuery(authStatus, provider, emailAddress, cursorValue, limit)
+	query, err := s.newMailboxListQuery(authStatus, provider, emailAddress, cursorValue, limit)
 	if err != nil {
 		return mailboxmodel.ListPage{}, err
 	}
@@ -25,7 +25,7 @@ func (s *MailboxStore) ListMailboxes(ctx context.Context, authStatus string, pro
 		return mailboxmodel.ListPage{}, err
 	}
 	rows := stored
-	virtual, err := listMailboxProviderVirtualMailboxes(ctx, s.pool, query)
+	virtual, err := s.listMailboxProviderVirtualMailboxes(ctx, s.pool, query)
 	if err != nil {
 		return mailboxmodel.ListPage{}, err
 	}
@@ -35,14 +35,14 @@ func (s *MailboxStore) ListMailboxes(ctx context.Context, authStatus string, pro
 	return mailboxPageFromRows(rows, query.Limit), nil
 }
 
-func newMailboxListQuery(authStatus string, provider string, emailAddress string, cursorValue string, limit int32) (mailboxprovider.ListQuery, error) {
+func (s *MailboxStore) newMailboxListQuery(authStatus string, provider string, emailAddress string, cursorValue string, limit int32) (mailboxprovider.ListQuery, error) {
 	cursor, err := pagex.DecodeKeysetCursor(cursorValue)
 	if err != nil {
 		return mailboxprovider.ListQuery{}, mailboxmodel.ErrInvalidMailboxListCursor
 	}
 	return mailboxprovider.ListQuery{
 		AuthStatus:   strings.TrimSpace(authStatus),
-		Provider:     normalizeEmailProvider(provider),
+		Provider:     s.normalizeMailboxProviderInput(provider),
 		EmailAddress: emailx.Normalize(emailAddress),
 		Cursor:       cursor,
 		Limit:        accountmodel.NormalizePageLimit(int(limit)),
@@ -82,9 +82,9 @@ func uniqueMailboxRows(rows []*mailboxmodel.Record) []*mailboxmodel.Record {
 
 func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxprovider.ListQuery) ([]*mailboxmodel.Record, error) {
 	args := []any{}
-	query := mailboxSelectSQL() + ` WHERE 1=1`
+	query := s.mailboxSelectSQL() + ` WHERE 1=1`
 	if filter.AuthStatus != "" {
-		query += " AND " + mailboxProviderAuthFilter(filter.Provider, filter.AuthStatus, &args)
+		query += " AND " + s.mailboxProviderAuthFilter(filter.Provider, filter.AuthStatus, &args)
 	}
 	if filter.Provider != "" {
 		args = append(args, filter.Provider)
@@ -113,7 +113,7 @@ func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxpr
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, row.toRecord())
+		out = append(out, s.recordFromMailboxRow(row))
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -130,7 +130,7 @@ func (s *MailboxStore) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*
 		n = 500
 	}
 	args := []any{}
-	query := mailboxSelectSQL() + " WHERE " + mailboxProviderAuthFilter("", mailboxmodel.AuthStatusAuthorized, &args)
+	query := s.mailboxSelectSQL() + " WHERE " + s.mailboxProviderAuthFilter("", mailboxmodel.AuthStatusAuthorized, &args)
 	args = append(args, n)
 	query += fmt.Sprintf(" ORDER BY m.updated_at DESC, m.email DESC LIMIT $%d", len(args))
 	rows, err := s.pool.Query(ctx, query, args...)
@@ -145,10 +145,10 @@ func (s *MailboxStore) ListOAuthMailboxes(ctx context.Context, limit int32) ([]*
 		if err != nil {
 			return nil, err
 		}
-		if mailboxProviderValidatePoll(row) != nil {
+		if s.mailboxProviderValidatePoll(row) != nil {
 			continue
 		}
-		out = append(out, row.toRecord())
+		out = append(out, s.recordFromMailboxRow(row))
 	}
 	return out, rows.Err()
 }

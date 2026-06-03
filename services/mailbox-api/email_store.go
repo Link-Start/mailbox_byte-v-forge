@@ -10,6 +10,8 @@ import (
 	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"mailboxapi/internal/mailboxprovider"
 )
 
 type mailboxRow struct {
@@ -119,20 +121,24 @@ type rowScanner interface {
 }
 
 type MailboxStore struct {
-	pool    *pgxpool.Pool
-	recent  *recentEmailCache
-	secrets *mailboxSecretStore
+	pool      *pgxpool.Pool
+	providers *mailboxprovider.Registry
+	recent    *recentEmailCache
+	secrets   *mailboxSecretStore
 }
 
-func NewMailboxStore(ctx context.Context, dsn string, recent *recentEmailCache, secrets *mailboxSecretStore) (*MailboxStore, error) {
+func NewMailboxStore(ctx context.Context, dsn string, providers *mailboxprovider.Registry, recent *recentEmailCache, secrets *mailboxSecretStore) (*MailboxStore, error) {
 	if strings.TrimSpace(dsn) == "" {
 		return nil, errors.New("PG_DSN is required")
+	}
+	if providers == nil {
+		return nil, errors.New("mailbox providers are required")
 	}
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return nil, err
 	}
-	store := &MailboxStore{pool: pool, recent: recent, secrets: secrets}
+	store := &MailboxStore{pool: pool, providers: providers, recent: recent, secrets: secrets}
 	if err := store.ensureSchema(ctx); err != nil {
 		pool.Close()
 		return nil, err

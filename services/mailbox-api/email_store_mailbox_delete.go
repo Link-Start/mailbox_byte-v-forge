@@ -21,7 +21,7 @@ func (s *MailboxStore) DeleteMailbox(ctx context.Context, email string) (bool, e
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	row, err := scanMailbox(tx.QueryRow(ctx, mailboxSelectSQL()+" WHERE m.email = $1 FOR UPDATE", email))
+	row, err := scanMailbox(tx.QueryRow(ctx, s.mailboxSelectSQL()+" WHERE m.email = $1 FOR UPDATE", email))
 	if errors.Is(err, pgx.ErrNoRows) {
 		deleted, deleteErr := deleteMailboxInbox(ctx, tx, []string{email})
 		if deleteErr != nil {

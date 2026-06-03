@@ -46,7 +46,7 @@ func main() {
 
 	recentCache := newRecentEmailCache(recentEmailClient, cfg.recentEmailCachePrefix, cfg.recentEmailCacheTTL, cfg.recentEmailCacheMax)
 	secretStore := newMailboxSecretStore(recentEmailClient, cfg.recentEmailCachePrefix+":secrets", cfg.recentEmailCacheTTL)
-	mailboxStore, err := NewMailboxStore(ctx, cfg.pgDSN, recentCache, secretStore)
+	mailboxStore, err := NewMailboxStore(ctx, cfg.pgDSN, defaultMailboxProviderRegistry(), recentCache, secretStore)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox store: %s", safeMailboxError(err))
 	}

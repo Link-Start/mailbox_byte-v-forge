@@ -29,22 +29,30 @@ func scanMailbox(scanner rowScanner) (*mailboxRow, error) {
 }
 
 func (m *mailboxRow) toRecord() *mailboxmodel.Record {
-	if m == nil {
+	return mailboxRecordFromRow(m, normalizeEmailProvider, prepareMailboxProjection)
+}
+
+func (s *MailboxStore) recordFromMailboxRow(row *mailboxRow) *mailboxmodel.Record {
+	return mailboxRecordFromRow(row, s.normalizeMailboxProviderInput, s.prepareMailboxProjection)
+}
+
+func mailboxRecordFromRow(row *mailboxRow, normalizeProvider func(string) string, prepareProjection func(*mailboxmodel.Record)) *mailboxmodel.Record {
+	if row == nil {
 		return nil
 	}
 	mailbox := &mailboxmodel.Record{
-		EmailAddress: m.Email,
-		ProviderKey:  normalizeEmailProvider(m.Provider),
-		Password:     m.Password,
-		RefreshToken: m.RefreshToken,
-		AccessToken:  m.AccessToken,
-		AuthStatus:   m.AuthStatus,
-		LastError:    m.LastError,
-		CreatedAt:    m.CreatedAt,
-		UpdatedAt:    m.UpdatedAt,
-		Domain:       domainForEmail(m.Email),
+		EmailAddress: row.Email,
+		ProviderKey:  normalizeProvider(row.Provider),
+		Password:     row.Password,
+		RefreshToken: row.RefreshToken,
+		AccessToken:  row.AccessToken,
+		AuthStatus:   row.AuthStatus,
+		LastError:    row.LastError,
+		CreatedAt:    row.CreatedAt,
+		UpdatedAt:    row.UpdatedAt,
+		Domain:       domainForEmail(row.Email),
 	}
-	prepareMailboxProjection(mailbox)
+	prepareProjection(mailbox)
 	return mailbox
 }
 
