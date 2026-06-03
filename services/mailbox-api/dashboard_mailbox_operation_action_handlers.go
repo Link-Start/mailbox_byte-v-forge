@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/envx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -85,11 +84,7 @@ func (s *dashboardServer) handleMailboxInbox(w http.ResponseWriter, r *http.Requ
 	req.EmailAddress = strings.TrimSpace(req.GetEmailAddress())
 	req.ParserProfile = strings.TrimSpace(req.GetParserProfile())
 
-	timeout := envx.Int("MAILBOX_INBOX_TIMEOUT_SECONDS", 180)
-	if timeout < 30 {
-		timeout = 30
-	}
-	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), s.config.inboxTimeout)
 	defer cancel()
 
 	resp, err := s.mailboxClient.FetchMailboxInboxes(ctx, &req)

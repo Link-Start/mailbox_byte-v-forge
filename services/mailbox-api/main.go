@@ -144,7 +144,7 @@ func main() {
 		log.Fatalf("connect mailbox dashboard API: %s", safeMailboxError(err))
 	}
 	defer dashboardConn.Close()
-	startDashboardHTTP(groupCtx, cfg.dashboardHTTPAddr, cfg.dashboardStaticDir, pb.NewMailboxServiceClient(dashboardConn), hotBus, errCh)
+	startDashboardHTTP(groupCtx, cfg.dashboardHTTPAddr, cfg.dashboardStaticDir, cfg.dashboard, pb.NewMailboxServiceClient(dashboardConn), hotBus, errCh)
 
 	go func() {
 		<-groupCtx.Done()

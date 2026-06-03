@@ -24,16 +24,17 @@ type dashboardServer struct {
 	mailboxClient pb.MailboxServiceClient
 	hotstream     hotstream.Subscriber
 	staticDir     string
+	config        dashboardConfig
 }
 
-func startDashboardHTTP(ctx context.Context, listenAddr, staticDir string, mailboxClient pb.MailboxServiceClient, stream hotstream.Subscriber, errCh chan<- error) {
+func startDashboardHTTP(ctx context.Context, listenAddr, staticDir string, config dashboardConfig, mailboxClient pb.MailboxServiceClient, stream hotstream.Subscriber, errCh chan<- error) {
 	if strings.TrimSpace(listenAddr) == "" {
 		return
 	}
 	if strings.TrimSpace(staticDir) == "" {
 		staticDir = "/app/dashboard/mailbox"
 	}
-	dashboard := &dashboardServer{mailboxClient: mailboxClient, hotstream: stream, staticDir: staticDir}
+	dashboard := &dashboardServer{mailboxClient: mailboxClient, hotstream: stream, staticDir: staticDir, config: config}
 	mux := http.NewServeMux()
 	mux.Handle("/api/mailbox/", http.StripPrefix("/api/mailbox", dashboard.routes()))
 	mux.Handle("/mf/mailbox/", http.StripPrefix("/mf/mailbox/", noCacheFileServer(staticDir)))

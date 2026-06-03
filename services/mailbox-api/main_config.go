@@ -14,6 +14,7 @@ type config struct {
 	webhookHTTPAddr        string
 	dashboardHTTPAddr      string
 	dashboardStaticDir     string
+	dashboard              dashboardConfig
 	browserAutomationAddr  string
 	coordinationRedisURL   string
 	recentEmailRedisURL    string
@@ -37,6 +38,7 @@ func loadConfig() config {
 		webhookHTTPAddr:        envx.StringDefault("MAILBOX_WEBHOOK_HTTP_ADDR", ":8082"),
 		dashboardHTTPAddr:      envx.StringDefault("MAILBOX_DASHBOARD_HTTP_ADDR", ":8080"),
 		dashboardStaticDir:     envx.StringDefault("MAILBOX_DASHBOARD_STATIC_DIR", "/app/dashboard/mailbox"),
+		dashboard:              loadDashboardConfig(),
 		browserAutomationAddr:  envx.StringDefault("BROWSER_AUTOMATION_ADDR", "browser-automation:50051"),
 		coordinationRedisURL:   envx.StringDefault("MAILBOX_COORDINATION_REDIS_URL", ""),
 		recentEmailRedisURL:    envx.StringDefault("MAILBOX_RECENT_EMAIL_REDIS_URL", ""),
