@@ -13,4 +13,5 @@ protoc -I "$ROOT/proto" -I "$COMMON_PROTO_ROOT" \
   --go-grpc_out="$ROOT/services/mailbox-api/pb" \
   "$ROOT/proto/email.proto" \
   "$ROOT/proto/mailbox_register.proto" \
+  "$ROOT/proto/mailbox_commands.proto" \
   "$ROOT/proto/mailbox_service.proto"

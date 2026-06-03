@@ -27,7 +27,7 @@ export async function importSingleMailbox(provider: MailboxProviderTab, credenti
 }
 
 export async function importMailboxBatch(provider: MailboxProviderTab, credentialKinds: MailboxCredentialKind[], values: MailboxBatchImportFormState) {
-  const batch = parseMailboxBatch(values.batchText, provider);
+  const batch = parseMailboxBatch(values.batchText, credentialKinds);
   if (batch.items.length === 0) {
     throw new Error(batch.errors.length ? `批量入池失败：${batch.errors[0]}` : '没有可入池邮箱');
   }

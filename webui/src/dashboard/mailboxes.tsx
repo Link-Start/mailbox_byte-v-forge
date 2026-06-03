@@ -9,26 +9,25 @@ import { MailboxImportSheet } from './mailbox-import';
 import { OutlookMailboxProviderPanel } from './mailbox-provider-outlook';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
 import { providerToolbarActions } from './mailbox-toolbar-actions';
-import { capabilityForProvider, mailboxProviderConfigs, mailboxProviderMatches, type MailboxProviderTab } from './mailbox-utils';
+import { capabilityForProvider, mailboxProviderMatches, type MailboxProviderTab } from './mailbox-utils';
 import type { Mailbox, MailboxDomain, MailboxOperation, MailboxProviderCapability } from './types';
 export { MailboxDetails } from './mailbox-details';
 
-const providerComponents: Record<MailboxProviderTab, ComponentType<MailboxProviderPanelProps>> = {
-  outlook: OutlookMailboxProviderPanel,
-  cloudflare: CloudflareMailboxProviderPanel,
-};
-
-const providerDefinitions = mailboxProviderConfigs.map((config) => ({
-  value: config.value,
-  label: config.label,
-  Component: providerComponents[config.value],
-})) satisfies ProviderDefinition[];
+const providerComponents: ProviderDefinition[] = [{
+  value: 'outlook',
+  fallbackLabel: 'Outlook',
+  Component: OutlookMailboxProviderPanel,
+}, {
+  value: 'cloudflare',
+  fallbackLabel: 'Cloudflare',
+  Component: CloudflareMailboxProviderPanel,
+}];
 
 export function MailboxPanel(props: MailboxPanelProps) {
   const [activeProvider, setActiveProvider] = useState<MailboxProviderTab>('outlook');
   const [importProvider, setImportProvider] = useState<MailboxProviderTab>();
   const panelProps = providerPanelProps(props);
-  const providerViews = providerDefinitions.map((definition) => ({
+  const providerViews = providerDefinitions(props.providerCapabilities).map((definition) => ({
     ...definition,
     capability: capabilityForProvider(props.providerCapabilities, definition.value),
     mailboxes: props.mailboxes.filter((mailbox) => mailboxProviderMatches(mailbox.provider_key, definition.value)),
@@ -41,9 +40,9 @@ export function MailboxPanel(props: MailboxPanelProps) {
         tabsClassName="min-h-0 flex-1 overflow-hidden"
         tabsListVariant="line"
         tabsListClassName="h-8"
-        tabs={providerViews.map(({ value, label, capability, mailboxes, Component }) => ({
+        tabs={providerViews.map(({ value, fallbackLabel, capability, mailboxes, Component }) => ({
           value,
-          label: capability?.display_name || label,
+          label: capability?.display_name || fallbackLabel,
           triggerClassName: 'gap-1.5 px-2',
           contentClassName: 'flex flex-col overflow-hidden',
           content: (
@@ -56,16 +55,23 @@ export function MailboxPanel(props: MailboxPanelProps) {
           )
         }))}
       />
-      <MailboxImportSheet open={!!importProvider} provider={importProvider || activeProvider} busy={props.busy} onOpenChange={(open) => !open && setImportProvider(undefined)} onDone={props.onDone} onError={props.onError} />
+      <MailboxImportSheet open={!!importProvider} provider={importProvider || activeProvider} capability={capabilityForProvider(props.providerCapabilities, importProvider || activeProvider)} busy={props.busy} onOpenChange={(open) => !open && setImportProvider(undefined)} onDone={props.onDone} onError={props.onError} />
     </>
   );
 }
 
 type ProviderDefinition = {
   value: MailboxProviderTab;
-  label: string;
+  fallbackLabel: string;
   Component: ComponentType<MailboxProviderPanelProps>;
 };
+
+function providerDefinitions(capabilities: MailboxProviderCapability[]): ProviderDefinition[] {
+  const fromCapabilities = capabilities
+    .map((capability) => providerComponents.find((item) => mailboxProviderMatches(capability.key, item.value)))
+    .filter((item): item is ProviderDefinition => !!item);
+  return fromCapabilities.length > 0 ? fromCapabilities : providerComponents;
+}
 
 
 type MailboxPanelProps = {

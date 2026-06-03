@@ -3,24 +3,22 @@ package main
 import (
 	"fmt"
 	"strings"
+
+	"mailboxapi/internal/mailboxprovider"
 )
 
 func mailboxProviderSchemaStatements() []string {
 	statements := []string{}
-	for _, provider := range mailboxProviderPlugins() {
-		if provider.schemaStatements != nil {
-			statements = append(statements, provider.schemaStatements()...)
-		}
+	for _, provider := range mailboxProviderStorageExtensions() {
+		statements = append(statements, provider.SchemaStatements()...)
 	}
 	return statements
 }
 
 func mailboxProviderLegacyStatements() []string {
 	statements := []string{}
-	for _, provider := range mailboxProviderPlugins() {
-		if provider.prepareLegacyData != nil {
-			statements = append(statements, provider.prepareLegacyData()...)
-		}
+	for _, provider := range mailboxProviderStorageExtensions() {
+		statements = append(statements, provider.PrepareLegacyData()...)
 	}
 	return statements
 }
@@ -28,9 +26,9 @@ func mailboxProviderLegacyStatements() []string {
 func mailboxSelectSQL() string {
 	fields := mailboxProviderFieldExpressions()
 	joins := ""
-	for _, provider := range mailboxProviderPlugins() {
-		if strings.TrimSpace(provider.selectJoin) != "" {
-			joins += "\n" + provider.selectJoin
+	for _, provider := range mailboxProviderStorageExtensions() {
+		if join := strings.TrimSpace(provider.SelectJoin()); join != "" {
+			joins += "\n" + join
 		}
 	}
 	return fmt.Sprintf(`
@@ -42,24 +40,24 @@ func mailboxSelectSQL() string {
 		%s AS last_error,
 		m.created_at, m.updated_at
 	FROM mailboxes m%s
-`, fields.password, fields.refreshToken, fields.accessToken, fields.authStatus, fields.lastError, joins)
+`, fields.Password, fields.RefreshToken, fields.AccessToken, fields.AuthStatus, fields.LastError, joins)
 }
 
-func mailboxProviderFieldExpressions() mailboxProviderSelectFields {
-	expressions := mailboxProviderSelectFields{
-		password:     "''",
-		refreshToken: "''",
-		accessToken:  "''",
-		authStatus:   "''",
-		lastError:    "''",
+func mailboxProviderFieldExpressions() mailboxprovider.SelectFields {
+	expressions := mailboxprovider.SelectFields{
+		Password:     "''",
+		RefreshToken: "''",
+		AccessToken:  "''",
+		AuthStatus:   "''",
+		LastError:    "''",
 	}
-	for _, provider := range mailboxProviderPlugins() {
-		fields := provider.selectFields
-		expressions.password = coalesceProviderField(expressions.password, fields.password)
-		expressions.refreshToken = coalesceProviderField(expressions.refreshToken, fields.refreshToken)
-		expressions.accessToken = coalesceProviderField(expressions.accessToken, fields.accessToken)
-		expressions.authStatus = coalesceProviderField(expressions.authStatus, fields.authStatus)
-		expressions.lastError = coalesceProviderField(expressions.lastError, fields.lastError)
+	for _, provider := range mailboxProviderStorageExtensions() {
+		fields := provider.SelectFields()
+		expressions.Password = coalesceProviderField(expressions.Password, fields.Password)
+		expressions.RefreshToken = coalesceProviderField(expressions.RefreshToken, fields.RefreshToken)
+		expressions.AccessToken = coalesceProviderField(expressions.AccessToken, fields.AccessToken)
+		expressions.AuthStatus = coalesceProviderField(expressions.AuthStatus, fields.AuthStatus)
+		expressions.LastError = coalesceProviderField(expressions.LastError, fields.LastError)
 	}
 	return expressions
 }

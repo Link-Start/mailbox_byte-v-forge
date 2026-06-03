@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package byte.v.forge.mailbox.internal.v1;
+
+import "byte/v/forge/contracts/mailbox/v1/mailbox.proto";
+
+option go_package = "./;pb";
+
+message MailboxRegistrationOperationRequest {
+  string operation_id = 1;
+}
+
+message MailboxOAuthOperationRequest {
+  string operation_id = 1;
+}
+
+message MailboxInboxFetchRequest {
+  string operation_id = 1;
+  byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxesRequest request = 2;
+}

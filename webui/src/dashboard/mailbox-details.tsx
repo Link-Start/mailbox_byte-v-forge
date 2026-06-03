@@ -16,11 +16,12 @@ import { mailboxStatusText } from './labels';
 import { MailboxInboxSection } from './mailbox-inbox';
 import { MailboxOtpPanel } from './otp-panel';
 import { latestOtpForInboxResult } from './mailbox-signal-utils';
-import { authStatus, mailboxProviderConfig, tokenText } from './mailbox-utils';
-import type { InboxResult, LatestOtp, Mailbox } from './types';
+import { authStatus, providerShowsCredentialState, tokenText } from './mailbox-utils';
+import type { InboxResult, LatestOtp, Mailbox, MailboxProviderCapability } from './types';
 
-export function MailboxDetails({ mailbox, showSecrets, inboxResult, inboxLoading, canFetchInbox, onCopy, onFetchInbox, onDelete }: {
+export function MailboxDetails({ mailbox, providerCapability, showSecrets, inboxResult, inboxLoading, canFetchInbox, onCopy, onFetchInbox, onDelete }: {
   mailbox: Mailbox;
+  providerCapability?: MailboxProviderCapability;
   showSecrets: boolean;
   inboxResult?: InboxResult | null;
   inboxLoading: boolean;
@@ -49,7 +50,7 @@ export function MailboxDetails({ mailbox, showSecrets, inboxResult, inboxLoading
           value: 'overview',
           label: '概览',
           contentClassName: 'overflow-auto',
-          content: <MailboxOverview mailbox={mailbox} showSecrets={showSecrets} latestOtp={latestOtp} onCopy={onCopy} onDelete={onDelete} />
+          content: <MailboxOverview mailbox={mailbox} providerCapability={providerCapability} showSecrets={showSecrets} latestOtp={latestOtp} onCopy={onCopy} onDelete={onDelete} />
         },
         {
           value: 'inbox',
@@ -62,14 +63,15 @@ export function MailboxDetails({ mailbox, showSecrets, inboxResult, inboxLoading
   );
 }
 
-function MailboxOverview({ mailbox, showSecrets, latestOtp, onCopy, onDelete }: {
+function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, onCopy, onDelete }: {
   mailbox: Mailbox;
+  providerCapability?: MailboxProviderCapability;
   showSecrets: boolean;
   latestOtp: LatestOtp | null;
   onCopy: (label: string, value: string) => void;
   onDelete: (mailbox: Mailbox) => Promise<void>;
 }) {
-  const providerConfig = mailboxProviderConfig(mailbox.provider_key);
+  const showCredentialState = providerShowsCredentialState(providerCapability);
   const fields: KVDescriptor[] = [{
     id: 'email',
     label: '邮箱',
@@ -78,7 +80,7 @@ function MailboxOverview({ mailbox, showSecrets, latestOtp, onCopy, onDelete }: 
     copyDisabled: !mailbox.email_address,
     masked: !showSecrets,
   }];
-  if (providerConfig.showStatus) fields.push({
+  if (showCredentialState) fields.push({
     id: 'password',
     label: '密码',
     value: showSecrets ? mailbox.password : mask(mailbox.password),
@@ -135,7 +137,7 @@ function MailboxOverview({ mailbox, showSecrets, latestOtp, onCopy, onDelete }: 
           <div className="min-w-0">
             <strong className="block truncate text-sm">{showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address)}</strong>
           </div>
-          {providerConfig.showStatus && <StatusBadge status={authStatus(mailbox)} />}
+          {showCredentialState && <StatusBadge status={authStatus(mailbox)} />}
         </div>
         <MailboxOtpPanel latestOtp={latestOtp} showSecrets={showSecrets} loading={false} onCopy={onCopy} />
       </Card>

@@ -12,6 +12,7 @@ import (
 	"github.com/byte-v-forge/common-lib/stringx"
 	"github.com/jackc/pgx/v5"
 
+	"mailboxapi/internal/mailboxprovider"
 	"mailboxapi/pb"
 )
 
@@ -137,9 +138,9 @@ func (s *MailboxStore) recordInboxMessages(ctx context.Context, provider string,
 	if err := updateInboxWatermarks(ctx, tx, watermarks, now); err != nil {
 		return nil, err
 	}
-	if err := mailboxProviderPruneInbound(ctx, tx, provider, mailboxInboxRetention{
-		touchedMailboxes: touchedMailboxes,
-		touchedDomains:   touchedDomains,
+	if err := mailboxProviderPruneInbound(ctx, tx, provider, mailboxprovider.InboxRetention{
+		TouchedMailboxes: touchedMailboxes,
+		TouchedDomains:   touchedDomains,
 	}); err != nil {
 		return nil, err
 	}

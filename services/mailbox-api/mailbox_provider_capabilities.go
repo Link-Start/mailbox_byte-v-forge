@@ -11,12 +11,12 @@ import (
 func (c mailboxProviderRuntimeConfig) ListCapabilities(req *mailboxv1.ListMailboxProviderCapabilitiesRequest) *mailboxv1.ListMailboxProviderCapabilitiesResponse {
 	providers := []*mailboxv1.MailboxProviderCapabilities{}
 	providerKey := normalizeMailboxProviderInput(req.GetProviderKey())
-	for _, provider := range mailboxProviderPlugins() {
-		if providerKey != "" && providerKey != provider.key {
+	for _, provider := range mailboxProviderCapabilityPlugins() {
+		if providerKey != "" && providerKey != provider.Key() {
 			continue
 		}
-		if provider.capabilities != nil {
-			providers = append(providers, provider.capabilities())
+		if capabilities := provider.Capabilities(); capabilities != nil {
+			providers = append(providers, capabilities)
 		}
 	}
 	return &mailboxv1.ListMailboxProviderCapabilitiesResponse{Providers: providers}
@@ -27,13 +27,13 @@ func (c mailboxProviderRuntimeConfig) StoredInboxOnlyMailbox(email string) (*pb.
 	if email == "" {
 		return nil, false
 	}
-	for _, provider := range mailboxProviderPlugins() {
-		if !provider.storedInboxOnly || provider.matchesAddress == nil || !provider.matchesAddress(email, c) {
+	for _, provider := range mailboxProviderCapabilityPlugins() {
+		if !provider.StoredInboxOnly() || !provider.MatchesAddress(email, c) {
 			continue
 		}
 		mailbox := &pb.EmailMailbox{
 			EmailAddress: email,
-			ProviderKey:  provider.key,
+			ProviderKey:  provider.Key(),
 			Domain:       domainForEmail(email),
 		}
 		prepareMailboxProjection(mailbox)

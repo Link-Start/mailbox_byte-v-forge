@@ -8,28 +8,30 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"mailboxapi/internal/mailboxprovider"
 	"mailboxapi/pb"
 )
 
 func mailboxProviderUpsert(ctx context.Context, tx pgx.Tx, provider string, mailbox *pb.EmailMailbox, now int64) error {
-	if definition := providerByKey(provider); definition != nil && definition.upsert != nil {
-		return definition.upsert(ctx, tx, mailbox, now)
+	if definition := providerStorageByKey(provider); definition != nil {
+		return definition.Upsert(ctx, tx, mailbox, now)
 	}
 	return nil
 }
 
 func mailboxProviderAuthFilter(provider string, authStatus string, args *[]any) string {
-	definition := providerByKey(provider)
+	definition := providerStorageByKey(provider)
 	if definition != nil {
-		if definition.authFilter == nil {
+		filter, ok := definition.AuthFilter(authStatus, args)
+		if !ok {
 			return "FALSE"
 		}
-		return definition.authFilter(authStatus, args)
+		return filter
 	}
 	parts := []string{}
-	for _, definition := range mailboxProviderPlugins() {
-		if definition.authFilter != nil {
-			parts = append(parts, definition.authFilter(authStatus, args))
+	for _, definition := range mailboxProviderStorageExtensions() {
+		if filter, ok := definition.AuthFilter(authStatus, args); ok {
+			parts = append(parts, filter)
 		}
 	}
 	if len(parts) == 0 {
@@ -42,47 +44,52 @@ func mailboxProviderValidatePoll(row *mailboxRow) error {
 	if row == nil {
 		return fmt.Errorf("mailbox is required")
 	}
-	definition := providerByKey(row.Provider)
-	if definition == nil || definition.validatePoll == nil {
+	definition := providerStorageByKey(row.Provider)
+	if definition == nil || !definition.CanValidatePoll() {
 		return fmt.Errorf("mailbox provider cannot poll inbox: %s", row.Provider)
 	}
-	return definition.validatePoll(row)
+	return definition.ValidatePoll(mailboxprovider.MailboxRecord{
+		Email:        row.Email,
+		Provider:     row.Provider,
+		RefreshToken: row.RefreshToken,
+		AuthStatus:   row.AuthStatus,
+	})
 }
 
 func mailboxProviderUpdateAuth(ctx context.Context, tx pgx.Tx, provider string, email string, authStatus string, lastError string, now int64) error {
-	if definition := providerByKey(provider); definition != nil && definition.updateAuth != nil {
-		return definition.updateAuth(ctx, tx, email, authStatus, lastError, now)
+	if definition := providerStorageByKey(provider); definition != nil && definition.CanUpdateAuth() {
+		return definition.UpdateAuth(ctx, tx, email, authStatus, lastError, now)
 	}
 	return fmt.Errorf("mailbox provider has no auth state: %s", provider)
 }
 
 func mailboxProviderUpdateTokens(ctx context.Context, pool *pgxpool.Pool, provider string, email string, refreshToken string, accessToken string) error {
-	if definition := providerByKey(provider); definition != nil && definition.updateTokens != nil {
-		return definition.updateTokens(ctx, pool, email, refreshToken, accessToken)
+	if definition := providerStorageByKey(provider); definition != nil && definition.CanUpdateTokens() {
+		return definition.UpdateTokens(ctx, pool, email, refreshToken, accessToken)
 	}
 	return fmt.Errorf("mailbox provider has no token storage: %s", provider)
 }
 
-func mailboxProviderPruneInbound(ctx context.Context, tx pgx.Tx, provider string, retention mailboxInboxRetention) error {
-	if definition := providerByKey(provider); definition != nil && definition.pruneInbound != nil {
-		return definition.pruneInbound(ctx, tx, retention)
+func mailboxProviderPruneInbound(ctx context.Context, tx pgx.Tx, provider string, retention mailboxprovider.InboxRetention) error {
+	if definition := providerRetentionByKey(provider); definition != nil {
+		return definition.PruneInbound(ctx, tx, retention)
 	}
 	return nil
 }
 
-func listMailboxProviderVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, query mailboxListQuery) ([]*pb.EmailMailbox, error) {
+func listMailboxProviderVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, query mailboxprovider.ListQuery) ([]*pb.EmailMailbox, error) {
 	out := []*pb.EmailMailbox{}
-	for _, definition := range mailboxProviderPlugins() {
-		if query.Provider != "" && query.Provider != definition.key {
+	for _, definition := range mailboxProviderVirtualSources() {
+		if query.Provider != "" && query.Provider != definition.Key() {
 			continue
 		}
-		if definition.virtualMailboxes == nil {
+		if !definition.HasVirtualMailboxes() {
 			continue
 		}
-		if definition.includeVirtual != nil && !definition.includeVirtual(query.AuthStatus) {
+		if !definition.IncludeVirtual(query.AuthStatus) {
 			continue
 		}
-		items, err := definition.virtualMailboxes(ctx, pool, query)
+		items, err := definition.VirtualMailboxes(ctx, pool, query)
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +102,7 @@ func prepareMailboxProjection(mailbox *pb.EmailMailbox) {
 	if mailbox == nil {
 		return
 	}
-	if definition := providerByKey(mailbox.GetProviderKey()); definition != nil && definition.prepareProjection != nil {
-		definition.prepareProjection(mailbox)
+	if definition := capabilityProviderByKey(mailbox.GetProviderKey()); definition != nil {
+		definition.PrepareProjection(mailbox)
 	}
 }

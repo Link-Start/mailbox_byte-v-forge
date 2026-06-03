@@ -37,16 +37,3 @@ message CloudflareEmailConfig {
   repeated CloudflareEmailZone zones = 1;
   string api_base_url = 2;
 }
-
-message MailboxRegistrationOperationRequest {
-  string operation_id = 1;
-}
-
-message MailboxOAuthOperationRequest {
-  string operation_id = 1;
-}
-
-message MailboxInboxFetchRequest {
-  string operation_id = 1;
-  byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxesRequest request = 2;
-}

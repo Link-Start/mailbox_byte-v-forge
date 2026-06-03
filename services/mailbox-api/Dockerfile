@@ -20,6 +20,7 @@ RUN mkdir -p /generated/pb \
     && protoc -I proto --go_out=/generated/pb --go-grpc_out=/generated/pb \
       proto/email.proto \
       proto/mailbox_register.proto \
+      proto/mailbox_commands.proto \
       proto/mailbox_service.proto
 
 COPY services/mailbox-api ./

@@ -1,15 +1,9 @@
 package main
 
 import (
-	"context"
-	"strings"
 	"sync"
 
-	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
-
-	"mailboxapi/pb"
+	"mailboxapi/internal/mailboxprovider"
 )
 
 type mailboxProviderRuntimeConfig struct {
@@ -22,41 +16,23 @@ type mailboxProviderDomainStore struct {
 	byProvider map[string][]string
 }
 
-type mailboxProviderPlugin struct {
-	key               string
-	aliases           []string
-	displayName       string
-	storedInboxOnly   bool
-	schemaStatements  func() []string
-	selectJoin        string
-	selectFields      mailboxProviderSelectFields
-	capabilities      func() *mailboxv1.MailboxProviderCapabilities
-	loadDomains       func() []string
-	domains           func([]string) []*mailboxv1.MailboxDomain
-	matchesAddress    func(string, mailboxProviderRuntimeConfig) bool
-	upsert            func(context.Context, pgx.Tx, *pb.EmailMailbox, int64) error
-	authFilter        func(string, *[]any) string
-	validatePoll      func(*mailboxRow) error
-	updateAuth        func(context.Context, pgx.Tx, string, string, string, int64) error
-	updateTokens      func(context.Context, *pgxpool.Pool, string, string, string) error
-	pruneInbound      func(context.Context, pgx.Tx, mailboxInboxRetention) error
-	virtualMailboxes  func(context.Context, *pgxpool.Pool, mailboxListQuery) ([]*pb.EmailMailbox, error)
-	includeVirtual    func(string) bool
-	prepareProjection func(*pb.EmailMailbox)
-	prepareLegacyData func() []string
-}
+var (
+	defaultMailboxProvidersOnce  sync.Once
+	defaultMailboxProvidersValue *mailboxprovider.Registry
+	defaultMailboxProvidersErr   error
+)
 
-type mailboxProviderSelectFields struct {
-	password     string
-	refreshToken string
-	accessToken  string
-	authStatus   string
-	lastError    string
-}
-
-type mailboxInboxRetention struct {
-	touchedMailboxes map[string]struct{}
-	touchedDomains   map[string]struct{}
+func defaultMailboxProviderRegistry() *mailboxprovider.Registry {
+	defaultMailboxProvidersOnce.Do(func() {
+		defaultMailboxProvidersValue, defaultMailboxProvidersErr = mailboxprovider.NewRegistry(
+			outlookMailboxProvider(),
+			cloudflareMailboxProvider(),
+		)
+	})
+	if defaultMailboxProvidersErr != nil {
+		panic(defaultMailboxProvidersErr)
+	}
+	return defaultMailboxProvidersValue
 }
 
 func loadMailboxProviderRuntimeConfig() mailboxProviderRuntimeConfig {
@@ -64,51 +40,64 @@ func loadMailboxProviderRuntimeConfig() mailboxProviderRuntimeConfig {
 		domainStore:  &mailboxProviderDomainStore{byProvider: map[string][]string{}},
 		registration: loadOutlookRegistrationConfig(),
 	}
-	for _, provider := range mailboxProviderPlugins() {
-		if provider.loadDomains != nil {
-			cfg.domainStore.set(provider.key, provider.loadDomains())
-		}
+	for _, provider := range mailboxProviderCapabilityPlugins() {
+		cfg.domainStore.set(provider.Key(), provider.LoadDomains())
 	}
 	return cfg
 }
 
-func mailboxProviderPlugins() []*mailboxProviderPlugin {
-	return []*mailboxProviderPlugin{
-		outlookMailboxProvider(),
-		cloudflareMailboxProvider(),
-	}
-}
-
 func defaultMailboxProvider() string {
-	providers := mailboxProviderPlugins()
-	if len(providers) == 0 {
-		return ""
-	}
-	return providers[0].key
+	return defaultMailboxProviderRegistry().DefaultKey()
 }
 
 func normalizeMailboxProviderInput(provider string) string {
-	value := strings.ToLower(strings.TrimSpace(provider))
+	value := mailboxprovider.NormalizeKey(provider)
 	if value == "" {
 		return ""
 	}
-	if definition := providerByKey(value); definition != nil {
-		return definition.key
+	if definition := defaultMailboxProviderRegistry().ByKey(value); definition != nil {
+		return definition.Key()
 	}
 	return value
 }
 
-func providerByKey(provider string) *mailboxProviderPlugin {
-	value := strings.ToLower(strings.TrimSpace(provider))
-	for _, definition := range mailboxProviderPlugins() {
-		if definition.key == value {
-			return definition
-		}
-		for _, alias := range definition.aliases {
-			if alias == value {
-				return definition
-			}
-		}
+func normalizeMailboxProviderKey(provider string) string {
+	return mailboxprovider.NormalizeKey(provider)
+}
+
+func providerByKey(provider string) mailboxprovider.Plugin {
+	return defaultMailboxProviderRegistry().ByKey(provider)
+}
+
+func capabilityProviderByKey(provider string) mailboxprovider.CapabilityPlugin {
+	if plugin := providerByKey(provider); plugin != nil {
+		return plugin
 	}
 	return nil
+}
+
+func providerStorageByKey(provider string) mailboxprovider.StorageExtension {
+	if plugin := providerByKey(provider); plugin != nil {
+		return plugin
+	}
+	return nil
+}
+
+func providerRetentionByKey(provider string) mailboxprovider.InboxRetentionPolicy {
+	if plugin := providerByKey(provider); plugin != nil {
+		return plugin
+	}
+	return nil
+}
+
+func mailboxProviderCapabilityPlugins() []mailboxprovider.CapabilityPlugin {
+	return defaultMailboxProviderRegistry().CapabilityPlugins()
+}
+
+func mailboxProviderStorageExtensions() []mailboxprovider.StorageExtension {
+	return defaultMailboxProviderRegistry().StorageExtensions()
+}
+
+func mailboxProviderVirtualSources() []mailboxprovider.VirtualMailboxSource {
+	return defaultMailboxProviderRegistry().VirtualMailboxSources()
 }

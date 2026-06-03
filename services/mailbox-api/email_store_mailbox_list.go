@@ -12,6 +12,7 @@ import (
 	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/byte-v-forge/common-lib/pagex"
 
+	"mailboxapi/internal/mailboxprovider"
 	"mailboxapi/pb"
 )
 
@@ -20,14 +21,6 @@ var errInvalidMailboxListCursor = errors.New("invalid mailbox cursor")
 type mailboxListPage struct {
 	Mailboxes  []*pb.EmailMailbox
 	NextCursor string
-}
-
-type mailboxListQuery struct {
-	AuthStatus   string
-	Provider     string
-	EmailAddress string
-	Cursor       pagex.KeysetCursor
-	Limit        int
 }
 
 func (s *MailboxStore) ListMailboxes(ctx context.Context, authStatus string, provider string, emailAddress string, cursorValue string, limit int32) (mailboxListPage, error) {
@@ -50,26 +43,18 @@ func (s *MailboxStore) ListMailboxes(ctx context.Context, authStatus string, pro
 	return mailboxPageFromRows(rows, query.Limit), nil
 }
 
-func newMailboxListQuery(authStatus string, provider string, emailAddress string, cursorValue string, limit int32) (mailboxListQuery, error) {
+func newMailboxListQuery(authStatus string, provider string, emailAddress string, cursorValue string, limit int32) (mailboxprovider.ListQuery, error) {
 	cursor, err := pagex.DecodeKeysetCursor(cursorValue)
 	if err != nil {
-		return mailboxListQuery{}, errInvalidMailboxListCursor
+		return mailboxprovider.ListQuery{}, errInvalidMailboxListCursor
 	}
-	return mailboxListQuery{
+	return mailboxprovider.ListQuery{
 		AuthStatus:   strings.TrimSpace(authStatus),
 		Provider:     normalizeEmailProvider(provider),
 		EmailAddress: emailx.Normalize(emailAddress),
 		Cursor:       cursor,
 		Limit:        accountmodel.NormalizePageLimit(int(limit)),
 	}, nil
-}
-
-func (q mailboxListQuery) scanLimit() int {
-	return pagex.KeysetLookaheadLimit(q.Limit)
-}
-
-func (q mailboxListQuery) hasCursor() bool {
-	return pagex.HasKeysetCursor(q.Cursor)
 }
 
 func mailboxPageFromRows(rows []*pb.EmailMailbox, limit int) mailboxListPage {
@@ -103,7 +88,7 @@ func uniqueMailboxRows(rows []*pb.EmailMailbox) []*pb.EmailMailbox {
 	return out
 }
 
-func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxListQuery) ([]*pb.EmailMailbox, error) {
+func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxprovider.ListQuery) ([]*pb.EmailMailbox, error) {
 	args := []any{}
 	query := mailboxSelectSQL() + ` WHERE 1=1`
 	if filter.AuthStatus != "" {
@@ -117,11 +102,11 @@ func (s *MailboxStore) listStoredMailboxes(ctx context.Context, filter mailboxLi
 		args = append(args, filter.EmailAddress)
 		query += fmt.Sprintf(" AND m.email = $%d", len(args))
 	}
-	if filter.hasCursor() {
+	if filter.HasCursor() {
 		args = append(args, filter.Cursor.UpdatedAt.Unix(), emailx.Normalize(filter.Cursor.ID))
 		query += fmt.Sprintf(" AND (m.updated_at < $%d OR (m.updated_at = $%d AND m.email < $%d))", len(args)-1, len(args)-1, len(args))
 	}
-	args = append(args, filter.scanLimit())
+	args = append(args, filter.ScanLimit())
 	query += fmt.Sprintf(" ORDER BY m.updated_at DESC, m.email DESC LIMIT $%d", len(args))
 
 	rows, err := s.pool.Query(ctx, query, args...)

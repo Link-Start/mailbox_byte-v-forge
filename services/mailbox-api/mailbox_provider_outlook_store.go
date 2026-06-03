@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"mailboxapi/internal/mailboxprovider"
 	"mailboxapi/pb"
 )
 
@@ -43,7 +44,7 @@ func upsertOutlookMailboxData(ctx context.Context, tx pgx.Tx, mailbox *pb.EmailM
 	return err
 }
 
-func validateOutlookPollableMailbox(row *mailboxRow) error {
+func validateOutlookPollableMailbox(row mailboxprovider.MailboxRecord) error {
 	if strings.TrimSpace(row.RefreshToken) == "" {
 		return fmt.Errorf("mailbox has no refresh token: %s", emailx.Redact(row.Email))
 	}

@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import {
   ActionButtonGroup,
   errorText,
+  MailboxProviderAction,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -13,15 +14,17 @@ import {
   useAsyncActionRunner,
   useForm
 } from '@byte-v-forge/common-ui';
-import type { ActionButtonDescriptor } from '@byte-v-forge/common-ui';
-import { mailboxProviderConfig, type MailboxProviderTab } from './mailbox-utils';
+import type { ActionButtonDescriptor, MailboxCredentialKind } from '@byte-v-forge/common-ui';
+import { providerAction, providerDisplayName, type MailboxProviderTab } from './mailbox-utils';
 import { BatchMailboxImportForm, SingleMailboxImportForm } from './mailbox-import-form';
 import { importMailboxBatch, importSingleMailbox } from './mailbox-import-submit';
 import { mailboxImportModeOptions, type MailboxBatchImportFormState, type MailboxImportFormState, type MailboxImportMode } from './mailbox-import-types';
+import type { MailboxProviderCapability } from './types';
 
-export function MailboxImportSheet({ open, provider, busy, onOpenChange, onDone, onError }: {
+export function MailboxImportSheet({ open, provider, capability, busy, onOpenChange, onDone, onError }: {
   open: boolean;
   provider: MailboxProviderTab;
+  capability?: MailboxProviderCapability;
   busy: boolean;
   onOpenChange: (open: boolean) => void;
   onDone: (message: string) => void;
@@ -31,14 +34,14 @@ export function MailboxImportSheet({ open, provider, busy, onOpenChange, onDone,
   const runner = useAsyncActionRunner();
   const singleForm = useForm<MailboxImportFormState>({ defaultValues: { email: '', password: '', refresh_token: '', access_token: '' } });
   const batchForm = useForm<MailboxBatchImportFormState>({ defaultValues: { batchText: '' } });
-  const importConfig = mailboxProviderConfig(provider).import;
+  const importAction = providerAction(capability, MailboxProviderAction.MAILBOX_PROVIDER_ACTION_IMPORT_MAILBOX);
   const activeFormId = mode === 'single' ? 'mailbox-import-single' : 'mailbox-import-batch';
-  if (!importConfig) return null;
-  const config = importConfig;
+  if (!importAction) return null;
+  const credentialKinds = importAction.required_credentials || [];
 
   async function saveSingle(values: MailboxImportFormState) {
     await runImport(async () => {
-      const message = await importSingleMailbox(provider, config.credentialKinds, values);
+      const message = await importSingleMailbox(provider, credentialKinds, values);
       singleForm.reset({ email: '', password: '', refresh_token: '', access_token: '' });
       return message;
     });
@@ -46,7 +49,7 @@ export function MailboxImportSheet({ open, provider, busy, onOpenChange, onDone,
 
   async function saveBatch(values: MailboxBatchImportFormState) {
     await runImport(async () => {
-      const message = await importMailboxBatch(provider, config.credentialKinds, values);
+      const message = await importMailboxBatch(provider, credentialKinds, values);
       batchForm.reset({ batchText: '' });
       return message;
     });
@@ -63,14 +66,14 @@ export function MailboxImportSheet({ open, provider, busy, onOpenChange, onDone,
       <SheetContent className="w-[min(460px,100vw)] p-0 sm:max-w-none">
         <SheetHeader className="border-b">
           <SheetTitle>添加邮箱账号</SheetTitle>
-          <SheetDescription>{importConfig.description}</SheetDescription>
+          <SheetDescription>{providerDisplayName(capability, provider)} 可附带 provider 支持的凭据。</SheetDescription>
         </SheetHeader>
         <div className="grid gap-3 p-4">
           <SegmentedControl value={mode} options={mailboxImportModeOptions} onChange={setMode} />
           {mode === 'single' ? (
-            <SingleMailboxImportForm formId="mailbox-import-single" control={singleForm.control} credentialKinds={importConfig.credentialKinds} onSubmit={singleForm.handleSubmit(saveSingle)} />
+            <SingleMailboxImportForm formId="mailbox-import-single" control={singleForm.control} credentialKinds={credentialKinds} onSubmit={singleForm.handleSubmit(saveSingle)} />
           ) : (
-            <BatchMailboxImportForm formId="mailbox-import-batch" control={batchForm.control} placeholder={importConfig.batchPlaceholder} onSubmit={batchForm.handleSubmit(saveBatch)} />
+            <BatchMailboxImportForm formId="mailbox-import-batch" control={batchForm.control} placeholder={batchPlaceholder(credentialKinds)} onSubmit={batchForm.handleSubmit(saveBatch)} />
           )}
         </div>
         <SheetFooter className="border-t">
@@ -79,6 +82,10 @@ export function MailboxImportSheet({ open, provider, busy, onOpenChange, onDone,
       </SheetContent>
     </Sheet>
   );
+}
+
+function batchPlaceholder(credentialKinds: MailboxCredentialKind[]) {
+  return credentialKinds.length > 0 ? 'account@example.com----password' : 'account@example.com';
 }
 
 function submitDisabled(mode: MailboxImportMode, singleEmail: string, batchText: string) {

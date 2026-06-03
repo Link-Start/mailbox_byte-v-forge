@@ -11,16 +11,17 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"mailboxapi/internal/mailboxprovider"
 	"mailboxapi/pb"
 )
 
-func cloudflareMailboxProvider() *mailboxProviderPlugin {
-	return &mailboxProviderPlugin{
-		key:             emailProviderCloudflare,
-		aliases:         []string{"cf", "cloudflare-email-relay"},
-		displayName:     "Cloudflare",
-		storedInboxOnly: true,
-		capabilities: func() *mailboxv1.MailboxProviderCapabilities {
+func cloudflareMailboxProvider() mailboxprovider.Plugin {
+	return mailboxprovider.NewDefinitionPlugin(mailboxprovider.Definition{
+		ProviderKey:          emailProviderCloudflare,
+		AliasKeys:            []string{"cf", "cloudflare-email-relay"},
+		DisplayNameValue:     "Cloudflare",
+		StoredInboxOnlyValue: true,
+		CapabilitiesFunc: func() *mailboxv1.MailboxProviderCapabilities {
 			return &mailboxv1.MailboxProviderCapabilities{
 				Key:         emailProviderCloudflare,
 				DisplayName: "Cloudflare",
@@ -35,8 +36,8 @@ func cloudflareMailboxProvider() *mailboxProviderPlugin {
 				},
 			}
 		},
-		loadDomains: loadCloudflareEmailDomains,
-		domains: func(configured []string) []*mailboxv1.MailboxDomain {
+		LoadDomainsFunc: loadCloudflareEmailDomains,
+		DomainsFunc: func(configured []string) []*mailboxv1.MailboxDomain {
 			domains := make([]*mailboxv1.MailboxDomain, 0, len(configured))
 			for _, domain := range configured {
 				domains = append(domains, &mailboxv1.MailboxDomain{
@@ -47,41 +48,41 @@ func cloudflareMailboxProvider() *mailboxProviderPlugin {
 			}
 			return domains
 		},
-		matchesAddress: func(email string, cfg mailboxProviderRuntimeConfig) bool {
+		MatchesAddressFunc: func(email string, cfg mailboxprovider.RuntimeContext) bool {
 			domain := domainForEmail(email)
 			if domain == "" {
 				return false
 			}
-			for _, candidate := range cfg.domainsForProvider(emailProviderCloudflare) {
+			for _, candidate := range cfg.DomainsForProvider(emailProviderCloudflare) {
 				if domain == strings.Trim(strings.ToLower(strings.TrimSpace(candidate)), ".") {
 					return true
 				}
 			}
 			return false
 		},
-		pruneInbound: func(ctx context.Context, tx pgx.Tx, retention mailboxInboxRetention) error {
-			for domain := range retention.touchedDomains {
+		PruneInboundFunc: func(ctx context.Context, tx pgx.Tx, retention mailboxprovider.InboxRetention) error {
+			for domain := range retention.TouchedDomains {
 				if err := pruneDomainMessages(ctx, tx, emailProviderCloudflare, domain, envx.Int("MAILBOX_CLOUDFLARE_MAX_MESSAGES_PER_DOMAIN", defaultCloudflareMaxDomain)); err != nil {
 					return err
 				}
 			}
 			return nil
 		},
-		includeVirtual: func(authStatus string) bool {
+		IncludeVirtualFunc: func(authStatus string) bool {
 			return authStatus == ""
 		},
-		virtualMailboxes: listCloudflareVirtualMailboxes,
-		prepareProjection: func(mailbox *pb.EmailMailbox) {
+		VirtualMailboxesFunc: listCloudflareVirtualMailboxes,
+		PrepareProjectionFunc: func(mailbox *pb.EmailMailbox) {
 			mailbox.AuthStatus = ""
 			mailbox.Password = ""
 			mailbox.RefreshToken = ""
 			mailbox.AccessToken = ""
 			mailbox.LastError = ""
 		},
-	}
+	})
 }
 
-func listCloudflareVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, filter mailboxListQuery) ([]*pb.EmailMailbox, error) {
+func listCloudflareVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, filter mailboxprovider.ListQuery) ([]*pb.EmailMailbox, error) {
 	args := []any{emailProviderCloudflare}
 	where := ""
 	if filter.EmailAddress != "" {
@@ -101,11 +102,11 @@ func listCloudflareVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, fil
 		) v
 		WHERE 1=1
 	`, where)
-	if filter.hasCursor() {
+	if filter.HasCursor() {
 		args = append(args, filter.Cursor.UpdatedAt.Unix(), emailx.Normalize(filter.Cursor.ID))
 		query += fmt.Sprintf(" AND (v.updated_at < $%d OR (v.updated_at = $%d AND v.mailbox_email < $%d))", len(args)-1, len(args)-1, len(args))
 	}
-	args = append(args, filter.scanLimit())
+	args = append(args, filter.ScanLimit())
 	query += fmt.Sprintf(" ORDER BY v.updated_at DESC, v.mailbox_email DESC LIMIT $%d", len(args))
 
 	rows, err := pool.Query(ctx, query, args...)

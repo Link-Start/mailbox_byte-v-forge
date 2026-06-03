@@ -1,9 +1,9 @@
 import { MailboxAuthStatus, MailboxCredentialKind, MailboxProviderAction } from '@byte-v-forge/common-ui';
 import { normalizeUiEmail } from './email-utils';
-import { mailboxProviderConfig, mailboxProviderConfigs, mailboxProviderMatches, mailboxProviderTabFor, mailboxProviderValue, type MailboxProviderTab } from './mailbox-provider-config';
+import { mailboxProviderMatches, mailboxProviderValue, normalizeMailboxProviderKey, type MailboxProviderTab } from './mailbox-provider-config';
 import type { Mailbox, MailboxProviderActionCapability, MailboxProviderCapability } from './types';
 
-export { mailboxProviderConfig, mailboxProviderConfigs, mailboxProviderMatches, mailboxProviderTabFor, mailboxProviderValue, type MailboxProviderTab };
+export { mailboxProviderMatches, mailboxProviderValue, normalizeMailboxProviderKey, type MailboxProviderTab };
 export type MailboxBatchItem = {
   email: string;
   password: string;
@@ -15,17 +15,10 @@ export function domainForEmail(email: string) {
 }
 
 export function tokenText(mailbox: Mailbox) {
-  const configured = mailboxProviderConfig(mailbox.provider_key).tokenText;
-  if (typeof configured === 'function') return configured(mailbox);
-  if (configured) return configured;
   if (mailbox.refresh_token && authStatus(mailbox) === 'AUTHORIZED') return 'Refresh 可用';
   if (mailbox.refresh_token) return 'Refresh 待验证';
   if (mailbox.access_token) return '仅 Access';
   return '缺 Token';
-}
-
-export function mailboxProviderText(provider: string) {
-  return mailboxProviderConfig(provider).label;
 }
 
 export function authStatus(mailbox: Mailbox) {
@@ -56,14 +49,10 @@ export function authStatusEnum(mailbox: Mailbox) {
   }
 }
 
-export function parseMailboxBatch(value: string, provider: string) {
+export function parseMailboxBatch(value: string, credentialKinds: MailboxCredentialKind[]) {
   const items: MailboxBatchItem[] = [];
   const errors: string[] = [];
-  const importConfig = mailboxProviderConfig(provider).import;
-  if (!importConfig) {
-    return { items, errors: ['当前 provider 不支持导入'] };
-  }
-  const allowPlainEmailBatch = importConfig.allowPlainEmailBatch;
+  const allowPlainEmailBatch = !credentialKinds.includes(MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD);
 
   value.split(/\r?\n/).forEach((raw, index) => {
     const line = raw.trim();
@@ -90,7 +79,7 @@ export function parseMailboxBatch(value: string, provider: string) {
 }
 
 export function capabilityForProvider(capabilities: MailboxProviderCapability[], provider: string) {
-  const target = mailboxProviderTabFor(provider);
+  const target = normalizeMailboxProviderKey(provider);
   if (!target) return undefined;
   return capabilities.find((capability) => mailboxProviderMatches(capability.key, target));
 }
@@ -115,6 +104,13 @@ export function canRunProviderMailboxAction(capabilities: MailboxProviderCapabil
   return canRunMailboxAction(mailbox, providerAction(capabilityForProvider(capabilities, mailbox.provider_key), action));
 }
 
+export function providerShowsCredentialState(capability?: MailboxProviderCapability) {
+  return (capability?.actions || []).some((action) => (action.required_credentials || []).length > 0);
+}
+
+export function providerDisplayName(capability: MailboxProviderCapability | undefined, fallback: string) {
+  return capability?.display_name || fallback;
+}
 
 function requiredCredentialsPresent(mailbox: Mailbox, credentials: MailboxCredentialKind[]) {
   return credentials.every((credential) => credentialPresent(mailbox, credential));

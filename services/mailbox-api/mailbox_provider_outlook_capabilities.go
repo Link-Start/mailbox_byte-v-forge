@@ -13,6 +13,11 @@ func outlookProviderCapabilities() *mailboxv1.MailboxProviderCapabilities {
 			{
 				Action:        mailboxv1.MailboxProviderAction_MAILBOX_PROVIDER_ACTION_IMPORT_MAILBOX,
 				BulkSupported: true,
+				RequiredCredentials: []mailboxv1.MailboxCredentialKind{
+					mailboxv1.MailboxCredentialKind_MAILBOX_CREDENTIAL_KIND_PASSWORD,
+					mailboxv1.MailboxCredentialKind_MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN,
+					mailboxv1.MailboxCredentialKind_MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN,
+				},
 			},
 			{
 				Action: mailboxv1.MailboxProviderAction_MAILBOX_PROVIDER_ACTION_RUN_OAUTH,
