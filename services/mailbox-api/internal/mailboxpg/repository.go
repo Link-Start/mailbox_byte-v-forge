@@ -154,7 +154,7 @@ func (r *Repository) UpdateMailboxTokens(ctx context.Context, email string, refr
 	if err != nil {
 		return err
 	}
-	if err := r.providers.UpdateTokens(ctx, r.pool, row.Provider, email, refreshToken, accessToken); err != nil {
+	if err := r.updateMailboxTokens(ctx, row.Provider, email, refreshToken, accessToken); err != nil {
 		return err
 	}
 	_, err = r.pool.Exec(ctx, "UPDATE mailboxes SET updated_at = $1 WHERE email = $2", time.Now().Unix(), email)
@@ -171,7 +171,7 @@ func (r *Repository) ListMailboxes(ctx context.Context, authStatus string, provi
 		return mailboxmodel.ListPage{}, err
 	}
 	rows := stored
-	virtual, err := r.providers.VirtualMailboxes(ctx, r.pool, query)
+	virtual, err := r.listVirtualMailboxes(ctx, query)
 	if err != nil {
 		return mailboxmodel.ListPage{}, err
 	}

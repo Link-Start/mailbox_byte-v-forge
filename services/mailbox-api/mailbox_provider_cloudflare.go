@@ -7,7 +7,6 @@ import (
 	"github.com/byte-v-forge/common-lib/envx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxpg"
@@ -70,7 +69,6 @@ func cloudflareMailboxProvider() mailboxprovider.Plugin {
 		IncludeVirtualFunc: func(authStatus string) bool {
 			return authStatus == ""
 		},
-		VirtualMailboxesFunc: listCloudflareVirtualMailboxes,
 		PrepareProjectionFunc: func(mailbox *mailboxmodel.Record) {
 			mailbox.AuthStatus = ""
 			mailbox.Password = ""
@@ -79,8 +77,4 @@ func cloudflareMailboxProvider() mailboxprovider.Plugin {
 			mailbox.LastError = ""
 		},
 	})
-}
-
-func listCloudflareVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, filter mailboxprovider.ListQuery) ([]*mailboxmodel.Record, error) {
-	return mailboxpg.ListStoredInboxOnlyVirtualMailboxes(ctx, pool, emailProviderCloudflare, filter, normalizeEmailProvider, prepareMailboxProjection)
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/byte-v-forge/common-lib/pagex"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"mailboxapi/internal/mailboxmodel"
 )
@@ -27,6 +26,20 @@ type MailboxRecord struct {
 	Provider     string
 	RefreshToken string
 	AuthStatus   string
+}
+
+type TokenFields struct {
+	Table              string
+	EmailColumn        string
+	RefreshTokenColumn string
+	AccessTokenColumn  string
+	AuthStatusColumn   string
+	LastErrorColumn    string
+	UpdatedAtColumn    string
+}
+
+func (f TokenFields) HasTokenStorage() bool {
+	return f.Table != "" && f.EmailColumn != "" && f.RefreshTokenColumn != "" && f.AccessTokenColumn != ""
 }
 
 type InboxRetention struct {
@@ -54,6 +67,4 @@ type UpsertFunc func(context.Context, pgx.Tx, *mailboxmodel.Record, int64) error
 type AuthFilterFunc func(string, *[]any) string
 type ValidatePollFunc func(MailboxRecord) error
 type UpdateAuthFunc func(context.Context, pgx.Tx, string, string, string, int64) error
-type UpdateTokensFunc func(context.Context, *pgxpool.Pool, string, string, string) error
 type PruneInboundFunc func(context.Context, pgx.Tx, InboxRetention) error
-type VirtualMailboxesFunc func(context.Context, *pgxpool.Pool, ListQuery) ([]*mailboxmodel.Record, error)

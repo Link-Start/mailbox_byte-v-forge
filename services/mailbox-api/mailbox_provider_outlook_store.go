@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"
@@ -60,14 +58,5 @@ func updateOutlookAuthStatus(ctx context.Context, tx pgx.Tx, email string, authS
 		SET auth_status = $1, last_error = $2, updated_at = $3
 		WHERE mailbox_email = $4
 	`, strings.TrimSpace(authStatus), strings.TrimSpace(lastError), now, emailx.Normalize(email))
-	return err
-}
-
-func updateOutlookTokens(ctx context.Context, pool *pgxpool.Pool, email string, refreshToken string, accessToken string) error {
-	_, err := pool.Exec(ctx, `
-		UPDATE mailbox_outlook_accounts
-		SET refresh_token = $1, access_token = $2, auth_status = $3, last_error = '', updated_at = $4
-		WHERE mailbox_email = $5
-	`, strings.TrimSpace(refreshToken), strings.TrimSpace(accessToken), mailboxmodel.AuthStatusAuthorized, time.Now().Unix(), emailx.Normalize(email))
 	return err
 }

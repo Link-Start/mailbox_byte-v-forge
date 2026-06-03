@@ -5,15 +5,14 @@ import (
 	"fmt"
 
 	"github.com/byte-v-forge/common-lib/emailx"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"
 )
 
-func ListStoredInboxOnlyVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, provider string, filter mailboxprovider.ListQuery, normalizeProvider func(string) string, prepareProjection func(*mailboxmodel.Record)) ([]*mailboxmodel.Record, error) {
+func (r *Repository) listStoredInboxOnlyVirtualMailboxes(ctx context.Context, provider string, filter mailboxprovider.ListQuery, normalizeProvider func(string) string, prepareProjection func(*mailboxmodel.Record)) ([]*mailboxmodel.Record, error) {
 	provider = mailboxprovider.NormalizeKey(provider)
-	if pool == nil || provider == "" {
+	if r == nil || r.pool == nil || provider == "" {
 		return []*mailboxmodel.Record{}, nil
 	}
 	if normalizeProvider == nil {
@@ -48,7 +47,7 @@ func ListStoredInboxOnlyVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool
 	args = append(args, filter.ScanLimit())
 	query += fmt.Sprintf(" ORDER BY v.updated_at DESC, v.mailbox_email DESC LIMIT $%d", len(args))
 
-	rows, err := pool.Query(ctx, query, args...)
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,4 +62,22 @@ func ListStoredInboxOnlyVirtualMailboxes(ctx context.Context, pool *pgxpool.Pool
 		out = append(out, row.ToRecord(normalizeProvider, prepareProjection))
 	}
 	return out, rows.Err()
+}
+
+func (r *Repository) listVirtualMailboxes(ctx context.Context, query mailboxprovider.ListQuery) ([]*mailboxmodel.Record, error) {
+	out := []*mailboxmodel.Record{}
+	for _, source := range r.providers.VirtualMailboxSources() {
+		if query.Provider != "" && query.Provider != source.Key() {
+			continue
+		}
+		if !source.StoredInboxOnly() || !source.IncludeVirtual(query.AuthStatus) {
+			continue
+		}
+		items, err := r.listStoredInboxOnlyVirtualMailboxes(ctx, source.Key(), query, r.providers.NormalizeProviderInput, r.providers.PrepareProjection)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, items...)
+	}
+	return out, nil
 }

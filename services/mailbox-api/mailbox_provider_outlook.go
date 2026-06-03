@@ -21,9 +21,17 @@ func outlookMailboxProvider() mailboxprovider.Plugin {
 			*args = append(*args, strings.TrimSpace(authStatus))
 			return fmt.Sprintf("outlook.auth_status = $%d", len(*args))
 		},
-		ValidatePollFunc:      validateOutlookPollableMailbox,
-		UpdateAuthFunc:        updateOutlookAuthStatus,
-		UpdateTokensFunc:      updateOutlookTokens,
+		ValidatePollFunc: validateOutlookPollableMailbox,
+		UpdateAuthFunc:   updateOutlookAuthStatus,
+		TokenFieldsValue: mailboxprovider.TokenFields{
+			Table:              "mailbox_outlook_accounts",
+			EmailColumn:        "mailbox_email",
+			RefreshTokenColumn: "refresh_token",
+			AccessTokenColumn:  "access_token",
+			AuthStatusColumn:   "auth_status",
+			LastErrorColumn:    "last_error",
+			UpdatedAtColumn:    "updated_at",
+		},
 		PrepareLegacyDataFunc: outlookLegacyStatements,
 	})
 }

@@ -5,7 +5,6 @@ import (
 
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"mailboxapi/internal/mailboxmodel"
 )
@@ -37,8 +36,7 @@ type StorageExtension interface {
 	ValidatePoll(MailboxRecord) error
 	CanUpdateAuth() bool
 	UpdateAuth(context.Context, pgx.Tx, string, string, string, int64) error
-	CanUpdateTokens() bool
-	UpdateTokens(context.Context, *pgxpool.Pool, string, string, string) error
+	TokenFields() (TokenFields, bool)
 	PrepareLegacyData() []string
 }
 
@@ -49,8 +47,7 @@ type InboxRetentionPolicy interface {
 
 type VirtualMailboxSource interface {
 	Identity
-	HasVirtualMailboxes() bool
-	VirtualMailboxes(context.Context, *pgxpool.Pool, ListQuery) ([]*mailboxmodel.Record, error)
+	StoredInboxOnly() bool
 	IncludeVirtual(string) bool
 }
 
@@ -77,9 +74,8 @@ type Definition struct {
 	AuthFilterFunc        AuthFilterFunc
 	ValidatePollFunc      ValidatePollFunc
 	UpdateAuthFunc        UpdateAuthFunc
-	UpdateTokensFunc      UpdateTokensFunc
+	TokenFieldsValue      TokenFields
 	PruneInboundFunc      PruneInboundFunc
-	VirtualMailboxesFunc  VirtualMailboxesFunc
 	IncludeVirtualFunc    func(string) bool
 	PrepareProjectionFunc func(*mailboxmodel.Record)
 	PrepareLegacyDataFunc func() []string
@@ -169,10 +165,9 @@ func (p definitionPlugin) UpdateAuth(ctx context.Context, tx pgx.Tx, email strin
 	return p.definition.UpdateAuthFunc(ctx, tx, email, authStatus, lastError, now)
 }
 
-func (p definitionPlugin) CanUpdateTokens() bool { return p.definition.UpdateTokensFunc != nil }
-
-func (p definitionPlugin) UpdateTokens(ctx context.Context, pool *pgxpool.Pool, email string, refreshToken string, accessToken string) error {
-	return p.definition.UpdateTokensFunc(ctx, pool, email, refreshToken, accessToken)
+func (p definitionPlugin) TokenFields() (TokenFields, bool) {
+	fields := p.definition.TokenFieldsValue
+	return fields, fields.HasTokenStorage()
 }
 
 func (p definitionPlugin) PruneInbound(ctx context.Context, tx pgx.Tx, retention InboxRetention) error {
@@ -180,12 +175,6 @@ func (p definitionPlugin) PruneInbound(ctx context.Context, tx pgx.Tx, retention
 		return nil
 	}
 	return p.definition.PruneInboundFunc(ctx, tx, retention)
-}
-
-func (p definitionPlugin) HasVirtualMailboxes() bool { return p.definition.VirtualMailboxesFunc != nil }
-
-func (p definitionPlugin) VirtualMailboxes(ctx context.Context, pool *pgxpool.Pool, query ListQuery) ([]*mailboxmodel.Record, error) {
-	return p.definition.VirtualMailboxesFunc(ctx, pool, query)
 }
 
 func (p definitionPlugin) IncludeVirtual(authStatus string) bool {
