@@ -21,7 +21,7 @@ func (r *Registry) NormalizeProviderInput(provider string) string {
 func (r *Registry) AuthFilter(provider string, authStatus string, args *[]any) string {
 	definition := r.StorageByKey(provider)
 	if definition != nil {
-		filter, ok := definition.AuthFilter(authStatus, args)
+		filter, ok := providerAuthFilterSQL(definition, authStatus, args)
 		if !ok {
 			return "FALSE"
 		}
@@ -29,7 +29,7 @@ func (r *Registry) AuthFilter(provider string, authStatus string, args *[]any) s
 	}
 	parts := []string{}
 	for _, definition := range r.StorageExtensions() {
-		if filter, ok := definition.AuthFilter(authStatus, args); ok {
+		if filter, ok := providerAuthFilterSQL(definition, authStatus, args); ok {
 			parts = append(parts, filter)
 		}
 	}

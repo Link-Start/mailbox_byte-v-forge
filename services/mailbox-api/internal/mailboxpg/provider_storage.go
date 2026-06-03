@@ -47,7 +47,7 @@ func (r *Repository) upsertProviderMailboxData(ctx context.Context, tx pgx.Tx, p
 	if authColumn != "" {
 		extraArgs = append(extraArgs, explicitAuthStatus)
 		explicitAuthArg := len(builder.args) + len(extraArgs)
-		refreshColumn, err := sqlIdentifier(fields.RefreshTokenColumn)
+		refreshColumn, err := mailboxprovider.SQLIdentifier(fields.RefreshTokenColumn)
 		if err != nil {
 			return err
 		}
@@ -74,22 +74,22 @@ func (r *Repository) updateProviderAuth(ctx context.Context, tx pgx.Tx, provider
 	if !ok || fields.AuthStatusColumn == "" {
 		return fmt.Errorf("mailbox provider has no auth state: %s", provider)
 	}
-	table, err := sqlIdentifier(fields.Table)
+	table, err := mailboxprovider.SQLIdentifier(fields.Table)
 	if err != nil {
 		return err
 	}
-	emailColumn, err := sqlIdentifier(fields.EmailColumn)
+	emailColumn, err := mailboxprovider.SQLIdentifier(fields.EmailColumn)
 	if err != nil {
 		return err
 	}
-	authColumn, err := sqlIdentifier(fields.AuthStatusColumn)
+	authColumn, err := mailboxprovider.SQLIdentifier(fields.AuthStatusColumn)
 	if err != nil {
 		return err
 	}
 	args := []any{strings.TrimSpace(authStatus)}
 	assignments := []string{fmt.Sprintf("%s = $1", authColumn)}
 	if fields.LastErrorColumn != "" {
-		column, err := sqlIdentifier(fields.LastErrorColumn)
+		column, err := mailboxprovider.SQLIdentifier(fields.LastErrorColumn)
 		if err != nil {
 			return err
 		}
@@ -97,7 +97,7 @@ func (r *Repository) updateProviderAuth(ctx context.Context, tx pgx.Tx, provider
 		assignments = append(assignments, fmt.Sprintf("%s = $%d", column, len(args)))
 	}
 	if fields.UpdatedAtColumn != "" {
-		column, err := sqlIdentifier(fields.UpdatedAtColumn)
+		column, err := mailboxprovider.SQLIdentifier(fields.UpdatedAtColumn)
 		if err != nil {
 			return err
 		}
@@ -125,11 +125,11 @@ const (
 )
 
 func newProviderStorageBuilder(fields mailboxprovider.TokenFields) (*providerStorageBuilder, error) {
-	table, err := sqlIdentifier(fields.Table)
+	table, err := mailboxprovider.SQLIdentifier(fields.Table)
 	if err != nil {
 		return nil, err
 	}
-	emailColumn, err := sqlIdentifier(fields.EmailColumn)
+	emailColumn, err := mailboxprovider.SQLIdentifier(fields.EmailColumn)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (b *providerStorageBuilder) add(rawColumn string, value any, updateMode str
 	if strings.TrimSpace(rawColumn) == "" {
 		return ""
 	}
-	column, err := sqlIdentifier(rawColumn)
+	column, err := mailboxprovider.SQLIdentifier(rawColumn)
 	if err != nil {
 		b.err = err
 		return ""

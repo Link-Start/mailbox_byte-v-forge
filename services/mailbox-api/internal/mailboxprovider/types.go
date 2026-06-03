@@ -6,14 +6,6 @@ type RuntimeContext interface {
 	DomainsForProvider(provider string) []string
 }
 
-type SelectFields struct {
-	Password     string
-	RefreshToken string
-	AccessToken  string
-	AuthStatus   string
-	LastError    string
-}
-
 type MailboxRecord struct {
 	Email        string
 	Provider     string
@@ -74,5 +66,4 @@ func (q ListQuery) HasCursor() bool {
 	return pagex.HasKeysetCursor(q.Cursor)
 }
 
-type AuthFilterFunc func(string, *[]any) string
 type ValidatePollFunc func(MailboxRecord) error

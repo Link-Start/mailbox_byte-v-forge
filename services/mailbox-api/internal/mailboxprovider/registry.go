@@ -23,6 +23,11 @@ func NewRegistry(plugins ...Plugin) (*Registry, error) {
 		if _, exists := registry.byKey[key]; exists {
 			return nil, fmt.Errorf("duplicate mailbox provider plugin %q", key)
 		}
+		if fields, ok := plugin.TokenFields(); ok {
+			if err := validateTokenFields(fields); err != nil {
+				return nil, fmt.Errorf("invalid mailbox provider %q token fields: %w", key, err)
+			}
+		}
 		registry.byKey[key] = plugin
 		for _, alias := range plugin.Aliases() {
 			alias = NormalizeKey(alias)

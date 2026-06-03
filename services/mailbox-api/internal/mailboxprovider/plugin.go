@@ -25,9 +25,6 @@ type CapabilityPlugin interface {
 type StorageExtension interface {
 	Identity
 	SchemaStatements() []string
-	SelectJoin() string
-	SelectFields() SelectFields
-	AuthFilter(string, *[]any) (string, bool)
 	CanValidatePoll() bool
 	ValidatePoll(MailboxRecord) error
 	TokenFields() (TokenFields, bool)
@@ -58,13 +55,10 @@ type Definition struct {
 	DisplayNameValue      string
 	StoredInboxOnlyValue  bool
 	SchemaStatementsFunc  func() []string
-	SelectJoinValue       string
-	SelectFieldsValue     SelectFields
 	CapabilitiesFunc      func() *mailboxv1.MailboxProviderCapabilities
 	LoadDomainsFunc       func() []string
 	DomainsFunc           func([]string) []*mailboxv1.MailboxDomain
 	MatchesAddressFunc    func(string, RuntimeContext) bool
-	AuthFilterFunc        AuthFilterFunc
 	ValidatePollFunc      ValidatePollFunc
 	TokenFieldsValue      TokenFields
 	RetentionPolicyValue  MessageRetention
@@ -102,10 +96,6 @@ func (p definitionPlugin) SchemaStatements() []string {
 	return p.definition.SchemaStatementsFunc()
 }
 
-func (p definitionPlugin) SelectJoin() string { return p.definition.SelectJoinValue }
-
-func (p definitionPlugin) SelectFields() SelectFields { return p.definition.SelectFieldsValue }
-
 func (p definitionPlugin) Capabilities() *mailboxv1.MailboxProviderCapabilities {
 	if p.definition.CapabilitiesFunc == nil {
 		return nil
@@ -129,13 +119,6 @@ func (p definitionPlugin) Domains(configured []string) []*mailboxv1.MailboxDomai
 
 func (p definitionPlugin) MatchesAddress(email string, cfg RuntimeContext) bool {
 	return p.definition.MatchesAddressFunc != nil && p.definition.MatchesAddressFunc(email, cfg)
-}
-
-func (p definitionPlugin) AuthFilter(authStatus string, args *[]any) (string, bool) {
-	if p.definition.AuthFilterFunc == nil {
-		return "", false
-	}
-	return p.definition.AuthFilterFunc(authStatus, args), true
 }
 
 func (p definitionPlugin) CanValidatePoll() bool { return p.definition.ValidatePollFunc != nil }
