@@ -14,15 +14,15 @@ import (
 	"mailboxapi/internal/inboxapp"
 )
 
-func inboxMessages(mailboxEmail string, messages []graphMessage) []*mailboxv1.EmailInboxMessage {
+func inboxMessages(providerKey string, mailboxEmail string, messages []graphMessage) []*mailboxv1.EmailInboxMessage {
 	out := make([]*mailboxv1.EmailInboxMessage, 0, len(messages))
 	for _, msg := range messages {
-		out = append(out, inboxMessage(mailboxEmail, msg))
+		out = append(out, inboxMessage(providerKey, mailboxEmail, msg))
 	}
 	return out
 }
 
-func inboxMessage(mailboxEmail string, msg graphMessage) *mailboxv1.EmailInboxMessage {
+func inboxMessage(providerKey string, mailboxEmail string, msg graphMessage) *mailboxv1.EmailInboxMessage {
 	bodyPreview := strings.TrimSpace(msg.BodyPreview)
 	if bodyPreview == "" {
 		bodyPreview = inboxapp.CompactMessageText(msg.Body.Content, 500)
@@ -35,7 +35,7 @@ func inboxMessage(mailboxEmail string, msg graphMessage) *mailboxv1.EmailInboxMe
 		BodyPreview:        inboxapp.CompactMessageText(bodyPreview, 500),
 		ReceivedAtUnix:     int64(timex.UnixFloat(msg.ReceivedDateTime)),
 		Recipients:         inboxapp.UniqueEmails(messageAddresses(msg)),
-		ProviderKey:        emailProviderOutlook,
+		ProviderKey:        providerKey,
 		SourceMailboxEmail: emailx.Normalize(mailboxEmail),
 	}
 }

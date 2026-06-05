@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
+
 	"mailboxapi/internal/mailboxprovider"
 	"mailboxapi/pb"
 )
@@ -22,12 +24,35 @@ type mailboxProviderActionRegistry struct {
 	oauth           map[string]mailboxOAuthRunner
 }
 
+type mailboxProviderActionDependencies struct {
+	browserClient browserautomationv1.BrowserAutomationServiceClient
+}
+
+type mailboxProviderActionPlugin interface {
+	RegisterMailboxProviderActions(*mailboxProviderActionRegistry, mailboxProviderActionDependencies)
+}
+
 func newMailboxProviderActionRegistry(defaultProvider string) *mailboxProviderActionRegistry {
 	return &mailboxProviderActionRegistry{
 		defaultProvider: mailboxprovider.NormalizeKey(defaultProvider),
 		registration:    map[string]mailboxRegistrationRunner{},
 		oauth:           map[string]mailboxOAuthRunner{},
 	}
+}
+
+func newMailboxProviderActionRegistryForProviders(providers mailboxProviderRuntimeConfig, deps mailboxProviderActionDependencies) *mailboxProviderActionRegistry {
+	registry := newMailboxProviderActionRegistry(providers.defaultProvider())
+	if providers.registry == nil {
+		return registry
+	}
+	for _, provider := range providers.registry.All() {
+		actionPlugin, ok := provider.(mailboxProviderActionPlugin)
+		if !ok {
+			continue
+		}
+		actionPlugin.RegisterMailboxProviderActions(registry, deps)
+	}
+	return registry
 }
 
 func (r *mailboxProviderActionRegistry) RegisterRegistration(provider string, runner mailboxRegistrationRunner) {

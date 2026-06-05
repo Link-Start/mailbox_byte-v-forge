@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/byte-v-forge/common-lib/emailx"
-	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 
 	"mailboxapi/internal/mailboxmodel"
@@ -60,13 +59,9 @@ func (c mailboxProviderRuntimeConfig) IsStoredInboxOnlyAddress(email string) boo
 	return ok
 }
 
-func newMailboxActivitiesForProviders(cfg mailboxProviderRuntimeConfig, registrationCfg outlookRegistrationConfig, browserClient browserautomationv1.BrowserAutomationServiceClient, emailBackend emailBackend, mailboxRepo *mailboxpg.Repository, operations *operationStore, hot *mailboxHotStream) *mailboxActivities {
-	providerActions := newMailboxProviderActionRegistry(cfg.defaultProvider())
-	outlookRegistration := newOutlookRegistrationRunner(registrationCfg, browserClient, nil)
-	providerActions.RegisterRegistration(emailProviderOutlook, outlookRegistration)
-	providerActions.RegisterOAuth(emailProviderOutlook, outlookRegistration)
+func newMailboxActivitiesForProviders(cfg mailboxProviderRuntimeConfig, actionDeps mailboxProviderActionDependencies, emailBackend emailBackend, mailboxRepo *mailboxpg.Repository, operations *operationStore, hot *mailboxHotStream) *mailboxActivities {
 	return &mailboxActivities{
-		providerActions: providerActions,
+		providerActions: newMailboxProviderActionRegistryForProviders(cfg, actionDeps),
 		emailBackend:    emailBackend,
 		mailboxRepo:     mailboxRepo,
 		operations:      operations,

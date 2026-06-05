@@ -2,10 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"sync"
-	"time"
 
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 
@@ -14,58 +10,19 @@ import (
 	"mailboxapi/internal/mailboxpg"
 )
 
-type oauthEntry struct {
-	refreshToken string
-	manager      *OAuthManager
-}
-
 type MailWatcher struct {
-	inbox        *inboxapp.Service
-	mailboxes    *mailboxpg.Repository
-	messageLimit int
-	pollInterval int
-	inboxOverlap int
-	httpClient   *http.Client
-	oauthConfig  outlookOAuthConfig
-	events       *mailboxHotStream
-
-	mu            sync.Mutex
-	oauthManagers map[string]oauthEntry
+	inbox     *inboxapp.Service
+	mailboxes *mailboxpg.Repository
+	sources   *mailboxInboxSourceRegistry
+	events    *mailboxHotStream
 }
 
-type GraphFetchError struct {
-	StatusCode int
-	Body       string
-	RetryAfter time.Duration
-}
-
-func (e *GraphFetchError) Error() string {
-	body := safeMailboxText(e.Body)
-	if len(body) > 500 {
-		body = body[:500]
-	}
-	return fmt.Sprintf("status=%d body=%s", e.StatusCode, body)
-}
-
-func (e *GraphFetchError) IsAuth() bool {
-	return e.StatusCode == http.StatusUnauthorized || e.StatusCode == http.StatusForbidden
-}
-
-func (e *GraphFetchError) Retryable() bool {
-	return e.StatusCode == http.StatusTooManyRequests || e.StatusCode >= http.StatusInternalServerError
-}
-
-func NewMailWatcher(inbox *inboxapp.Service, mailboxes *mailboxpg.Repository, cfg outlookWatcherConfig, events *mailboxHotStream) *MailWatcher {
+func NewMailWatcher(inbox *inboxapp.Service, mailboxes *mailboxpg.Repository, sources *mailboxInboxSourceRegistry, events *mailboxHotStream) *MailWatcher {
 	return &MailWatcher{
-		inbox:         inbox,
-		mailboxes:     mailboxes,
-		messageLimit:  cfg.messageLimit,
-		pollInterval:  cfg.pollInterval,
-		inboxOverlap:  cfg.inboxOverlap,
-		httpClient:    &http.Client{Timeout: cfg.httpTimeout},
-		oauthConfig:   cfg.oauth,
-		events:        events,
-		oauthManagers: map[string]oauthEntry{},
+		inbox:     inbox,
+		mailboxes: mailboxes,
+		sources:   sources,
+		events:    events,
 	}
 }
 
@@ -74,11 +31,15 @@ func (w *MailWatcher) PollForEmail(ctx context.Context, email string) error {
 	if err != nil {
 		return err
 	}
-	messages, err := w.fetchMailboxMessages(ctx, mailbox, w.messageLimit, 0)
+	source, err := w.sources.SourceForMailbox(mailbox)
 	if err != nil {
 		return err
 	}
-	unseen, err := w.inbox.RecordMessages(ctx, emailProviderOutlook, inboxMessages(mailbox.GetEmailAddress(), messages), true)
+	messages, err := source.FetchInboxMessages(ctx, mailbox, source.DefaultMessageLimit(), 0)
+	if err != nil {
+		return err
+	}
+	unseen, err := w.inbox.RecordMessages(ctx, source.ProviderKey(), messages, true)
 	if err != nil {
 		return err
 	}
@@ -87,12 +48,16 @@ func (w *MailWatcher) PollForEmail(ctx context.Context, email string) error {
 }
 
 func (w *MailWatcher) FetchMailboxInbox(ctx context.Context, mailbox *mailboxmodel.Record, limit int32, receivedAfterUnix int64) ([]*mailboxv1.EmailInboxMessage, error) {
+	source, err := w.sources.SourceForMailbox(mailbox)
+	if err != nil {
+		return nil, err
+	}
 	watermark, err := w.inbox.InboxWatermark(ctx, mailbox.GetEmailAddress())
 	if err != nil {
 		return nil, err
 	}
-	messageLimit := inboxapp.MessageLimitValue(limit, w.messageLimit)
-	receivedAfter := inboxapp.InboxReceivedAfter(watermark, w.inboxOverlap)
+	messageLimit := inboxapp.MessageLimitValue(limit, source.DefaultMessageLimit())
+	receivedAfter := inboxapp.InboxReceivedAfter(watermark, source.InboxOverlap())
 	hasPersistedMessages, err := w.inbox.HasMessages(ctx, mailbox.GetEmailAddress())
 	if err != nil {
 		return nil, err
@@ -100,16 +65,30 @@ func (w *MailWatcher) FetchMailboxInbox(ctx context.Context, mailbox *mailboxmod
 	if !hasPersistedMessages {
 		receivedAfter = 0
 	}
-	messages, err := w.fetchMailboxMessages(ctx, mailbox, messageLimit, receivedAfter)
+	messages, err := source.FetchInboxMessages(ctx, mailbox, messageLimit, receivedAfter)
 	if err != nil {
 		return nil, err
 	}
-	unseen, err := w.inbox.RecordMessages(ctx, emailProviderOutlook, inboxMessages(mailbox.GetEmailAddress(), messages), true)
+	unseen, err := w.inbox.RecordMessages(ctx, source.ProviderKey(), messages, true)
 	if err != nil {
 		return nil, err
 	}
 	w.DispatchMailboxEvents(ctx, unseen)
 	return w.inbox.ListMessagesSince(ctx, mailbox.GetEmailAddress(), int32(messageLimit), receivedAfterUnix)
+}
+
+func (w *MailWatcher) DefaultMessageLimit() int {
+	if w == nil || w.sources == nil {
+		return defaultMessageLimit
+	}
+	return w.sources.DefaultMessageLimit()
+}
+
+func (w *MailWatcher) DefaultPollInterval() int {
+	if w == nil || w.sources == nil {
+		return defaultPollIntervalSeconds
+	}
+	return w.sources.DefaultPollInterval()
 }
 
 func (w *MailWatcher) DispatchMailboxEvents(ctx context.Context, messages []*mailboxv1.EmailInboxMessage) {

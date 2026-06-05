@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-func (w *MailWatcher) fetchRecentMessages(ctx context.Context, accessToken string, limit int, receivedAfterNs int64) ([]graphMessage, error) {
+func (s *outlookInboxSource) fetchRecentMessages(ctx context.Context, accessToken string, limit int, receivedAfterNs int64) ([]graphMessage, error) {
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
-		messages, err := w.fetchOnce(ctx, accessToken, limit, receivedAfterNs)
+		messages, err := s.fetchOnce(ctx, accessToken, limit, receivedAfterNs)
 		if err == nil {
 			return messages, nil
 		}
@@ -33,6 +33,6 @@ func (w *MailWatcher) fetchRecentMessages(ctx context.Context, accessToken strin
 	return nil, lastErr
 }
 
-func (w *MailWatcher) fetchOnce(ctx context.Context, accessToken string, limit int, receivedAfterNs int64) ([]graphMessage, error) {
-	return w.fetchOnceWithGraphSDK(ctx, accessToken, limit, receivedAfterNs)
+func (s *outlookInboxSource) fetchOnce(ctx context.Context, accessToken string, limit int, receivedAfterNs int64) ([]graphMessage, error) {
+	return s.fetchOnceWithGraphSDK(ctx, accessToken, limit, receivedAfterNs)
 }

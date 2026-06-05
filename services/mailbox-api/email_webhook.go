@@ -13,7 +13,7 @@ import (
 	"mailboxapi/internal/inboxapp"
 )
 
-type graphWebhookHandler struct {
+type emailWebhookHandler struct {
 	inbox       *inboxapp.Service
 	watcher     *MailWatcher
 	refreshLock *redisx.BestEffortLocker
@@ -31,21 +31,22 @@ type graphNotification struct {
 	ChangeType     string `json:"changeType"`
 }
 
-func startWebhookServer(ctx context.Context, addr string, config emailWebhookConfig, inbox *inboxapp.Service, watcher *MailWatcher, refreshLock *redisx.BestEffortLocker, errCh chan<- error) {
+func startWebhookServer(ctx context.Context, addr string, config emailWebhookConfig, providers mailboxProviderRuntimeConfig, inbox *inboxapp.Service, watcher *MailWatcher, refreshLock *redisx.BestEffortLocker, errCh chan<- error) {
 	addr = strings.TrimSpace(addr)
 	if addr == "" {
 		return
 	}
 
-	handler := &graphWebhookHandler{
+	handler := &emailWebhookHandler{
 		inbox:       inbox,
 		watcher:     watcher,
 		refreshLock: refreshLock,
 		config:      config,
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/webhooks/email/cloudflare", handler.handleCloudflareEmail)
-	mux.HandleFunc("/webhooks/email/microsoft-graph", handler.handleGraphNotification)
+	for _, route := range newMailboxWebhookRegistryForProviders(providers, mailboxWebhookDependencies{handler: handler}).Routes() {
+		mux.HandleFunc(route.path, route.handler)
+	}
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})

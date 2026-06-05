@@ -16,9 +16,13 @@ type mailboxProviderDomainStore struct {
 	byProvider map[string][]string
 }
 
-func loadMailboxProviderRuntimeConfig(config mailboxProviderConfig) mailboxProviderRuntimeConfig {
+func loadMailboxProviderRuntimeConfig(config mailboxProviderConfig, outlook outlookRuntimeConfig) mailboxProviderRuntimeConfig {
 	registry, err := mailboxprovider.NewRegistry(
-		outlookMailboxProvider(config.outlookMaxMessages),
+		outlookMailboxProvider(outlookProviderConfig{
+			maxMessages:  config.outlookMaxMessages,
+			registration: outlook.registration,
+			watcher:      outlook.watcher,
+		}),
 		cloudflareMailboxProvider(config.cloudflare),
 	)
 	if err != nil {

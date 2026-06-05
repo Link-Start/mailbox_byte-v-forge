@@ -47,7 +47,7 @@ func (s *EmailService) WaitForEmail(ctx context.Context, request *mailboxv1.Wait
 func (s *EmailService) waitForPersistedEmail(ctx context.Context, request *mailboxv1.WaitForMailboxEmailRequest, timeoutSeconds int32, issuedAfterUnix int64) (*mailboxv1.WaitForMailboxEmailResponse, error) {
 	deadline := time.Now().Add(time.Duration(timeoutSeconds) * time.Second)
 	for time.Now().Before(deadline) {
-		sleepFor := time.Duration(s.watcher.pollInterval) * time.Second
+		sleepFor := time.Duration(s.watcher.DefaultPollInterval()) * time.Second
 		if remaining := time.Until(deadline); remaining < sleepFor {
 			sleepFor = remaining
 		}

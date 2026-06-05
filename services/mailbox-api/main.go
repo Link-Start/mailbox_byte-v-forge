@@ -78,7 +78,9 @@ func main() {
 	}
 	hotEvents := newMailboxHotStream(hotBus)
 	platformEmailEvents := newMailboxPlatformEvents(platformEventBus)
-	mailWatcher := NewMailWatcher(inboxService, mailboxRepo, cfg.outlook.watcher, hotEvents)
+	browserClient := browserautomationv1.NewBrowserAutomationServiceClient(browserConn)
+	inboxSources := newMailboxInboxSourceRegistryForProviders(cfg.providers, mailboxInboxSourceDependencies{mailboxes: mailboxRepo})
+	mailWatcher := NewMailWatcher(inboxService, mailboxRepo, inboxSources, hotEvents)
 
 	operations, err := newOperationStore(cfg.pgDSN)
 	if err != nil {
@@ -97,7 +99,7 @@ func main() {
 		log.Fatalf("failed to initialize mailbox inbox fetch worker: %s", safeMailboxError(err))
 	}
 
-	activities := newMailboxActivitiesForProviders(cfg.providers, cfg.outlook.registration, browserautomationv1.NewBrowserAutomationServiceClient(browserConn), emailBackend, mailboxRepo, operations, hotEvents)
+	activities := newMailboxActivitiesForProviders(cfg.providers, mailboxProviderActionDependencies{browserClient: browserClient}, emailBackend, mailboxRepo, operations, hotEvents)
 
 	registrationConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxRegistrationRequested, 2, 5*time.Minute)
 	if err != nil {
@@ -120,7 +122,7 @@ func main() {
 		return runMailboxRegistrationWorker(groupCtx, registrationConsumer, operations, activities)
 	})
 	group.Go(func() error { return runMailboxOAuthWorker(groupCtx, oauthConsumer, operations, activities) })
-	startWebhookServer(groupCtx, cfg.webhookHTTPAddr, cfg.webhook, inboxService, mailWatcher, inboxLock, errCh)
+	startWebhookServer(groupCtx, cfg.webhookHTTPAddr, cfg.webhook, cfg.providers, inboxService, mailWatcher, inboxLock, errCh)
 
 	listener, err := net.Listen("tcp", cfg.listenAddr)
 	if err != nil {

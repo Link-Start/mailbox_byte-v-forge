@@ -27,11 +27,11 @@ type config struct {
 	inboxLockTTL           time.Duration
 	inboxLockRetry         time.Duration
 	providers              mailboxProviderRuntimeConfig
-	outlook                outlookRuntimeConfig
 	webhook                emailWebhookConfig
 }
 
 func loadConfig() config {
+	outlook := loadOutlookRuntimeConfig()
 	return config{
 		listenAddr:             envx.StringDefault("LISTEN_ADDR", ":50051"),
 		pgDSN:                  requiredEnv("MAILBOX_PG_DSN"),
@@ -50,8 +50,7 @@ func loadConfig() config {
 		inboxLockPrefix:        envx.StringDefault("MAILBOX_INBOX_LOCK_KEY_PREFIX", "byte-v-forge:mailbox:locks"),
 		inboxLockTTL:           envx.PositiveDurationSeconds("MAILBOX_INBOX_LOCK_TTL_SECONDS", 10*time.Minute),
 		inboxLockRetry:         envx.PositiveDurationSeconds("MAILBOX_INBOX_LOCK_RETRY_SECONDS", time.Second),
-		providers:              loadMailboxProviderRuntimeConfig(loadMailboxProviderConfig()),
-		outlook:                loadOutlookRuntimeConfig(),
+		providers:              loadMailboxProviderRuntimeConfig(loadMailboxProviderConfig(), outlook),
 		webhook:                loadEmailWebhookConfig(),
 	}
 }

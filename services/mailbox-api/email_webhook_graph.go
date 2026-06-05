@@ -12,7 +12,7 @@ import (
 	"github.com/byte-v-forge/common-lib/redisx"
 )
 
-func (h *graphWebhookHandler) handleGraphNotification(w http.ResponseWriter, r *http.Request) {
+func (h *emailWebhookHandler) handleGraphNotification(w http.ResponseWriter, r *http.Request) {
 	if token := r.URL.Query().Get("validationToken"); token != "" {
 		if !h.validGraphWebhookRequestToken(r) {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -49,7 +49,7 @@ func (h *graphWebhookHandler) handleGraphNotification(w http.ResponseWriter, r *
 	w.WriteHeader(http.StatusAccepted)
 }
 
-func (h *graphWebhookHandler) validGraphWebhookClientState(envelope graphNotificationEnvelope) bool {
+func (h *emailWebhookHandler) validGraphWebhookClientState(envelope graphNotificationEnvelope) bool {
 	expected := h.config.token
 	if expected == "" {
 		logWarning("MAILBOX_WEBHOOK_TOKEN is required for Graph webhook ingestion")
@@ -66,7 +66,7 @@ func (h *graphWebhookHandler) validGraphWebhookClientState(envelope graphNotific
 	return true
 }
 
-func (h *graphWebhookHandler) validGraphWebhookRequestToken(r *http.Request) bool {
+func (h *emailWebhookHandler) validGraphWebhookRequestToken(r *http.Request) bool {
 	expected := h.config.token
 	if expected == "" {
 		logWarning("MAILBOX_WEBHOOK_TOKEN is required for Graph webhook validation")
@@ -86,7 +86,7 @@ func (h *graphWebhookHandler) validGraphWebhookRequestToken(r *http.Request) boo
 	return token == expected
 }
 
-func (h *graphWebhookHandler) triggerRefresh() {
+func (h *emailWebhookHandler) triggerRefresh() {
 	if h.refreshLock == nil {
 		logWarning("Outlook webhook refresh lock is not configured")
 		return
@@ -101,7 +101,7 @@ func (h *graphWebhookHandler) triggerRefresh() {
 	go h.refreshMailboxes(lock)
 }
 
-func (h *graphWebhookHandler) refreshMailboxes(lock *redisx.Lock) {
+func (h *emailWebhookHandler) refreshMailboxes(lock *redisx.Lock) {
 	defer func() {
 		unlockCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -120,8 +120,9 @@ func (h *graphWebhookHandler) refreshMailboxes(lock *redisx.Lock) {
 	}
 	fetched := 0
 	failed := 0
+	messageLimit := int32(h.watcher.DefaultMessageLimit())
 	for _, mailbox := range mailboxes {
-		if _, err := h.watcher.FetchMailboxInbox(ctx, mailbox, int32(h.watcher.messageLimit), 0); err != nil {
+		if _, err := h.watcher.FetchMailboxInbox(ctx, mailbox, messageLimit, 0); err != nil {
 			failed++
 			logWarning("webhook mailbox refresh failed for %s: %v", emailx.Redact(mailbox.GetEmailAddress()), err)
 			continue

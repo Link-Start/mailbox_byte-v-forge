@@ -42,7 +42,7 @@ func (w *mailboxEmailPollWorker) handle(ctx context.Context, request *mailboxv1.
 			log.Printf("mailbox email poll auth failure email=%s: %s", emailx.Redact(email), safeMailboxError(err))
 			return eventbus.TermResult("terminate auth-failed mailbox email poll request")
 		}
-		delay := mailboxPollRetryDelay(err, w.service.watcher.pollInterval)
+		delay := mailboxPollRetryDelay(err, w.service.watcher.DefaultPollInterval())
 		log.Printf("mailbox email poll failed email=%s: %s", emailx.Redact(email), safeMailboxError(err))
 		return eventbus.NakResult(delay, "delay mailbox email poll retry")
 	}
@@ -61,5 +61,5 @@ func (w *mailboxEmailPollWorker) handle(ctx context.Context, request *mailboxv1.
 	if deadlineReached(request.GetDeadlineUnix()) {
 		return eventbus.AckResult("ack timed-out mailbox email poll request")
 	}
-	return eventbus.NakResult(mailboxPollInterval(w.service.watcher.pollInterval), "delay mailbox email poll")
+	return eventbus.NakResult(mailboxPollInterval(w.service.watcher.DefaultPollInterval()), "delay mailbox email poll")
 }

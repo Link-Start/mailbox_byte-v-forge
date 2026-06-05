@@ -9,8 +9,12 @@ import (
 	"mailboxapi/internal/mailboxprovider"
 )
 
+type cloudflareMailboxProviderPlugin struct {
+	mailboxprovider.Plugin
+}
+
 func cloudflareMailboxProvider(config cloudflareProviderConfig) mailboxprovider.Plugin {
-	return mailboxprovider.NewDefinitionPlugin(mailboxprovider.Definition{
+	return cloudflareMailboxProviderPlugin{Plugin: mailboxprovider.NewDefinitionPlugin(mailboxprovider.Definition{
 		ProviderKey:          emailProviderCloudflare,
 		AliasKeys:            []string{"cf", "cloudflare-email-relay"},
 		DisplayNameValue:     "Cloudflare",
@@ -68,5 +72,9 @@ func cloudflareMailboxProvider(config cloudflareProviderConfig) mailboxprovider.
 			mailbox.AccessToken = ""
 			mailbox.LastError = ""
 		},
-	})
+	})}
+}
+
+func (p cloudflareMailboxProviderPlugin) RegisterMailboxWebhookRoutes(registry *mailboxWebhookRegistry, deps mailboxWebhookDependencies) {
+	registry.Handle("/webhooks/email/cloudflare", deps.handler.handleInboundEmailWebhook(p.Key()))
 }

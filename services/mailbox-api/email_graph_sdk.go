@@ -10,12 +10,12 @@ import (
 	"mailboxapi/internal/inboxapp"
 )
 
-func (w *MailWatcher) fetchOnceWithGraphSDK(ctx context.Context, accessToken string, limit int, receivedAfterNs int64) ([]graphMessage, error) {
-	client, err := newGraphClient(accessToken, w.httpClient)
+func (s *outlookInboxSource) fetchOnceWithGraphSDK(ctx context.Context, accessToken string, limit int, receivedAfterNs int64) ([]graphMessage, error) {
+	client, err := newGraphClient(accessToken, s.httpClient)
 	if err != nil {
 		return nil, err
 	}
-	top := int32(inboxapp.MessageLimitValue(int32(limit), w.messageLimit))
+	top := int32(inboxapp.MessageLimitValue(int32(limit), s.messageLimit))
 	filter := ""
 	if receivedAfterNs > 0 {
 		filter = "receivedDateTime gt " + time.Unix(0, receivedAfterNs).UTC().Format(time.RFC3339Nano)
