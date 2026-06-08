@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Search, X } from 'lucide-react';
 import {
+  Badge,
+  Button,
   EmptyBlock,
+  Input,
   PanelTabs,
   ToolbarActionButtons
 } from './dashboard-kit';
+import { normalizeUiEmail } from './email-utils';
 import { MailboxImportSheet } from './mailbox-import';
 import { mailboxProviderViews } from './mailbox-provider-registry';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
@@ -15,14 +20,24 @@ export { MailboxDetails } from './mailbox-details';
 export function MailboxPanel(props: MailboxPanelProps) {
   const [activeProvider, setActiveProvider] = useState<MailboxProviderTab>('');
   const [importProvider, setImportProvider] = useState<MailboxProviderTab>();
-  const panelProps = providerPanelProps(props);
-  const providerViews = useMemo(() => mailboxProviderViews(props.providerCapabilities, props.mailboxes), [props.providerCapabilities, props.mailboxes]);
+  const [query, setQuery] = useState('');
+  const filteredMailboxes = useMemo(() => filterMailboxes(props.mailboxes, query), [props.mailboxes, query]);
+  const panelProps = providerPanelProps(props, query);
+  const providerViews = useMemo(() => mailboxProviderViews(props.providerCapabilities, filteredMailboxes), [props.providerCapabilities, filteredMailboxes]);
   useEffect(() => {
     if (providerViews.length > 0 && !providerViews.some((view) => view.value === activeProvider)) setActiveProvider(providerViews[0].value);
   }, [activeProvider, providerViews]);
-  if (providerViews.length === 0) return <EmptyBlock text="暂无可用邮箱 provider。" />;
+  if (providerViews.length === 0) return <EmptyBlock text={props.busy ? '正在加载邮箱 provider。' : '暂无可用邮箱 provider。'} />;
   return (
-    <>
+    <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[240px] flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9 pr-9" value={query} placeholder="搜索邮箱、域名或 provider" onChange={(event) => setQuery(event.target.value)} />
+          {query && <Button className="absolute right-1 top-1/2 size-7 -translate-y-1/2" variant="ghost" size="icon" aria-label="清空搜索" onClick={() => setQuery('')}><X className="size-4" /></Button>}
+        </div>
+        <Badge variant="secondary">{filteredMailboxes.length}/{props.mailboxes.length}</Badge>
+      </div>
       <PanelTabs
         value={activeProvider}
         onValueChange={(value) => setActiveProvider(value as MailboxProviderTab)}
@@ -45,7 +60,7 @@ export function MailboxPanel(props: MailboxPanelProps) {
         }))}
       />
       <MailboxImportSheet open={!!importProvider} provider={importProvider || activeProvider} capability={capabilityForProvider(props.providerCapabilities, importProvider || activeProvider)} busy={props.busy} onOpenChange={(open) => !open && setImportProvider(undefined)} onDone={props.onDone} onError={props.onError} />
-    </>
+    </div>
   );
 }
 
@@ -73,7 +88,7 @@ type MailboxPanelProps = {
   onError: (message: string) => void;
 };
 
-function providerPanelProps(props: MailboxPanelProps): Omit<MailboxProviderPanelProps, 'mailboxes' | 'capability'> {
+function providerPanelProps(props: MailboxPanelProps, searchQuery: string): Omit<MailboxProviderPanelProps, 'mailboxes' | 'capability'> {
   return {
     domains: props.domains,
     selected: props.selected,
@@ -83,6 +98,7 @@ function providerPanelProps(props: MailboxPanelProps): Omit<MailboxProviderPanel
     inboxLoading: props.inboxLoading,
     domainSyncing: props.domainSyncing,
     runningOperationByEmail: props.runningOperationByEmail,
+    searchQuery,
     hasMoreMailboxes: props.hasMoreMailboxes,
     loadingMoreMailboxes: props.loadingMoreMailboxes,
     onLoadMoreMailboxes: props.onLoadMoreMailboxes,
@@ -95,4 +111,14 @@ function providerPanelProps(props: MailboxPanelProps): Omit<MailboxProviderPanel
     onDone: props.onDone,
     onError: props.onError
   };
+}
+
+function filterMailboxes(mailboxes: Mailbox[], query: string) {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return mailboxes;
+  return mailboxes.filter((mailbox) => [
+    mailbox.email_address,
+    mailbox.domain,
+    mailbox.provider_key
+  ].some((value) => normalizeUiEmail(value || '').includes(needle)));
 }

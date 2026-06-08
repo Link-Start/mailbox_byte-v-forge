@@ -8,7 +8,7 @@ export function GenericMailboxProviderPanel(props: MailboxProviderPanelProps) {
   const label = providerDisplayName(props.capability, props.capability?.key || '邮箱');
   return (
     <AccountManagementFrame title={`${label}邮箱账号`} icon={<Mail size={16} />} actions={props.actions}>
-      <MailboxRecordList {...props} providerCapability={props.capability} showStatus={providerShowsCredentialState(props.capability)} emptyText={`暂无 ${label} 邮箱。`} />
+      <MailboxRecordList {...props} providerCapability={props.capability} showStatus={providerShowsCredentialState(props.capability)} emptyText={props.searchQuery ? '没有匹配的邮箱。' : `暂无 ${label} 邮箱。`} />
     </AccountManagementFrame>
   );
 }

@@ -7,7 +7,7 @@ import type { MailboxProviderPanelProps } from './mailbox-provider-types';
 export function CloudflareMailboxProviderPanel(props: MailboxProviderPanelProps) {
   const providerKey = props.capability?.key || 'cloudflare';
   const label = providerDisplayName(props.capability, 'Cloudflare');
-  const configuredDomains = props.domains
+  const configuredDomains = (props.searchQuery ? [] : props.domains)
     .filter((domain) => mailboxProviderMatches(domain.provider_key, providerKey))
     .map((domain) => domain.domain);
   return (
@@ -17,8 +17,8 @@ export function CloudflareMailboxProviderPanel(props: MailboxProviderPanelProps)
         providerCapability={props.capability}
         configuredDomains={configuredDomains}
         showStatus={providerShowsCredentialState(props.capability)}
-        emptyDomainsText="域名未配置；邮件到达后会按 recipient 自动归组。"
-        emptyDomainText="这个域名下暂无邮件地址，收到邮件后会自动出现。"
+        emptyDomainsText={props.searchQuery ? '没有匹配的邮箱。' : '域名未配置；邮件到达后会按 recipient 自动归组。'}
+        emptyDomainText={props.searchQuery ? '这个域名下没有匹配的邮箱。' : '这个域名下暂无邮件地址，收到邮件后会自动出现。'}
       />
     </AccountManagementFrame>
   );

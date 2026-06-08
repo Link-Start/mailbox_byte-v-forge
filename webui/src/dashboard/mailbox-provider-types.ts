@@ -13,6 +13,7 @@ export type MailboxProviderPanelProps = {
   inboxLoading: boolean;
   domainSyncing: boolean;
   runningOperationByEmail: Map<string, MailboxOperation>;
+  searchQuery?: string;
   hasMoreMailboxes?: boolean;
   loadingMoreMailboxes?: boolean;
   onLoadMoreMailboxes: () => void | Promise<void>;
