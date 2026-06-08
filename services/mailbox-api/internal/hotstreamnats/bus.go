@@ -52,7 +52,7 @@ func ConnectService(ctx context.Context, cfg ServiceConfig, opts ...nats.Option)
 		clientName = service
 	}
 	if clientName == "" {
-		clientName = "byte-v-forge"
+		clientName = "mailbox"
 	}
 	subject := strings.TrimSpace(cfg.Subject)
 	if subject == "" {
@@ -77,7 +77,7 @@ func Connect(ctx context.Context, cfg Config, opts ...nats.Option) (*Bus, error)
 	}
 	name := strings.TrimSpace(cfg.ClientName)
 	if name == "" {
-		name = "byte-v-forge-hotstream"
+		name = "mailbox-hotstream"
 	}
 	subject := strings.TrimSpace(cfg.Subject)
 	if subject == "" {

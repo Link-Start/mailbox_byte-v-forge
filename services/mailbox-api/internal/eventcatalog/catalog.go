@@ -3,9 +3,9 @@ package eventcatalog
 import commonv1 "mailboxapi/internal/contracts/commonv1"
 
 const (
-	StreamName      = "BYTE_V_FORGE_EVENTS"
-	StreamSubject   = "byte.v.forge.>"
-	DeadLetterTopic = "byte.v.forge.platform.dead_letter"
+	StreamName      = "MAILBOX_EVENTS"
+	StreamSubject   = "mailbox.>"
+	DeadLetterTopic = "mailbox.dead_letter"
 	EventVersionV1  = "v1"
 )
 
@@ -70,7 +70,7 @@ func protoKind(kind Kind) commonv1.EventKind {
 
 var (
 	MailboxEmailPollRequested = Definition{
-		Subject:          "byte.v.forge.mailbox.email.poll.requested",
+		Subject:          "mailbox.email.poll.requested",
 		EventName:        "mailbox.email.poll_requested",
 		EventVersion:     EventVersionV1,
 		Kind:             KindCommand,
@@ -83,7 +83,7 @@ var (
 	}
 
 	MailboxEmailReceived = Definition{
-		Subject:      "byte.v.forge.mailbox.email.received",
+		Subject:      "mailbox.email.received",
 		EventName:    "mailbox.email.received",
 		EventVersion: EventVersionV1,
 		Kind:         KindFact,
@@ -91,7 +91,7 @@ var (
 		OwnerService: "mailbox-api",
 	}
 	MailboxEmailSignalReceived = Definition{
-		Subject:      "byte.v.forge.mailbox.email.signal.received",
+		Subject:      "mailbox.email.signal.received",
 		EventName:    "mailbox.email.signal.received",
 		EventVersion: EventVersionV1,
 		Kind:         KindFact,
@@ -100,11 +100,11 @@ var (
 	}
 	DeadLetter = Definition{
 		Subject:      DeadLetterTopic,
-		EventName:    "platform.dead_letter",
+		EventName:    "mailbox.dead_letter",
 		EventVersion: EventVersionV1,
 		Kind:         KindFact,
 		PayloadType:  "byte.v.forge.contracts.common.v1.DeadLetterEvent",
-		OwnerService: "platform",
+		OwnerService: "mailbox-api",
 	}
 )
 

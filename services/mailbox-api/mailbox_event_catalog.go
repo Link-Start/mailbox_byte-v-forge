@@ -4,7 +4,7 @@ import "mailboxapi/internal/eventcatalog"
 
 var (
 	mailboxInboxFetchRequested = eventcatalog.Definition{
-		Subject:          "byte.v.forge.mailbox.inbox.fetch.requested",
+		Subject:          "mailbox.inbox.fetch.requested",
 		EventName:        "mailbox.inbox.fetch_requested",
 		EventVersion:     eventcatalog.EventVersionV1,
 		Kind:             eventcatalog.KindCommand,
@@ -16,7 +16,7 @@ var (
 		RetryDelaySecond: 5,
 	}
 	mailboxRegistrationRequested = eventcatalog.Definition{
-		Subject:          "byte.v.forge.mailbox.registration.requested",
+		Subject:          "mailbox.registration.requested",
 		EventName:        "mailbox.registration.requested",
 		EventVersion:     eventcatalog.EventVersionV1,
 		Kind:             eventcatalog.KindCommand,
@@ -28,7 +28,7 @@ var (
 		RetryDelaySecond: 5,
 	}
 	mailboxOAuthRequested = eventcatalog.Definition{
-		Subject:          "byte.v.forge.mailbox.oauth.requested",
+		Subject:          "mailbox.oauth.requested",
 		EventName:        "mailbox.oauth.requested",
 		EventVersion:     eventcatalog.EventVersionV1,
 		Kind:             eventcatalog.KindCommand,

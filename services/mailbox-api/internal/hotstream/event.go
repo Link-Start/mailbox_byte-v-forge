@@ -9,7 +9,7 @@ import (
 	observabilityv1 "mailboxapi/internal/contracts/observabilityv1"
 )
 
-const SubjectPrefix = "byte.v.forge.hot"
+const SubjectPrefix = "mailbox.hot"
 const DataContentType = "application/x-protobuf"
 
 type EventConfig struct {
@@ -52,7 +52,7 @@ func NewEvent(cfg EventConfig) *observabilityv1.HotStreamEvent {
 func ServiceStateSubject(service string) string {
 	service = strings.Trim(strings.ToLower(strings.TrimSpace(service)), ".")
 	if service == "" {
-		service = "platform"
+		service = "mailbox"
 	}
 	return SubjectPrefix + "." + service + ".state"
 }

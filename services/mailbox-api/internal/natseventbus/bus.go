@@ -41,7 +41,7 @@ func Connect(cfg Config, opts ...nats.Option) (*Bus, error) {
 	}
 	name := strings.TrimSpace(cfg.ClientName)
 	if name == "" {
-		name = "byte-v-forge"
+		name = "mailbox"
 	}
 	options := append([]nats.Option{
 		nats.Name(name),
@@ -329,9 +329,9 @@ func publishDeadLetter(ctx context.Context, bus *Bus, durable string, envelope *
 	eventID := eventbus.StableEventID("dead-letter-", envelope.GetSubject(), originalID, durable, fmt.Sprintf("%d", attempt))
 	deadMetadata := eventbus.NewEventMetadata(eventbus.EventMetadataConfig{
 		EventID:       eventID,
-		EventName:     "platform.dead_letter",
+		EventName:     "mailbox.dead_letter",
 		EventVersion:  eventcatalog.EventVersionV1,
-		SourceService: "platform-eventbus",
+		SourceService: "mailbox-eventbus",
 		Subject:       eventcatalog.DeadLetter.Subject,
 		CorrelationID: correlationID,
 		TraceID:       traceID,
