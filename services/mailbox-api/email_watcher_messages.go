@@ -14,12 +14,27 @@ import (
 	"mailboxapi/internal/inboxapp"
 )
 
-func inboxMessages(providerKey string, mailboxEmail string, messages []graphMessage) []*mailboxv1.EmailInboxMessage {
-	out := make([]*mailboxv1.EmailInboxMessage, 0, len(messages))
+func inboxMessages(providerKey string, mailboxEmail string, messages []graphMessage) []inboxapp.MessageInput {
+	out := make([]inboxapp.MessageInput, 0, len(messages))
 	for _, msg := range messages {
-		out = append(out, inboxMessage(providerKey, mailboxEmail, msg))
+		out = append(out, inboxMessageInput(providerKey, mailboxEmail, msg))
 	}
 	return out
+}
+
+func inboxMessageInput(providerKey string, mailboxEmail string, msg graphMessage) inboxapp.MessageInput {
+	message := inboxMessage(providerKey, mailboxEmail, msg)
+	bodyContent := strings.TrimSpace(msg.Body.Content)
+	bodyText := bodyContent
+	htmlBody := ""
+	if strings.EqualFold(msg.Body.ContentType, "html") {
+		bodyText = inboxapp.CompactMessageText(bodyContent, 5000)
+		htmlBody = bodyContent
+	}
+	if bodyText == "" {
+		bodyText = message.GetBodyPreview()
+	}
+	return inboxapp.MessageInput{Message: message, BodyText: bodyText, HTMLBody: htmlBody}
 }
 
 func inboxMessage(providerKey string, mailboxEmail string, msg graphMessage) *mailboxv1.EmailInboxMessage {

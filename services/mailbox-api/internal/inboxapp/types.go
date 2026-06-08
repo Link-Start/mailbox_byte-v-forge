@@ -23,9 +23,15 @@ type MessageRow struct {
 	RawSize        int64
 }
 
+type MessageInput struct {
+	Message  *mailboxv1.EmailInboxMessage
+	BodyText string
+	HTMLBody string
+}
+
 type RecordMessagesRequest struct {
 	Provider         string
-	Messages         []*mailboxv1.EmailInboxMessage
+	Messages         []MessageInput
 	ExpandRecipients bool
 	OutboxTable      string
 	EventSource      string
@@ -36,6 +42,7 @@ type Repository interface {
 	InboxWatermark(ctx context.Context, email string) (int64, error)
 	HasInboxMessages(ctx context.Context, email string) (bool, error)
 	ListInboxRows(ctx context.Context, email string, limit int, receivedAfterUnix int64) ([]MessageRow, error)
+	GetInboxRow(ctx context.Context, email string, messageID string, provider string) (MessageRow, bool, error)
 	LatestInboxRows(ctx context.Context, email string, subjectKeyword string, issuedAfterUnix int64, limit int) ([]MessageRow, error)
 	RecordMessages(ctx context.Context, request RecordMessagesRequest) ([]*mailboxv1.EmailInboxMessage, error)
 }

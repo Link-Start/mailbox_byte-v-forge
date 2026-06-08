@@ -41,11 +41,11 @@ func (s *Service) RecordInboundEmail(ctx context.Context, event *pb.InboundEmail
 		body = CompactMessageText(event.GetHtmlBody(), 5000)
 	}
 
-	messages := make([]*mailboxv1.EmailInboxMessage, 0, len(recipients))
+	inputs := make([]MessageInput, 0, len(recipients))
 	for _, recipient := range recipients {
 		key := StableMessageKey(provider, recipient, stringx.FirstNonEmpty(event.GetEventId(), event.GetMessageId(), event.GetSubject()))
 		messageID := stringx.FirstNonEmpty(event.GetMessageId(), event.GetEventId(), key)
-		messages = append(messages, &mailboxv1.EmailInboxMessage{
+		inputs = append(inputs, MessageInput{Message: &mailboxv1.EmailInboxMessage{
 			Id:                 messageID,
 			MailboxEmail:       recipient,
 			Subject:            strings.TrimSpace(event.GetSubject()),
@@ -56,12 +56,16 @@ func (s *Service) RecordInboundEmail(ctx context.Context, event *pb.InboundEmail
 			ProviderKey:        provider,
 			SourceMailboxEmail: recipient,
 			RawSize:            event.GetRawSize(),
-		})
+		}, BodyText: body, HTMLBody: strings.TrimSpace(event.GetHtmlBody())})
 	}
-	return s.RecordMessages(ctx, provider, messages, false)
+	return s.RecordMessageInputs(ctx, provider, inputs, false)
 }
 
 func (s *Service) RecordMessages(ctx context.Context, provider string, messages []*mailboxv1.EmailInboxMessage, expandRecipients bool) ([]*mailboxv1.EmailInboxMessage, error) {
+	return s.RecordMessageInputs(ctx, provider, MessageInputs(messages), expandRecipients)
+}
+
+func (s *Service) RecordMessageInputs(ctx context.Context, provider string, messages []MessageInput, expandRecipients bool) ([]*mailboxv1.EmailInboxMessage, error) {
 	provider = s.normalizeProvider(provider)
 	if provider == "" {
 		return nil, errors.New("email provider is required")

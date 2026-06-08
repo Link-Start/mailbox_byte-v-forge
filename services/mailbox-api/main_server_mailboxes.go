@@ -101,3 +101,26 @@ func (s *server) ListMailboxInbox(ctx context.Context, req *mailboxv1.ListMailbo
 	}
 	return resp, nil
 }
+
+func (s *server) GetMailboxInboxMessage(ctx context.Context, req *mailboxv1.GetMailboxInboxMessageRequest) (*mailboxv1.GetMailboxInboxMessageResponse, error) {
+	email := emailx.Normalize(req.GetEmailAddress())
+	if email == "" {
+		return nil, status.Error(codes.InvalidArgument, "email_address is required")
+	}
+	if strings.TrimSpace(req.GetMessageId()) == "" {
+		return nil, status.Error(codes.InvalidArgument, "message_id is required")
+	}
+	resp, err := s.emailBackend.GetInboxMessage(ctx, &mailboxv1.GetMailboxInboxMessageRequest{
+		EmailAddress:  email,
+		MessageId:     strings.TrimSpace(req.GetMessageId()),
+		ProviderKey:   s.providers.normalizeProviderInput(req.GetProviderKey()),
+		ParserProfile: strings.TrimSpace(req.GetParserProfile()),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "get mailbox inbox message: %s", safeMailboxError(err))
+	}
+	if resp == nil || resp.GetMessage() == nil {
+		return nil, status.Error(codes.Internal, "email service returned empty inbox message")
+	}
+	return resp, nil
+}

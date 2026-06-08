@@ -14,7 +14,8 @@ type graphMessage struct {
 }
 
 type graphBody struct {
-	Content string
+	Content     string
+	ContentType string
 }
 
 type graphRecipient struct {

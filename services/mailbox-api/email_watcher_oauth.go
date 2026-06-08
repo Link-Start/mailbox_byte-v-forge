@@ -5,13 +5,13 @@ import (
 	"errors"
 	"strings"
 
-	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/inboxapp"
 
 	"mailboxapi/internal/mailboxmodel"
 )
 
-func (s *outlookInboxSource) FetchInboxMessages(ctx context.Context, mailbox *mailboxmodel.Record, limit int, receivedAfterNs int64) ([]*mailboxv1.EmailInboxMessage, error) {
+func (s *outlookInboxSource) FetchInboxMessages(ctx context.Context, mailbox *mailboxmodel.Record, limit int, receivedAfterNs int64) ([]inboxapp.MessageInput, error) {
 	messages, err := s.fetchMailboxMessages(ctx, mailbox, limit, receivedAfterNs)
 	if err != nil {
 		return nil, err

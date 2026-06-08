@@ -73,6 +73,15 @@ func (s *dashboardServer) handleMailbox(w http.ResponseWriter, r *http.Request) 
 		s.handleMailboxStoredInbox(w, r, email)
 		return
 	}
+	if len(parts) == 3 && parts[1] == "inbox" {
+		messageID, err := url.PathUnescape(parts[2])
+		if err != nil || strings.TrimSpace(messageID) == "" {
+			writeError(w, http.StatusBadRequest, errors.New("message_id is required"))
+			return
+		}
+		s.handleMailboxStoredInboxMessage(w, r, email, messageID)
+		return
+	}
 	if len(parts) > 1 {
 		writeError(w, http.StatusNotFound, errors.New("mailbox endpoint not found"))
 		return
@@ -98,6 +107,28 @@ func (s *dashboardServer) handleMailboxStoredInbox(w http.ResponseWriter, r *htt
 	resp, err := s.mailboxClient.ListMailboxInbox(r.Context(), &mailboxv1.ListMailboxInboxRequest{
 		EmailAddress:  strings.TrimSpace(email),
 		Limit:         int32(httpx.QueryInt(r, "limit", 20)),
+		ParserProfile: strings.TrimSpace(r.URL.Query().Get("parser_profile")),
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+	if resp.GetErrorMessage() != "" {
+		writeError(w, http.StatusBadGateway, errors.New(resp.GetErrorMessage()))
+		return
+	}
+	writeProtoJSON(w, http.StatusOK, resp)
+}
+
+func (s *dashboardServer) handleMailboxStoredInboxMessage(w http.ResponseWriter, r *http.Request, email string, messageID string) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	resp, err := s.mailboxClient.GetMailboxInboxMessage(r.Context(), &mailboxv1.GetMailboxInboxMessageRequest{
+		EmailAddress:  strings.TrimSpace(email),
+		MessageId:     strings.TrimSpace(messageID),
+		ProviderKey:   strings.TrimSpace(r.URL.Query().Get("provider_key")),
 		ParserProfile: strings.TrimSpace(r.URL.Query().Get("parser_profile")),
 	})
 	if err != nil {

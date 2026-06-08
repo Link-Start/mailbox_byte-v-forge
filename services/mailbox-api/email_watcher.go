@@ -38,7 +38,7 @@ func (w *MailWatcher) PollForEmail(ctx context.Context, email string) error {
 	if err != nil {
 		return err
 	}
-	unseen, err := w.inbox.RecordMessages(ctx, source.ProviderKey(), messages, true)
+	unseen, err := w.inbox.RecordMessageInputs(ctx, source.ProviderKey(), messages, true)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (w *MailWatcher) FetchMailboxInbox(ctx context.Context, mailbox *mailboxmod
 	if err != nil {
 		return nil, err
 	}
-	unseen, err := w.inbox.RecordMessages(ctx, source.ProviderKey(), messages, true)
+	unseen, err := w.inbox.RecordMessageInputs(ctx, source.ProviderKey(), messages, true)
 	if err != nil {
 		return nil, err
 	}

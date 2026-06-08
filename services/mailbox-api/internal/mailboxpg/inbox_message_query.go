@@ -25,6 +25,22 @@ func (q *inboxMessageQuery) WhereMailbox(email string) *inboxMessageQuery {
 	return q
 }
 
+func (q *inboxMessageQuery) WhereProvider(provider string) *inboxMessageQuery {
+	provider = strings.TrimSpace(provider)
+	if provider != "" {
+		q.conditions = append(q.conditions, fmt.Sprintf("provider = %s", q.addArg(provider)))
+	}
+	return q
+}
+
+func (q *inboxMessageQuery) WhereMessageID(messageID string) *inboxMessageQuery {
+	messageID = strings.TrimSpace(messageID)
+	if messageID != "" {
+		q.conditions = append(q.conditions, fmt.Sprintf("message_id = %s", q.addArg(messageID)))
+	}
+	return q
+}
+
 func (q *inboxMessageQuery) WhereReceivedAfter(receivedAt int64) *inboxMessageQuery {
 	if receivedAt > 0 {
 		q.conditions = append(q.conditions, fmt.Sprintf("received_at > %s", q.addArg(receivedAt)))

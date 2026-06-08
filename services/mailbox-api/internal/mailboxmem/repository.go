@@ -292,6 +292,33 @@ func (r *Repository) ListInboxRows(ctx context.Context, email string, limit int,
 	return r.filterInboxRows(ctx, email, "", receivedAfterUnix, false, limit)
 }
 
+func (r *Repository) GetInboxRow(ctx context.Context, email string, messageID string, provider string) (inboxapp.MessageRow, bool, error) {
+	if err := ctx.Err(); err != nil {
+		return inboxapp.MessageRow{}, false, err
+	}
+	email = emailx.Normalize(email)
+	if email == "" {
+		return inboxapp.MessageRow{}, false, errors.New("email_address is required")
+	}
+	messageID = strings.TrimSpace(messageID)
+	if messageID == "" {
+		return inboxapp.MessageRow{}, false, errors.New("message_id is required")
+	}
+	provider = r.providers.NormalizeProviderInput(provider)
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, message := range r.messages {
+		if message.row.MailboxEmail != email || message.row.ID != messageID {
+			continue
+		}
+		if provider != "" && message.row.Provider != provider {
+			continue
+		}
+		return message.row, true, nil
+	}
+	return inboxapp.MessageRow{}, false, nil
+}
+
 func (r *Repository) LatestInboxRows(ctx context.Context, email string, subjectKeyword string, issuedAfterUnix int64, limit int) ([]inboxapp.MessageRow, error) {
 	return r.filterInboxRows(ctx, email, subjectKeyword, issuedAfterUnix, true, limit)
 }
@@ -313,13 +340,16 @@ func (r *Repository) RecordMessages(ctx context.Context, request inboxapp.Record
 	touchedDomains := map[string]struct{}{}
 
 	r.mu.Lock()
-	for _, message := range request.Messages {
-		for _, mailboxEmail := range persistTargetMailboxes(message, request.ExpandRecipients) {
+	for _, input := range request.Messages {
+		if input.Message == nil {
+			continue
+		}
+		for _, mailboxEmail := range persistTargetMailboxes(input, request.ExpandRecipients) {
 			touchedMailboxes[mailboxEmail] = struct{}{}
 			if domain := domainForEmail(mailboxEmail); domain != "" {
 				touchedDomains[domain] = struct{}{}
 			}
-			persisted, key, row, err := r.prepareInboxMessage(provider, mailboxEmail, message, now)
+			persisted, key, row, err := r.prepareInboxMessage(provider, mailboxEmail, input, now)
 			if err != nil {
 				r.mu.Unlock()
 				return nil, err
@@ -535,15 +565,24 @@ func (r *Repository) filterInboxRows(ctx context.Context, email string, keyword 
 	return out, nil
 }
 
-func (r *Repository) prepareInboxMessage(provider string, mailboxEmail string, message *mailboxv1.EmailInboxMessage, now int64) (*mailboxv1.EmailInboxMessage, string, inboxapp.MessageRow, error) {
+func (r *Repository) prepareInboxMessage(provider string, mailboxEmail string, input inboxapp.MessageInput, now int64) (*mailboxv1.EmailInboxMessage, string, inboxapp.MessageRow, error) {
+	message := input.Message
 	mailboxEmail = emailx.Normalize(mailboxEmail)
 	if mailboxEmail == "" {
 		return nil, "", inboxapp.MessageRow{}, errors.New("mailbox_email is required")
+	}
+	if message == nil {
+		return nil, "", inboxapp.MessageRow{}, errors.New("message is required")
 	}
 	receivedAt := message.GetReceivedAtUnix()
 	if receivedAt <= 0 {
 		receivedAt = now
 	}
+	bodyText := strings.TrimSpace(input.BodyText)
+	if bodyText == "" {
+		bodyText = strings.TrimSpace(message.GetBodyPreview())
+	}
+	htmlBody := strings.TrimSpace(input.HTMLBody)
 	sourceEmail := emailx.Normalize(stringx.FirstNonEmpty(message.GetSourceMailboxEmail(), message.GetMailboxEmail(), mailboxEmail))
 	key := inboxapp.StableMessageKey(provider, mailboxEmail, stringx.FirstNonEmpty(message.GetId(), message.GetSubject(), message.GetBodyPreview()))
 	messageID := stringx.FirstNonEmpty(message.GetId(), key)
@@ -563,7 +602,8 @@ func (r *Repository) prepareInboxMessage(provider string, mailboxEmail string, m
 		Recipients:         recipients,
 		ProviderKey:        provider,
 		SourceMailboxEmail: sourceEmail,
-		BodyArtifactRef:    inboxapp.ArtifactRef(provider, mailboxEmail, messageID, "body_text", int64(len(message.GetBodyPreview())), r.providers.NormalizeProviderInput),
+		BodyArtifactRef:    inboxapp.ArtifactRef(provider, mailboxEmail, messageID, "body_text", int64(len(bodyText)), r.providers.NormalizeProviderInput),
+		HtmlArtifactRef:    inboxapp.ArtifactRef(provider, mailboxEmail, messageID, "html_body", int64(len(htmlBody)), r.providers.NormalizeProviderInput),
 		RawSize:            message.GetRawSize(),
 	}
 	row := inboxapp.MessageRow{
@@ -576,8 +616,8 @@ func (r *Repository) prepareInboxMessage(provider string, mailboxEmail string, m
 		RecipientsJSON: string(recipientsJSON),
 		Provider:       provider,
 		SourceEmail:    sourceEmail,
-		BodyText:       strings.TrimSpace(message.GetBodyPreview()),
-		HTMLBody:       "",
+		BodyText:       bodyText,
+		HTMLBody:       htmlBody,
 		RawSize:        persisted.GetRawSize(),
 	}
 	return persisted, key, row, nil
@@ -651,7 +691,11 @@ func (r *Repository) deleteInboxLocked(email string) bool {
 	return deleted
 }
 
-func persistTargetMailboxes(message *mailboxv1.EmailInboxMessage, expandRecipients bool) []string {
+func persistTargetMailboxes(input inboxapp.MessageInput, expandRecipients bool) []string {
+	message := input.Message
+	if message == nil {
+		return []string{}
+	}
 	if !expandRecipients {
 		return inboxapp.UniqueEmails([]string{message.GetMailboxEmail()})
 	}

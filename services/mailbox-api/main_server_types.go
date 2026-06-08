@@ -25,6 +25,7 @@ type emailBackend interface {
 	DeleteMailbox(context.Context, *mailboxv1.DeleteMailboxRequest) (*mailboxv1.DeleteMailboxResponse, error)
 	WaitForEmail(context.Context, *mailboxv1.WaitForMailboxEmailRequest) (*mailboxv1.WaitForMailboxEmailResponse, error)
 	ListInbox(context.Context, *mailboxv1.ListMailboxInboxRequest) (*mailboxv1.ListMailboxInboxResponse, error)
+	GetInboxMessage(context.Context, *mailboxv1.GetMailboxInboxMessageRequest) (*mailboxv1.GetMailboxInboxMessageResponse, error)
 	FetchInboxes(context.Context, *mailboxv1.FetchMailboxInboxesRequest) (*mailboxv1.FetchMailboxInboxesResponse, error)
 	MarkEmailAuthStatus(context.Context, *mailboxv1.MarkEmailAuthStatusRequest) (*mailboxv1.MarkEmailAuthStatusResponse, error)
 }

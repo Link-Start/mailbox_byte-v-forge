@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
+	"mailboxapi/internal/inboxapp"
 
 	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"
@@ -15,7 +15,7 @@ type mailboxInboxSource interface {
 	DefaultMessageLimit() int
 	DefaultPollInterval() int
 	InboxOverlap() int
-	FetchInboxMessages(context.Context, *mailboxmodel.Record, int, int64) ([]*mailboxv1.EmailInboxMessage, error)
+	FetchInboxMessages(context.Context, *mailboxmodel.Record, int, int64) ([]inboxapp.MessageInput, error)
 }
 
 type mailboxInboxSourceDependencies struct {

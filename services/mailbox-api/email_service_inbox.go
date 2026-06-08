@@ -42,3 +42,18 @@ func (s *EmailService) ListInbox(ctx context.Context, request *mailboxv1.ListMai
 		Messages: messages,
 	}}, nil
 }
+
+func (s *EmailService) GetInboxMessage(ctx context.Context, request *mailboxv1.GetMailboxInboxMessageRequest) (*mailboxv1.GetMailboxInboxMessageResponse, error) {
+	email := emailx.Normalize(request.GetEmailAddress())
+	if email == "" {
+		return nil, status.Error(codes.InvalidArgument, "email_address is required")
+	}
+	if request.GetMessageId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "message_id is required")
+	}
+	resp, err := s.inbox.GetMessage(ctx, email, request.GetMessageId(), request.GetProviderKey(), request.GetParserProfile())
+	if err != nil {
+		return nil, status.Error(codes.Internal, safeMailboxError(err))
+	}
+	return resp, nil
+}

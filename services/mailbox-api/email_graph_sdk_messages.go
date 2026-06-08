@@ -28,7 +28,11 @@ func graphBodyFromSDK(body graphmodels.ItemBodyable) graphBody {
 	if body == nil {
 		return graphBody{}
 	}
-	return graphBody{Content: stringValueFromPtr(body.GetContent())}
+	contentType := ""
+	if body.GetContentType() != nil {
+		contentType = body.GetContentType().String()
+	}
+	return graphBody{Content: stringValueFromPtr(body.GetContent()), ContentType: contentType}
 }
 
 func graphRecipientFromSDK(recipient graphmodels.Recipientable) graphRecipient {

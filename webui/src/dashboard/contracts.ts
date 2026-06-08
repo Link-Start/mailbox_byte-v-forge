@@ -14,6 +14,8 @@ export type {
   FetchMailboxInboxResult,
   FetchMailboxInboxesRequest,
   FetchMailboxInboxesResponse,
+  GetMailboxInboxMessageRequest,
+  GetMailboxInboxMessageResponse,
   ListEmailMailboxesResponse,
   ListMailboxDomainsResponse,
   ListMailboxInboxResponse,

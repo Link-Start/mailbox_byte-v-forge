@@ -220,6 +220,20 @@ message ListMailboxInboxResponse {
   string error_message = 2;
 }
 
+message GetMailboxInboxMessageRequest {
+  string email_address = 1;
+  string message_id = 2;
+  string provider_key = 3;
+  string parser_profile = 4;
+}
+
+message GetMailboxInboxMessageResponse {
+  EmailInboxMessage message = 1;
+  string body_text = 2;
+  string html_body = 3;
+  string error_message = 4;
+}
+
 message FetchMailboxInboxesResponse {
   repeated FetchMailboxInboxResult results = 1;
   int32 mailbox_count = 2;

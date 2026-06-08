@@ -83,13 +83,16 @@ func (r *Repository) RecordMessages(ctx context.Context, request inboxapp.Record
 	touchedDomains := map[string]struct{}{}
 	watermarks := map[string]int64{}
 	unseen := []*mailboxv1.EmailInboxMessage{}
-	for _, message := range request.Messages {
-		for _, mailboxEmail := range persistTargetMailboxes(message, request.ExpandRecipients) {
+	for _, input := range request.Messages {
+		if input.Message == nil {
+			continue
+		}
+		for _, mailboxEmail := range persistTargetMailboxes(input, request.ExpandRecipients) {
 			touchedMailboxes[mailboxEmail] = struct{}{}
 			if domain := DomainForEmail(mailboxEmail); domain != "" {
 				touchedDomains[domain] = struct{}{}
 			}
-			persisted, key, err := persistInboxMessage(ctx, tx, provider, mailboxEmail, message, now)
+			persisted, key, err := persistInboxMessage(ctx, tx, provider, mailboxEmail, input, now)
 			if err != nil {
 				return nil, err
 			}
@@ -126,22 +129,35 @@ func (r *Repository) RecordMessages(ctx context.Context, request inboxapp.Record
 	return unseen, nil
 }
 
-func persistTargetMailboxes(message *mailboxv1.EmailInboxMessage, expandRecipients bool) []string {
+func persistTargetMailboxes(input inboxapp.MessageInput, expandRecipients bool) []string {
+	message := input.Message
+	if message == nil {
+		return []string{}
+	}
 	if !expandRecipients {
 		return inboxapp.UniqueEmails([]string{message.GetMailboxEmail()})
 	}
 	return inboxapp.MessageMailboxEmails(message.GetMailboxEmail(), message.GetRecipients())
 }
 
-func persistInboxMessage(ctx context.Context, tx pgx.Tx, provider string, mailboxEmail string, message *mailboxv1.EmailInboxMessage, now int64) (*mailboxv1.EmailInboxMessage, string, error) {
+func persistInboxMessage(ctx context.Context, tx pgx.Tx, provider string, mailboxEmail string, input inboxapp.MessageInput, now int64) (*mailboxv1.EmailInboxMessage, string, error) {
+	message := input.Message
 	mailboxEmail = emailx.Normalize(mailboxEmail)
 	if mailboxEmail == "" {
 		return nil, "", fmt.Errorf("mailbox_email is required")
+	}
+	if message == nil {
+		return nil, "", fmt.Errorf("message is required")
 	}
 	receivedAt := message.GetReceivedAtUnix()
 	if receivedAt <= 0 {
 		receivedAt = now
 	}
+	bodyText := strings.TrimSpace(input.BodyText)
+	if bodyText == "" {
+		bodyText = strings.TrimSpace(message.GetBodyPreview())
+	}
+	htmlBody := strings.TrimSpace(input.HTMLBody)
 	sourceEmail := emailx.Normalize(stringx.FirstNonEmpty(message.GetSourceMailboxEmail(), message.GetMailboxEmail(), mailboxEmail))
 	key := inboxapp.StableMessageKey(provider, mailboxEmail, stringx.FirstNonEmpty(message.GetId(), message.GetSubject(), message.GetBodyPreview()))
 	messageID := stringx.FirstNonEmpty(message.GetId(), key)
@@ -155,10 +171,10 @@ func persistInboxMessage(ctx context.Context, tx pgx.Tx, provider string, mailbo
 		Recipients:         inboxapp.UniqueEmails(message.GetRecipients()),
 		ProviderKey:        provider,
 		SourceMailboxEmail: sourceEmail,
-		BodyArtifactRef:    inboxapp.ArtifactRef(provider, mailboxEmail, messageID, "body_text", int64(len(message.GetBodyPreview())), mailboxprovider.NormalizeKey),
+		BodyArtifactRef:    inboxapp.ArtifactRef(provider, mailboxEmail, messageID, "body_text", int64(len(bodyText)), mailboxprovider.NormalizeKey),
+		HtmlArtifactRef:    inboxapp.ArtifactRef(provider, mailboxEmail, messageID, "html_body", int64(len(htmlBody)), mailboxprovider.NormalizeKey),
 		RawSize:            message.GetRawSize(),
 	}
-	bodyText := strings.TrimSpace(message.GetBodyPreview())
 	if err := InsertInboxMessage(ctx, tx, PersistInboxMessage{
 		Key:            key,
 		ID:             messageID,
@@ -171,7 +187,7 @@ func persistInboxMessage(ctx context.Context, tx pgx.Tx, provider string, mailbo
 		Provider:       provider,
 		SourceEmail:    sourceEmail,
 		BodyText:       bodyText,
-		HTMLBody:       "",
+		HTMLBody:       htmlBody,
 		RawSize:        persisted.GetRawSize(),
 	}, now); err != nil {
 		return nil, "", err

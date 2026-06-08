@@ -17,6 +17,7 @@ service MailboxService {
   rpc RegisterMailbox(byte.v.forge.contracts.mailbox.v1.RegisterMailboxRequest) returns (byte.v.forge.contracts.mailbox.v1.RegisterMailboxResponse);
   rpc RunMailboxOAuth(byte.v.forge.contracts.mailbox.v1.StartMailboxOAuthRequest) returns (byte.v.forge.contracts.mailbox.v1.StartMailboxOAuthResponse);
   rpc ListMailboxInbox(byte.v.forge.contracts.mailbox.v1.ListMailboxInboxRequest) returns (byte.v.forge.contracts.mailbox.v1.ListMailboxInboxResponse);
+  rpc GetMailboxInboxMessage(byte.v.forge.contracts.mailbox.v1.GetMailboxInboxMessageRequest) returns (byte.v.forge.contracts.mailbox.v1.GetMailboxInboxMessageResponse);
   rpc FetchMailboxInboxes(byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxesRequest) returns (byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxesResponse);
   rpc GetMailboxOperation(byte.v.forge.contracts.mailbox.v1.GetMailboxOperationRequest) returns (byte.v.forge.contracts.mailbox.v1.GetMailboxOperationResponse);
   rpc ListMailboxOperations(byte.v.forge.contracts.mailbox.v1.ListMailboxOperationsRequest) returns (byte.v.forge.contracts.mailbox.v1.ListMailboxOperationsResponse);
