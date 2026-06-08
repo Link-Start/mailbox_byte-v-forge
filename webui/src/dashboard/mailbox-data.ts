@@ -1,18 +1,15 @@
 import { useMemo } from 'react';
 import {
   DEFAULT_CURSOR_PAGE_SIZE,
-  api,
   createHotStreamURL,
-  type ListMailboxDomainsResponse,
-  type ListMailboxOperationsResponse,
-  type ListMailboxProviderCapabilitiesResponse,
   useHotStreamInvalidation,
   useCursorPageItems,
   useQuery,
   useQueryClient
 } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
-import { mailboxApiPaths, mailboxListURL, mailboxLookupURL } from './mailbox-api-paths';
+import { mailboxApiPaths } from './mailbox-api-paths';
+import { listMailboxDomains, listMailboxProviderCapabilities, listMailboxes, listRunningMailboxOperations, lookupMailbox } from './mailbox-data-api';
 import type { ListEmailMailboxesResponse, Mailbox, MailboxOperation } from './types';
 
 const mailboxQueryKeys = {
@@ -28,14 +25,14 @@ export function useMailboxData(selectedEmail: string) {
   const mailboxesQuery = useCursorPageItems<Mailbox, ListEmailMailboxesResponse, 'mailboxes'>({
     queryKey: mailboxQueryKeys.mailboxes,
     field: 'mailboxes',
-    queryFn: (cursor) => api<ListEmailMailboxesResponse>(mailboxListURL(cursor)),
+    queryFn: listMailboxes,
     pageSize: DEFAULT_CURSOR_PAGE_SIZE
   });
-  const domainsQuery = useQuery({ queryKey: mailboxQueryKeys.domains, queryFn: () => api<ListMailboxDomainsResponse>(mailboxApiPaths.domains) });
-  const providerCapabilitiesQuery = useQuery({ queryKey: mailboxQueryKeys.providerCapabilities, queryFn: () => api<ListMailboxProviderCapabilitiesResponse>(mailboxApiPaths.providerCapabilities) });
+  const domainsQuery = useQuery({ queryKey: mailboxQueryKeys.domains, queryFn: listMailboxDomains });
+  const providerCapabilitiesQuery = useQuery({ queryKey: mailboxQueryKeys.providerCapabilities, queryFn: listMailboxProviderCapabilities });
   const runningOperationsQuery = useQuery({
     queryKey: mailboxQueryKeys.runningOperations,
-    queryFn: () => api<ListMailboxOperationsResponse>(`${mailboxApiPaths.operations}?limit=200&status=RUNNING`)
+    queryFn: listRunningMailboxOperations
   });
   useHotStreamInvalidation({
     url: createHotStreamURL(mailboxApiPaths.base, { eventTypes: ['mailbox.email.received', 'mailbox.email.signal_received', 'mailbox.operation.updated'] }),
@@ -48,7 +45,7 @@ export function useMailboxData(selectedEmail: string) {
   const selectedFromList = mailboxes.find((mailbox) => mailbox.email_address === selectedEmail) || null;
   const selectedQuery = useQuery({
     queryKey: mailboxQueryKeys.mailbox(selectedEmail),
-    queryFn: () => api<ListEmailMailboxesResponse>(mailboxLookupURL(selectedEmail)),
+    queryFn: () => lookupMailbox(selectedEmail),
     enabled: !!selectedEmail && !selectedFromList
   });
   const runningOperations = runningOperationsQuery.data?.operations;

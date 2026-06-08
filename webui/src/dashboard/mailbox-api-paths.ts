@@ -31,3 +31,7 @@ export function mailboxListURL(cursor: string) {
 export function mailboxLookupURL(email: string) {
   return cursorPageURL(mailboxApiPaths.mailboxes, { cursor: '', limit: 1, params: { email_address: email } });
 }
+
+export function mailboxRunningOperationsURL(limit = 200) {
+  return `${mailboxApiPaths.operations}?limit=${limit}&status=RUNNING`;
+}
