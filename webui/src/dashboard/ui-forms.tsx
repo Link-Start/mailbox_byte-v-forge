@@ -1,6 +1,9 @@
 import { Controller, useForm } from 'react-hook-form';
 import type { Control, FieldValues, Path, SubmitHandler } from 'react-hook-form';
-import { cx } from './text';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 export { useForm, type Control, type SubmitHandler };
 
@@ -19,9 +22,9 @@ export function ControlledInputFieldList<T extends FieldValues>({ control, field
 }
 
 function ControlledInputField<T extends FieldValues>({ control, field }: { control: Control<T>; field: ControlledInputFieldDescriptor<T> }) {
-  return <Controller control={control} name={field.name} render={({ field: input }) => <label className="formField" htmlFor={field.inputId || field.id}><span>{field.label}</span><input {...input} value={String(input.value || '')} id={field.inputId || field.id} type={field.type || 'text'} placeholder={field.placeholder} /></label>} />;
+  return <Controller control={control} name={field.name} render={({ field: input }) => <label className="formField" htmlFor={field.inputId || field.id}><Label>{field.label}</Label><Input {...input} value={String(input.value || '')} id={field.inputId || field.id} type={field.type || 'text'} placeholder={field.placeholder} /></label>} />;
 }
 
 export function ControlledTextareaField<T extends FieldValues>({ control, name, className, placeholder }: { control: Control<T>; name: Path<T>; className?: string; placeholder?: string }) {
-  return <Controller control={control} name={name} render={({ field }) => <textarea {...field} value={String(field.value || '')} className={cx('textarea', className)} placeholder={placeholder} />} />;
+  return <Controller control={control} name={name} render={({ field }) => <Textarea {...field} value={String(field.value || '')} className={cn('textarea', className)} placeholder={placeholder} />} />;
 }

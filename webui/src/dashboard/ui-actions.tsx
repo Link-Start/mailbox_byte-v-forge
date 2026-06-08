@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from './ui-basic';
-import { cx } from './text';
+import { cn } from '@/lib/utils';
 
 export type ActionButtonDescriptor = {
   id: string;
@@ -17,7 +18,7 @@ export type ToolbarActionDescriptor = ActionButtonDescriptor;
 export type RowActionDescriptor = ActionButtonDescriptor & { kind?: 'danger' };
 
 export function ActionButtonGroup({ actions, className }: { actions: ActionButtonDescriptor[]; className?: string }) {
-  return <div className={cx('actionButtonGroup', className)}>{actions.map((action) => <ActionButton key={action.id} action={action} />)}</div>;
+  return <div className={cn('actionButtonGroup', className)}>{actions.map((action) => <ActionButton key={action.id} action={action} />)}</div>;
 }
 
 export function ToolbarActionButtons({ actions }: { actions: ToolbarActionDescriptor[] }) {
@@ -29,9 +30,10 @@ export function RecordActionButtons({ actions }: { actions: RowActionDescriptor[
 }
 
 function ActionButton({ action, iconOnly }: { action: ActionButtonDescriptor; iconOnly?: boolean }) {
-  return (
-    <Button type={action.type || 'button'} form={action.form} variant={action.variant} disabled={action.disabled} title={action.label} aria-label={iconOnly ? action.label : undefined} onClick={(event) => { event.stopPropagation(); action.onClick?.(); }}>
+  const button = (
+    <Button type={action.type || 'button'} form={action.form} variant={action.variant} size={iconOnly ? 'icon' : 'default'} disabled={action.disabled} title={action.label} aria-label={iconOnly ? action.label : undefined} onClick={(event) => { event.stopPropagation(); action.onClick?.(); }}>
       {action.icon}{!iconOnly && action.label}
     </Button>
   );
+  return iconOnly ? <Tooltip><TooltipTrigger asChild>{button}</TooltipTrigger><TooltipContent>{action.label}</TooltipContent></Tooltip> : button;
 }

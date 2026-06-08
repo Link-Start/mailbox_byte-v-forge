@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Tabs } from 'radix-ui';
-import { cx } from './text';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 export type TabDescriptor = {
   value: string;
@@ -16,7 +16,7 @@ type ManagedTabsProps = {
   tabs: TabDescriptor[];
   tabsClassName?: string;
   tabsListClassName?: string;
-  tabsListVariant?: string;
+  tabsListVariant?: 'default' | 'line' | string;
 };
 
 export function PanelTabs(props: ManagedTabsProps) {
@@ -31,11 +31,11 @@ export function SegmentedControl<T extends string>({ value, options, onChange }:
   return <div className="segmentedControl">{options.map((option) => <button type="button" key={option.value} className={option.value === value ? 'active' : ''} onClick={() => onChange(option.value)}>{option.label}</button>)}</div>;
 }
 
-function ManagedTabs({ value, onValueChange, tabs, tabsClassName, tabsListClassName }: ManagedTabsProps) {
+function ManagedTabs({ value, onValueChange, tabs, tabsClassName, tabsListClassName, tabsListVariant }: ManagedTabsProps) {
   return (
-    <Tabs.Root value={value} onValueChange={onValueChange} className={cx('tabsRoot', tabsClassName)}>
-      <Tabs.List className={cx('tabsList', tabsListClassName)}>{tabs.map((tab) => <Tabs.Trigger key={tab.value} value={tab.value} className={cx('tabsTrigger', tab.triggerClassName)}>{tab.label}</Tabs.Trigger>)}</Tabs.List>
-      {tabs.map((tab) => <Tabs.Content key={tab.value} value={tab.value} className={cx('tabsContent', tab.contentClassName)}>{tab.content}</Tabs.Content>)}
-    </Tabs.Root>
+    <Tabs value={value} onValueChange={onValueChange} className={cn('tabsRoot', tabsClassName)}>
+      <TabsList variant={tabsListVariant === 'line' ? 'line' : 'default'} className={cn('tabsList', tabsListClassName)}>{tabs.map((tab) => <TabsTrigger key={tab.value} value={tab.value} className={cn('tabsTrigger', tab.triggerClassName)}>{tab.label}</TabsTrigger>)}</TabsList>
+      {tabs.map((tab) => <TabsContent key={tab.value} value={tab.value} className={cn('tabsContent', tab.contentClassName)}>{tab.content}</TabsContent>)}
+    </Tabs>
   );
 }
