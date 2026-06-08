@@ -1,4 +1,5 @@
-export const mailboxRouterBasename = '/dashboard/mailbox';
+export const mailboxStandaloneBasename = '/dashboard/mailbox';
+export const mailboxDashboardViewBasename = '/mailbox/mailboxes';
 
 export type MailboxDetailTab = 'overview' | 'inbox';
 

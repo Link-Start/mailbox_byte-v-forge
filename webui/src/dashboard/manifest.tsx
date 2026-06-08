@@ -1,6 +1,7 @@
 import { Inbox } from 'lucide-react';
 import { DashboardNavSection, type DashboardModuleRegistration } from './dashboard-kit';
-import { MailboxPage } from './mailbox-page';
+import { mailboxDashboardViewBasename } from './mailbox-route-paths';
+import { MailboxRouterProvider } from './mailbox-router';
 
 const registration: DashboardModuleRegistration = {
   manifest: {
@@ -20,7 +21,7 @@ const registration: DashboardModuleRegistration = {
     mailbox: <Inbox size={17} />
   },
   views: {
-    mailboxes: () => <MailboxPage />
+    mailboxes: () => <MailboxRouterProvider basename={mailboxDashboardViewBasename} />
   }
 };
 
