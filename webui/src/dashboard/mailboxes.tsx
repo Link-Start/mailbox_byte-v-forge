@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Search, X } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 import {
   Badge,
   Button,
@@ -14,35 +15,37 @@ import { mailboxProviderViews } from './mailbox-provider-registry';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
 import { providerToolbarActions } from './mailbox-toolbar-actions';
 import { capabilityForProvider } from './mailbox-provider-capabilities';
+import { activeMailboxPanelProvider, mailboxPanelImportProvider, mailboxPanelProvider, mailboxPanelQuery, nextMailboxPanelParams } from './mailbox-panel-query';
 import type { MailboxProviderTab } from './mailbox-provider-config';
 import type { Mailbox, MailboxDomain, MailboxOperation, MailboxProviderCapability } from './types';
 export { MailboxDetails } from './mailbox-details';
 
 export function MailboxPanel(props: MailboxPanelProps) {
-  const [activeProvider, setActiveProvider] = useState<MailboxProviderTab>('');
-  const [importProvider, setImportProvider] = useState<MailboxProviderTab>();
-  const [query, setQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = mailboxPanelQuery(searchParams);
   const searchQuery = query.trim();
+  const importProvider = mailboxPanelImportProvider(searchParams);
   const filteredMailboxes = useMemo(() => filterMailboxes(props.mailboxes, searchQuery), [props.mailboxes, searchQuery]);
-  const panelProps = providerPanelProps(props, searchQuery);
   const providerViews = useMemo(() => mailboxProviderViews(props.providerCapabilities, filteredMailboxes), [props.providerCapabilities, filteredMailboxes]);
-  useEffect(() => {
-    if (providerViews.length > 0 && !providerViews.some((view) => view.value === activeProvider)) setActiveProvider(providerViews[0].value);
-  }, [activeProvider, providerViews]);
+  const activeProvider = activeMailboxPanelProvider(providerViews, mailboxPanelProvider(searchParams));
+  const panelProps = providerPanelProps(props, searchQuery);
+  const updateQuery = (update: Parameters<typeof nextMailboxPanelParams>[1]) => {
+    setSearchParams((current) => nextMailboxPanelParams(current, update), { replace: true });
+  };
   if (providerViews.length === 0) return <EmptyBlock text={props.busy ? '加载中' : '暂无 Provider'} />;
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[240px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9 pr-9" value={query} placeholder="搜索" onChange={(event) => setQuery(event.target.value)} />
-          {query && <Button className="absolute right-1 top-1/2 size-7 -translate-y-1/2" variant="ghost" size="icon" aria-label="清空搜索" onClick={() => setQuery('')}><X className="size-4" /></Button>}
+          <Input className="pl-9 pr-9" value={query} placeholder="搜索" onChange={(event) => updateQuery({ q: event.target.value })} />
+          {query && <Button className="absolute right-1 top-1/2 size-7 -translate-y-1/2" variant="ghost" size="icon" aria-label="清空搜索" onClick={() => updateQuery({ q: '' })}><X className="size-4" /></Button>}
         </div>
         {searchQuery && <Badge variant="secondary">{filteredMailboxes.length}/{props.mailboxes.length}</Badge>}
       </div>
       <PanelTabs
         value={activeProvider}
-        onValueChange={(value) => setActiveProvider(value as MailboxProviderTab)}
+        onValueChange={(value) => updateQuery({ provider: value as MailboxProviderTab })}
         tabsClassName="min-h-0 flex-1 overflow-hidden"
         tabsListVariant="line"
         tabsListClassName="h-8"
@@ -56,12 +59,12 @@ export function MailboxPanel(props: MailboxPanelProps) {
               {...panelProps}
               mailboxes={mailboxes}
               capability={capability}
-              actions={<ToolbarActionButtons actions={providerToolbarActions({ value, capability, mailboxes }, props, setImportProvider)} />}
+              actions={<ToolbarActionButtons actions={providerToolbarActions({ value, capability, mailboxes }, props, (provider) => updateQuery({ importProvider: provider }))} />}
             />
           )
         }))}
       />
-      <MailboxImportSheet open={!!importProvider} provider={importProvider || activeProvider} capability={capabilityForProvider(props.providerCapabilities, importProvider || activeProvider)} busy={props.busy} onOpenChange={(open) => !open && setImportProvider(undefined)} onDone={props.onDone} onError={props.onError} />
+      <MailboxImportSheet open={!!importProvider} provider={importProvider || activeProvider} capability={capabilityForProvider(props.providerCapabilities, importProvider || activeProvider)} busy={props.busy} onOpenChange={(open) => !open && updateQuery({ importProvider: '' })} onDone={props.onDone} onError={props.onError} />
     </div>
   );
 }

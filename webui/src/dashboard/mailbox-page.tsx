@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Mail } from 'lucide-react';
-import { Outlet, useNavigate, useOutletContext, useParams } from 'react-router';
+import { Outlet, useLocation, useNavigate, useOutletContext, useParams } from 'react-router';
 import { AppDrawer, MailboxProviderAction, WorkspacePanel } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
 import { useMailboxActions } from './mailbox-actions';
@@ -8,6 +8,7 @@ import { useMailboxData } from './mailbox-data';
 import { MailboxDeleteDialog } from './mailbox-delete-dialog';
 import { useMailboxEmailEventCache } from './mailbox-events';
 import { MailboxPageStatus } from './mailbox-page-status';
+import { persistentMailboxPanelSearch } from './mailbox-panel-query';
 import { mailboxDetailPath, mailboxIndexPath, type MailboxDetailTab } from './mailbox-route-paths';
 import { MailboxDetails, MailboxPanel } from './mailboxes';
 import { canRunProviderMailboxAction, capabilityForProvider } from './mailbox-provider-capabilities';
@@ -22,10 +23,11 @@ type MailboxPageContext = {
 
 export function MailboxPage() {
   const navigate = useNavigate();
+  const { search } = useLocation();
   const { mailboxEmail = '' } = useParams();
   const selectedEmail = normalizeUiEmail(mailboxEmail);
   const [showSecrets, setShowSecrets] = useState(false);
-  const closeDetails = useCallback(() => void navigate(mailboxIndexPath()), [navigate]);
+  const closeDetails = useCallback(() => void navigate(`${mailboxIndexPath()}${persistentMailboxPanelSearch(search)}`), [navigate, search]);
   const closeDeletedMailbox = useCallback((email: string) => {
     if (normalizeUiEmail(email) === selectedEmail) closeDetails();
   }, [closeDetails, selectedEmail]);
@@ -33,8 +35,8 @@ export function MailboxPage() {
   const actions = useMailboxActions(data, showSecrets, closeDeletedMailbox);
   useMailboxEmailEventCache({ email: data.selected?.email_address, inboxQueryKey: actions.inboxQueryKey, enabled: !!data.selected?.email_address });
   const openDetailTab = useCallback((tab: MailboxDetailTab) => {
-    if (data.selected) void navigate(mailboxDetailPath(data.selected.email_address, tab));
-  }, [data.selected, navigate]);
+    if (data.selected) void navigate(`${mailboxDetailPath(data.selected.email_address, tab)}${persistentMailboxPanelSearch(search)}`);
+  }, [data.selected, navigate, search]);
 
   return (
     <>

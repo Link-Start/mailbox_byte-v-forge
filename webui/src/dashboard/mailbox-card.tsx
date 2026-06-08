@@ -1,5 +1,5 @@
 import { AlertCircle, KeyRound, Mail, Trash2 } from 'lucide-react';
-import { NavLink } from 'react-router';
+import { NavLink, useLocation } from 'react-router';
 import {
   RecordActionButtons,
   RecordActions,
@@ -14,6 +14,7 @@ import {
 import { maskEmail } from './email-utils';
 import { mailboxDetailPath } from './mailbox-route-paths';
 import { authStatus } from './mailbox-auth-status';
+import { persistentMailboxPanelSearch } from './mailbox-panel-query';
 import { canRunMailboxAction, providerAction } from './mailbox-provider-capabilities';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
 
@@ -29,12 +30,14 @@ export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, sh
   onOAuth: (emailAddress?: string) => Promise<void>;
   onDelete: (mailbox: Mailbox) => void;
 }) {
+  const { search } = useLocation();
   const displayEmail = showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address);
   const rowActions = mailboxRowActions({ mailbox, busy, oauthing, providerCapability, currentOperation, onOAuth, onDelete });
+  const detailPath = `${mailboxDetailPath(mailbox.email_address)}${persistentMailboxPanelSearch(search)}`;
 
   return (
     <RecordCard selected={selected}>
-      <NavLink to={mailboxDetailPath(mailbox.email_address)} className="recordMain rounded-md text-inherit no-underline outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+      <NavLink to={detailPath} className="recordMain rounded-md text-inherit no-underline outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
         <RecordTop>
           <RecordIdentity
             icon={<Mail className="size-4" />}
