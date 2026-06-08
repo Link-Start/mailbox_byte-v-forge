@@ -109,15 +109,16 @@ func main() {
 	if cfg.pgDSN == "" {
 		operations = newMemoryOperationStore()
 	} else {
-		pgOperations, err = newPgOperationStore(cfg.pgDSN)
+		pgOperations, err = newPgOperationStore(ctx, cfg.pgDSN)
 		if err != nil {
 			log.Fatalf("failed to initialize mailbox operation store: %s", safeMailboxError(err))
 		}
+		defer pgOperations.Close()
 		operations = pgOperations
 	}
 	var workDispatcher *mailboxWorkDispatcher
 	if mailboxEventBus != nil && pgOperations != nil {
-		workDispatcher = newMailboxWorkDispatcher(pgOperations.db, "mailbox-api")
+		workDispatcher = newMailboxWorkDispatcher(pgOperations.pool, "mailbox-api")
 	} else {
 		logInfo("mailbox MQ dispatcher is disabled; mailbox operations run in local worker goroutines")
 	}

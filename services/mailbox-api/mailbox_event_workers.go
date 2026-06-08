@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
 	"mailboxapi/internal/eventbus"
 )
 
@@ -17,7 +16,7 @@ func operationStartErrorResult(operationID string, label string, err error) even
 	if errors.Is(err, errOperationAlreadyRunning) {
 		return eventbus.NakResult(30*time.Second, "delay busy "+label+" request")
 	}
-	if errors.Is(err, errOperationInvalidAction) || errors.Is(err, gorm.ErrRecordNotFound) {
+	if errors.Is(err, errOperationInvalidAction) || errors.Is(err, errOperationNotFound) {
 		log.Printf("%s request is invalid operation_id=%s: %s", label, operationID, safeMailboxError(err))
 		return eventbus.TermResult("terminate invalid " + label + " request")
 	}

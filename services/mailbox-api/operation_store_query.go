@@ -2,44 +2,62 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
+	"time"
 
+	"github.com/jackc/pgx/v5"
 	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
-	"mailboxapi/internal/dbclaim"
 	"mailboxapi/internal/emailx"
 )
 
 func (s *pgOperationStore) update(ctx context.Context, operationID string, update operationUpdate) (*mailboxv1.MailboxOperation, error) {
-	updates := map[string]any{}
-	if value := strings.ToUpper(strings.TrimSpace(update.Status)); value != "" {
-		updates["status"] = value
-		if value == operationStatusSucceeded || value == operationStatusFailed {
-			for key, item := range dbclaim.ClearUpdates() {
-				updates[key] = item
-			}
-		}
+	status := strings.ToUpper(strings.TrimSpace(update.Status))
+	lastStep := strings.TrimSpace(update.LastStep)
+	clearClaim := status == operationStatusSucceeded || status == operationStatusFailed
+	query := `UPDATE mailbox_operations SET
+		status = CASE WHEN $2 <> '' THEN $2 ELSE status END,
+		last_step = CASE WHEN $3 <> '' THEN $3 ELSE last_step END,
+		error_message = $4,
+		exit_code = $5,
+		mailbox_count = $6,
+		fetched_count = $7,
+		failed_count = $8,
+		message_count = $9,
+		claim_owner = CASE WHEN $10 THEN '' ELSE claim_owner END,
+		claim_until = CASE WHEN $10 THEN 0 ELSE claim_until END,
+		updated_at = $11
+		WHERE operation_id = $1
+		RETURNING ` + operationColumns()
+	row, err := scanOperationRow(s.pool.QueryRow(ctx, query,
+		strings.TrimSpace(operationID),
+		status,
+		lastStep,
+		safeMailboxText(update.ErrorMessage),
+		update.ExitCode,
+		update.MailboxCount,
+		update.FetchedCount,
+		update.FailedCount,
+		update.MessageCount,
+		clearClaim,
+		time.Now().Unix(),
+	))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errOperationNotFound
 	}
-	if value := strings.TrimSpace(update.LastStep); value != "" {
-		updates["last_step"] = value
-	}
-	updates["error_message"] = safeMailboxText(update.ErrorMessage)
-	updates["exit_code"] = update.ExitCode
-	updates["mailbox_count"] = update.MailboxCount
-	updates["fetched_count"] = update.FetchedCount
-	updates["failed_count"] = update.FailedCount
-	updates["message_count"] = update.MessageCount
-
-	if err := s.db.WithContext(ctx).Model(&mailboxOperationRow{}).
-		Where("operation_id = ?", strings.TrimSpace(operationID)).
-		Updates(updates).Error; err != nil {
+	if err != nil {
 		return nil, err
 	}
-	return s.get(ctx, operationID)
+	return operationRowToProto(&row), nil
 }
 
 func (s *pgOperationStore) get(ctx context.Context, operationID string) (*mailboxv1.MailboxOperation, error) {
-	var row mailboxOperationRow
-	if err := s.db.WithContext(ctx).First(&row, "operation_id = ?", strings.TrimSpace(operationID)).Error; err != nil {
+	row, err := scanOperationRow(s.pool.QueryRow(ctx, operationSelectSQL()+` WHERE operation_id = $1`, strings.TrimSpace(operationID)))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errOperationNotFound
+	}
+	if err != nil {
 		return nil, err
 	}
 	return operationRowToProto(&row), nil
@@ -50,26 +68,42 @@ func (s *pgOperationStore) list(ctx context.Context, filter operationListFilter)
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
-	query := s.db.WithContext(ctx).Model(&mailboxOperationRow{})
+	conditions := []string{}
+	args := []any{}
 	if value := operationStatusValue(filter.Status); value != "" {
-		query = query.Where("status = ?", value)
+		conditions = append(conditions, fmt.Sprintf("status = $%d", appendOperationArg(&args, value)))
 	}
 	if value := operationActionValue(filter.Action); value != "" {
-		query = query.Where("action = ?", value)
+		conditions = append(conditions, fmt.Sprintf("action = $%d", appendOperationArg(&args, value)))
 	}
 	if value := emailx.Normalize(filter.EmailAddress); value != "" {
-		query = query.Where("email_address = ?", value)
+		conditions = append(conditions, fmt.Sprintf("email_address = $%d", appendOperationArg(&args, value)))
 	}
-
-	var rows []mailboxOperationRow
-	if err := query.Order("updated_at DESC").Limit(limit).Find(&rows).Error; err != nil {
+	query := operationSelectSQL()
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+	args = append(args, limit)
+	query += fmt.Sprintf(" ORDER BY updated_at DESC LIMIT $%d", len(args))
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
 		return nil, err
 	}
-	operations := make([]*mailboxv1.MailboxOperation, 0, len(rows))
-	for i := range rows {
-		operations = append(operations, operationRowToProto(&rows[i]))
+	defer rows.Close()
+	operations := []*mailboxv1.MailboxOperation{}
+	for rows.Next() {
+		row, err := scanOperationRow(rows)
+		if err != nil {
+			return nil, err
+		}
+		operations = append(operations, operationRowToProto(&row))
 	}
-	return operations, nil
+	return operations, rows.Err()
+}
+
+func appendOperationArg(args *[]any, value any) int {
+	*args = append(*args, value)
+	return len(*args)
 }
 
 func operationRowToProto(row *mailboxOperationRow) *mailboxv1.MailboxOperation {

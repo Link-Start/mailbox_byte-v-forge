@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/proto"
-	"gorm.io/gorm"
 	commonv1 "mailboxapi/internal/contracts/commonv1"
 	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 	"mailboxapi/internal/emailx"
@@ -20,19 +19,19 @@ import (
 )
 
 type mailboxWorkDispatcher struct {
-	db     *gorm.DB
-	source string
+	beginner eventoutbox.PgxBeginner
+	source   string
 }
 
-func newMailboxWorkDispatcher(db *gorm.DB, source string) *mailboxWorkDispatcher {
-	if db == nil {
+func newMailboxWorkDispatcher(beginner eventoutbox.PgxBeginner, source string) *mailboxWorkDispatcher {
+	if beginner == nil {
 		return nil
 	}
 	source = strings.TrimSpace(source)
 	if source == "" {
 		source = mailboxEventSource
 	}
-	return &mailboxWorkDispatcher{db: db, source: source}
+	return &mailboxWorkDispatcher{beginner: beginner, source: source}
 }
 
 func (d *mailboxWorkDispatcher) PublishRegistrationRequested(ctx context.Context, operationID string) error {
@@ -44,7 +43,7 @@ func (d *mailboxWorkDispatcher) PublishOAuthRequested(ctx context.Context, opera
 }
 
 func (d *mailboxWorkDispatcher) publishOperationRequested(ctx context.Context, definition eventcatalog.Definition, eventPrefix string, operationID string, request proto.Message) error {
-	if d == nil || d.db == nil {
+	if d == nil || d.beginner == nil {
 		return fmt.Errorf("mailbox work dispatcher is not configured")
 	}
 	operationID = strings.TrimSpace(operationID)
@@ -60,7 +59,7 @@ func (d *mailboxWorkDispatcher) publishOperationRequested(ctx context.Context, d
 }
 
 func (d *mailboxWorkDispatcher) PublishEmailPollRequested(ctx context.Context, request *mailboxv1.MailboxEmailPollRequest) error {
-	if d == nil || d.db == nil || request == nil {
+	if d == nil || d.beginner == nil || request == nil {
 		return nil
 	}
 	request.EmailAddress = emailx.Normalize(request.GetEmailAddress())
@@ -87,7 +86,7 @@ func (d *mailboxWorkDispatcher) PublishEmailPollRequested(ctx context.Context, r
 }
 
 func (d *mailboxWorkDispatcher) PublishInboxFetchRequested(ctx context.Context, operationID string, request *mailboxv1.FetchMailboxInboxesRequest) error {
-	if d == nil || d.db == nil {
+	if d == nil || d.beginner == nil {
 		return fmt.Errorf("mailbox work dispatcher is not configured")
 	}
 	operationID = strings.TrimSpace(operationID)
@@ -128,7 +127,22 @@ func (d *mailboxWorkDispatcher) metadata(eventName string, subject string, event
 }
 
 func (d *mailboxWorkDispatcher) enqueue(ctx context.Context, record eventoutbox.Record) error {
-	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		return eventoutbox.InsertRecordGORM(ctx, tx, mailboxEventOutboxTable, record, time.Now().Unix())
-	})
+	tx, err := d.beginner.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+	if err := eventoutbox.InsertRecordPgx(ctx, tx, mailboxEventOutboxTable, record, time.Now().Unix()); err != nil {
+		return err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+	committed = true
+	return nil
 }
