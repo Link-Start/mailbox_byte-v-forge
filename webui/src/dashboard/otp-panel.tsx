@@ -9,7 +9,8 @@ export function MailboxOtpPanel({ latestOtp, showSecrets, loading, compact, onCo
   compact?: boolean;
   onCopy: (label: string, value: string) => void;
 }) {
-  const hasOtp = !!latestOtp?.captured;
+  const hasOtp = !!latestOtp?.detected;
+  const statusText = latestOtp?.secret_resolvable ? '验证码已保存' : hasOtp ? '检测到验证码' : '暂无 OTP';
   const subject = latestOtp?.subject || 'Latest OTP';
   const displaySubject = showSecrets ? subject : maskPreview(subject);
   const sizeClass = compact ? 'min-h-[52px] p-2' : 'min-h-[68px] p-2';
@@ -19,13 +20,13 @@ export function MailboxOtpPanel({ latestOtp, showSecrets, loading, compact, onCo
       <div className="grid min-w-0 gap-1">
         <span className="text-xs font-semibold text-muted-foreground">{loading ? '正在拉取 OTP' : '最近 OTP'}</span>
         <strong className={`truncate leading-tight ${codeClass} ${hasOtp ? 'text-emerald-700' : ''}`}>
-          {hasOtp ? '验证码已捕获' : '暂无 OTP'}
+          {statusText}
         </strong>
         <small className="truncate text-xs text-muted-foreground" title={displaySubject}>
           {hasOtp ? `${formatUnix(latestOtp?.received_at_unix || 0)} · ${displaySubject}` : '点击拉取 OTP 后在这里显示最新验证码'}
         </small>
       </div>
-      <Button className="copyButton" {...buttonHint('OTP 通过 SecretRef 保存')} disabled onClick={() => onCopy('OTP', '')}>
+      <Button className="copyButton" {...buttonHint(latestOtp?.secret_resolvable ? 'OTP 通过 SecretRef 保存' : 'OTP 未暴露明文')} disabled onClick={() => onCopy('OTP', '')}>
         <Copy size={14} />
       </Button>
     </Card>

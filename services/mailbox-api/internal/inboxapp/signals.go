@@ -29,7 +29,6 @@ func MessageWithSignals(message *mailboxv1.EmailInboxMessage, _ string) *mailbox
 	}
 	signal := &mailboxv1.EmailSignal{
 		Kind:            mailboxv1.EmailSignalKind_EMAIL_SIGNAL_KIND_OTP,
-		SecretRef:       OTPSecretRef(message, time.Time{}),
 		Label:           "verification_code",
 		Profile:         "generic",
 		Parser:          "mailbox-email-otp",
@@ -48,11 +47,11 @@ func MessageHasSignal(message *mailboxv1.EmailInboxMessage, kind mailboxv1.Email
 	if kind == mailboxv1.EmailSignalKind_EMAIL_SIGNAL_KIND_UNSPECIFIED {
 		return true
 	}
-	if signal := message.GetPrimarySignal(); signal.GetKind() == kind && signal.GetSecretRef().GetSecretId() != "" {
+	if signal := message.GetPrimarySignal(); signal.GetKind() == kind {
 		return true
 	}
 	for _, signal := range message.GetSignals() {
-		if signal.GetKind() == kind && signal.GetSecretRef().GetSecretId() != "" {
+		if signal.GetKind() == kind {
 			return true
 		}
 	}
@@ -96,11 +95,14 @@ func (s *Service) AttachSignalSecrets(ctx context.Context, message *mailboxv1.Em
 	}
 	expiresAt := s.emailOTPExpiresAt(message)
 	ref := OTPSecretRef(message, expiresAt)
-	ApplyOTPSecretRef(message, ref)
 	if ref == nil || !expiresAt.After(s.now()) {
 		return nil
 	}
-	return s.secrets.SaveOTP(ctx, ref, code, expiresAt)
+	if err := s.secrets.SaveOTP(ctx, ref, code, expiresAt); err != nil {
+		return err
+	}
+	ApplyOTPSecretRef(message, ref)
+	return nil
 }
 
 func (s *Service) emailOTPExpiresAt(message *mailboxv1.EmailInboxMessage) time.Time {

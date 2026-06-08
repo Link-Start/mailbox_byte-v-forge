@@ -102,7 +102,7 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   fields.push({
     id: 'latest-otp',
     label: '验证码',
-    value: latestOtp?.captured ? '已捕获' : '-',
+    value: latestOtp?.secret_resolvable ? '已保存' : latestOtp?.detected ? '已检测' : '-',
     copyValue: '',
     copyDisabled: true,
     masked: false,

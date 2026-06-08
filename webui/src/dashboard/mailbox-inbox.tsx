@@ -101,7 +101,7 @@ function MessageSignalStrip({ message }: { message: InboxMessage }) {
   const signals = messageSignals(message);
   const fallbackSignal = messageHasVerificationSignal(message);
   if (signals.length === 0 && fallbackSignal) {
-    return <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">验证码 已捕获</Badge>;
+    return <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">验证码 已检测</Badge>;
   }
   if (signals.length === 0) return null;
   return (
@@ -109,7 +109,7 @@ function MessageSignalStrip({ message }: { message: InboxMessage }) {
       {signals.map((signal, index) => {
         const kind = signalKindName(signal.kind);
         const captured = kind === 'otp' && signalHasSecretRef(signal, 'otp');
-        return <Badge variant="secondary" key={`${kind}-${signal.label || index}`}>{signalLabel(signal)}{captured ? ' 已捕获' : ''}</Badge>;
+        return <Badge variant="secondary" key={`${kind}-${signal.label || index}`}>{signalLabel(signal)}{captured ? ' 已保存' : ''}</Badge>;
       })}
     </span>
   );

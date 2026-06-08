@@ -9,7 +9,9 @@ export function latestOtpForInboxResult(result: InboxResult | null, email: strin
     const matchesTarget = normalizeUiEmail(message.mailbox_email) === target ||
       (message.recipients || []).some((recipient) => normalizeUiEmail(recipient) === target);
     const refID = verificationRefForMessage(message);
-    if (matchesTarget && refID) candidates.push({ captured: true, ref_id: refID, subject: message.subject, received_at_unix: message.received_at_unix });
+    if (matchesTarget && messageHasVerificationSignal(message)) {
+      candidates.push({ detected: true, secret_resolvable: refID !== '', ref_id: refID, subject: message.subject, received_at_unix: message.received_at_unix });
+    }
   }
   candidates.sort((a, b) => b.received_at_unix - a.received_at_unix);
   return candidates[0] || null;
@@ -26,7 +28,7 @@ export function verificationRefForMessage(message: InboxMessage): string {
 }
 
 export function messageHasVerificationSignal(message: InboxMessage): boolean {
-  return verificationRefForMessage(message) !== '';
+  return messageSignals(message).some((signal) => signalKindName(signal.kind) === 'otp');
 }
 
 export function messageSignals(message: InboxMessage): EmailSignal[] {

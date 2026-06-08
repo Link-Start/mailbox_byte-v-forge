@@ -32,7 +32,8 @@ export type {
 export type MailboxProviderCapability = MailboxProviderCapabilities;
 
 export type LatestOtp = {
-  captured: boolean;
+  detected: boolean;
+  secret_resolvable: boolean;
   ref_id: string;
   subject: string;
   received_at_unix: number;
