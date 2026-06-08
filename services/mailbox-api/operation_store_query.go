@@ -3,13 +3,11 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
-	"mailboxapi/internal/emailx"
 )
 
 func (s *pgOperationStore) update(ctx context.Context, operationID string, update operationUpdate) (*mailboxv1.MailboxOperation, error) {
@@ -64,25 +62,8 @@ func (s *pgOperationStore) get(ctx context.Context, operationID string) (*mailbo
 }
 
 func (s *pgOperationStore) list(ctx context.Context, filter operationListFilter) ([]*mailboxv1.MailboxOperation, error) {
-	limit := normalizedOperationListLimit(filter.Limit)
-	conditions := []string{}
-	args := []any{}
-	if value := operationStatusValue(filter.Status); value != "" {
-		conditions = append(conditions, fmt.Sprintf("status = $%d", appendOperationArg(&args, value)))
-	}
-	if value := operationActionValue(filter.Action); value != "" {
-		conditions = append(conditions, fmt.Sprintf("action = $%d", appendOperationArg(&args, value)))
-	}
-	if value := emailx.Normalize(filter.EmailAddress); value != "" {
-		conditions = append(conditions, fmt.Sprintf("email_address = $%d", appendOperationArg(&args, value)))
-	}
-	query := operationSelectSQL()
-	if len(conditions) > 0 {
-		query += " WHERE " + strings.Join(conditions, " AND ")
-	}
-	args = append(args, limit)
-	query += fmt.Sprintf(" ORDER BY updated_at DESC LIMIT $%d", len(args))
-	rows, err := s.pool.Query(ctx, query, args...)
+	query := newOperationListQuery(filter)
+	rows, err := s.pool.Query(ctx, query.sql, query.args...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,9 +77,4 @@ func (s *pgOperationStore) list(ctx context.Context, filter operationListFilter)
 		operations = append(operations, operationRowToProto(&row))
 	}
 	return operations, rows.Err()
-}
-
-func appendOperationArg(args *[]any, value any) int {
-	*args = append(*args, value)
-	return len(*args)
 }
