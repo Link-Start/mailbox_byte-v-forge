@@ -33,17 +33,38 @@ func optionalBoolEnabled(value *bool) bool {
 	return value == nil || *value
 }
 
-func appendCloudflareEmailDomain(out *[]string, seen map[string]struct{}, value string) bool {
+type cloudflareEmailDomainCollector struct {
+	domains []string
+	seen    map[string]struct{}
+}
+
+func newCloudflareEmailDomainCollector() *cloudflareEmailDomainCollector {
+	return &cloudflareEmailDomainCollector{seen: map[string]struct{}{}}
+}
+
+func (c *cloudflareEmailDomainCollector) add(value string) bool {
 	domain := normalizeCloudflareDomain(value)
 	if domain == "" {
 		return false
 	}
-	if _, ok := seen[domain]; ok {
+	if _, ok := c.seen[domain]; ok {
 		return false
 	}
-	seen[domain] = struct{}{}
-	*out = append(*out, domain)
+	c.seen[domain] = struct{}{}
+	c.domains = append(c.domains, domain)
 	return true
+}
+
+func (c *cloudflareEmailDomainCollector) addAll(values []string) bool {
+	added := false
+	for _, value := range values {
+		added = c.add(value) || added
+	}
+	return added
+}
+
+func (c *cloudflareEmailDomainCollector) values() []string {
+	return c.domains
 }
 
 func normalizeCloudflareDomain(value string) string {

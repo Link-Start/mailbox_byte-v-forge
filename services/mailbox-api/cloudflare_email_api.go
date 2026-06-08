@@ -21,8 +21,7 @@ func fetchCloudflareEmailDomains(ctx context.Context, httpClient *http.Client, t
 		cfg = &pb.CloudflareEmailConfig{}
 	}
 	api := newCloudflareEmailAPI(httpClient, token, strings.TrimRight(stringx.FirstNonEmpty(baseURL, cfg.GetApiBaseUrl()), "/"))
-	out := []string{}
-	seen := map[string]struct{}{}
+	domains := newCloudflareEmailDomainCollector()
 	zones, err := api.cloudflareEmailZones(ctx, cfg.GetZones())
 	if err != nil {
 		return nil, err
@@ -49,15 +48,11 @@ func fetchCloudflareEmailDomains(ctx context.Context, httpClient *http.Client, t
 			logWarning("skip Cloudflare email zone %s MX: %v", stringx.FirstNonEmpty(zoneName, cloudflareZoneLabel(zone)), err)
 			continue
 		}
-		added := false
-		for _, domain := range mxDomains {
-			added = appendCloudflareEmailDomain(&out, seen, domain) || added
-		}
-		if !added {
-			appendCloudflareEmailDomain(&out, seen, zoneName)
+		if !domains.addAll(mxDomains) {
+			domains.add(zoneName)
 		}
 	}
-	return out, nil
+	return domains.values(), nil
 }
 
 type cloudflareEmailAPI struct {
