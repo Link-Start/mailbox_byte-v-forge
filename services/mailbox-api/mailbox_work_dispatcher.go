@@ -30,7 +30,7 @@ func newMailboxWorkDispatcher(db *gorm.DB, source string) *mailboxWorkDispatcher
 	}
 	source = strings.TrimSpace(source)
 	if source == "" {
-		source = mailboxPlatformEventSource
+		source = mailboxEventSource
 	}
 	return &mailboxWorkDispatcher{db: db, source: source}
 }
@@ -129,6 +129,6 @@ func (d *mailboxWorkDispatcher) metadata(eventName string, subject string, event
 
 func (d *mailboxWorkDispatcher) enqueue(ctx context.Context, record eventoutbox.Record) error {
 	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		return eventoutbox.InsertRecordGORM(ctx, tx, mailboxPlatformEventOutboxTable, record, time.Now().Unix())
+		return eventoutbox.InsertRecordGORM(ctx, tx, mailboxEventOutboxTable, record, time.Now().Unix())
 	})
 }

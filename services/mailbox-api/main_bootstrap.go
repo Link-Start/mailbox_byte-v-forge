@@ -9,9 +9,9 @@ import (
 	"mailboxapi/internal/natseventbus"
 )
 
-func newPlatformEventBus(_ context.Context, cfg config) (*natseventbus.Bus, func(), error) {
+func newMailboxEventBus(_ context.Context, cfg config) (*natseventbus.Bus, func(), error) {
 	if strings.TrimSpace(cfg.mailboxNATSURL) == "" {
-		logInfo("MAILBOX_NATS_URL is not configured; mailbox platform events and MQ workers are disabled")
+		logInfo("MAILBOX_NATS_URL is not configured; mailbox events and MQ workers are disabled")
 		return nil, func() {}, nil
 	}
 	bus, err := natseventbus.ConnectRequired(natseventbus.Config{

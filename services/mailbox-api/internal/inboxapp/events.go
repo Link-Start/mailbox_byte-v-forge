@@ -23,7 +23,7 @@ func EventRecords(source string, messages []*mailboxv1.EmailInboxMessage) ([]eve
 		}
 		record, err := EmailReceivedEventRecord(source, message)
 		if err != nil {
-			return nil, fmt.Errorf("prepare mailbox platform event record: %w", err)
+			return nil, fmt.Errorf("prepare mailbox event record: %w", err)
 		}
 		records = append(records, record)
 		for _, signal := range message.GetSignals() {
@@ -32,7 +32,7 @@ func EventRecords(source string, messages []*mailboxv1.EmailInboxMessage) ([]eve
 			}
 			record, err := EmailSignalReceivedEventRecord(source, message, signal)
 			if err != nil {
-				return nil, fmt.Errorf("prepare mailbox platform signal event record: %w", err)
+				return nil, fmt.Errorf("prepare mailbox signal event record: %w", err)
 			}
 			records = append(records, record)
 		}

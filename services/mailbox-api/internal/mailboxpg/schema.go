@@ -97,7 +97,7 @@ func (r *Repository) EnsureSchema(ctx context.Context, outboxTable string) error
 		`CREATE INDEX IF NOT EXISTS idx_mailbox_inbox_messages_received_at ON mailbox_inbox_messages(mailbox_email, received_at DESC)`,
 		`CREATE INDEX IF NOT EXISTS idx_mailbox_inbox_messages_provider_received_at ON mailbox_inbox_messages(provider, mailbox_email, received_at DESC)`,
 	}
-	outboxStatements, err := eventoutbox.PostgresSchemaStatements(outboxTable, "idx_mailbox_platform_event_outbox_pending")
+	outboxStatements, err := eventoutbox.PostgresSchemaStatements(outboxTable, "idx_mailbox_event_outbox_pending")
 	if err != nil {
 		return err
 	}

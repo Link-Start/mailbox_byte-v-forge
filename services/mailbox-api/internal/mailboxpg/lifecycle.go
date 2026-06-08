@@ -46,7 +46,7 @@ func (r *Repository) RunOutboxWorker(ctx context.Context, table string, publishe
 		return nil
 	}
 	return eventoutbox.RunPgxWorker(ctx, eventoutbox.PgxWorkerConfig{
-		Name:      "mailbox platform event outbox",
+		Name:      "mailbox event outbox",
 		Beginner:  r.pool,
 		Table:     table,
 		Publisher: publisher,
