@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/protojsonx"
 	"mailboxapi/internal/redisx"
 
 	"mailboxapi/internal/inboxapp"
@@ -117,7 +117,7 @@ func encodeRecentEmailMessage(message *mailboxv1.EmailInboxMessage) (string, boo
 		return "", false
 	}
 	cloned.MailboxEmail = emailx.Normalize(cloned.GetMailboxEmail())
-	payload, err := (protojson.MarshalOptions{UseProtoNames: true}).Marshal(cloned)
+	payload, err := protojsonx.Marshal(cloned)
 	if err != nil {
 		return "", false
 	}
@@ -126,7 +126,7 @@ func encodeRecentEmailMessage(message *mailboxv1.EmailInboxMessage) (string, boo
 
 func decodeRecentEmailMessage(payload string, parserProfile string) (*mailboxv1.EmailInboxMessage, bool) {
 	message := &mailboxv1.EmailInboxMessage{}
-	if err := (protojson.UnmarshalOptions{DiscardUnknown: true}).Unmarshal([]byte(payload), message); err != nil {
+	if err := protojsonx.Unmarshal([]byte(payload), message); err != nil {
 		return nil, false
 	}
 	return inboxapp.MessageWithSignals(message, parserProfile), true

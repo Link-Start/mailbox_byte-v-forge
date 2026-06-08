@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"mailboxapi/internal/hotstream"
+	"mailboxapi/internal/protojsonx"
 
 	observabilityv1 "mailboxapi/internal/contracts/observabilityv1"
 )
@@ -126,9 +126,9 @@ func control(kind observabilityv1.HotStreamControlKind, message string) *observa
 }
 
 func protoJSON(message proto.Message) string {
-	data, err := (protojson.MarshalOptions{UseProtoNames: true}).Marshal(message)
+	data, err := protojsonx.Marshal(message)
 	if err != nil {
-		fallback, _ := (protojson.MarshalOptions{UseProtoNames: true}).Marshal(control(observabilityv1.HotStreamControlKind_HOT_STREAM_CONTROL_KIND_ERROR, err.Error()))
+		fallback, _ := protojsonx.Marshal(control(observabilityv1.HotStreamControlKind_HOT_STREAM_CONTROL_KIND_ERROR, err.Error()))
 		return string(fallback)
 	}
 	return string(data)
