@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -115,44 +114,4 @@ func (s *memoryOperationStore) get(ctx context.Context, operationID string) (*ma
 		return nil, errOperationNotFound
 	}
 	return operationRowToProto(&row), nil
-}
-
-func (s *memoryOperationStore) list(ctx context.Context, filter operationListFilter) ([]*mailboxv1.MailboxOperation, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	limit := filter.Limit
-	if limit <= 0 || limit > 200 {
-		limit = 50
-	}
-	statusValue := operationStatusValue(filter.Status)
-	actionValue := operationActionValue(filter.Action)
-	emailAddress := emailx.Normalize(filter.EmailAddress)
-	s.mu.Lock()
-	rows := make([]mailboxOperationRow, 0, len(s.rows))
-	for _, row := range s.rows {
-		if statusValue != "" && row.Status != statusValue {
-			continue
-		}
-		if actionValue != "" && row.Action != actionValue {
-			continue
-		}
-		if emailAddress != "" && row.EmailAddress != emailAddress {
-			continue
-		}
-		rows = append(rows, row)
-	}
-	s.mu.Unlock()
-
-	sort.SliceStable(rows, func(i, j int) bool {
-		return rows[i].UpdatedAt > rows[j].UpdatedAt
-	})
-	if len(rows) > limit {
-		rows = rows[:limit]
-	}
-	operations := make([]*mailboxv1.MailboxOperation, 0, len(rows))
-	for i := range rows {
-		operations = append(operations, operationRowToProto(&rows[i]))
-	}
-	return operations, nil
 }

@@ -64,10 +64,7 @@ func (s *pgOperationStore) get(ctx context.Context, operationID string) (*mailbo
 }
 
 func (s *pgOperationStore) list(ctx context.Context, filter operationListFilter) ([]*mailboxv1.MailboxOperation, error) {
-	limit := filter.Limit
-	if limit <= 0 || limit > 200 {
-		limit = 50
-	}
+	limit := normalizedOperationListLimit(filter.Limit)
 	conditions := []string{}
 	args := []any{}
 	if value := operationStatusValue(filter.Status); value != "" {
