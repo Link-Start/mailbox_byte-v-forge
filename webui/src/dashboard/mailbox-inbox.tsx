@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Inbox } from 'lucide-react';
 import {
   Alert,
@@ -14,6 +15,7 @@ import {
   maskPreview
 } from './dashboard-kit';
 import { formatEmailList, maskEmail } from './email-utils';
+import { MailboxInboxDetail } from './mailbox-inbox-detail';
 import { messageHasVerificationSignal, messageSignals, signalHasSecretRef, signalKindName, signalLabel } from './mailbox-signal-utils';
 import type { InboxMessage, InboxResult, Mailbox } from './types';
 
@@ -25,7 +27,20 @@ export function MailboxInboxSection({ mailbox, result, showSecrets, loading, can
   canFetch: boolean;
   onFetch: (emailAddress?: string) => Promise<void>;
 }) {
-  const messages = result?.messages || [];
+  const messages = useMemo(() => result?.messages || [], [result?.messages]);
+  const [selectedKey, setSelectedKey] = useState('');
+  const selectedMessage = messages.find((message, index) => inboxMessageKey(message, index) === selectedKey) || null;
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      setSelectedKey('');
+      return;
+    }
+    if (!messages.some((message, index) => inboxMessageKey(message, index) === selectedKey)) {
+      setSelectedKey(inboxMessageKey(messages[0], 0));
+    }
+  }, [messages, selectedKey]);
+
   return (
     <section className="grid gap-3">
       <div className="flex items-center justify-between gap-2">
@@ -41,23 +56,29 @@ export function MailboxInboxSection({ mailbox, result, showSecrets, loading, can
           <AlertDescription>{compactToast(result.error_message)}</AlertDescription>
         </Alert>
       )}
-      <div className="grid gap-2">
-        {messages.map((message, index) => (
-          <InboxMessageRow message={message} showSecrets={showSecrets} key={`${message.mailbox_email}-${message.id || index}`} />
-        ))}
-        {!result && <EmptyBlock text={loading ? '正在读取收件箱。' : '暂无邮件。'} />}
-        {result && !result.error_message && messages.length === 0 && <EmptyBlock text="当前邮箱没有新邮件。" />}
+      <div className="mailboxInboxLayout">
+        <div className="grid gap-2">
+          {messages.map((message, index) => {
+            const key = inboxMessageKey(message, index);
+            return <InboxMessageRow message={message} selected={key === selectedKey} showSecrets={showSecrets} key={key} onSelect={() => setSelectedKey(key)} />;
+          })}
+          {!result && <EmptyBlock text={loading ? '正在读取收件箱。' : '暂无邮件。'} />}
+          {result && !result.error_message && messages.length === 0 && <EmptyBlock text="当前邮箱没有新邮件。" />}
+        </div>
+        {messages.length > 0 && <MailboxInboxDetail message={selectedMessage} showSecrets={showSecrets} />}
       </div>
     </section>
   );
 }
 
-function InboxMessageRow({ message, showSecrets }: {
+function InboxMessageRow({ message, selected, showSecrets, onSelect }: {
   message: InboxMessage;
+  selected: boolean;
   showSecrets: boolean;
+  onSelect: () => void;
 }) {
   return (
-    <Item variant="outline" className="items-start">
+    <Item variant="outline" className={`inboxMessageRow items-start ${selected ? 'selected' : ''}`} role="button" tabIndex={0} onClick={onSelect} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(); }}>
       <ItemContent className="min-w-0">
         <ItemTitle className="w-full justify-between gap-2">
           <span className="truncate" title={message.subject}>{message.subject || '-'}</span>
@@ -76,9 +97,7 @@ function InboxMessageRow({ message, showSecrets }: {
   );
 }
 
-function MessageSignalStrip({ message }: {
-  message: InboxMessage;
-}) {
+function MessageSignalStrip({ message }: { message: InboxMessage }) {
   const signals = messageSignals(message);
   const fallbackSignal = messageHasVerificationSignal(message);
   if (signals.length === 0 && fallbackSignal) {
@@ -90,12 +109,12 @@ function MessageSignalStrip({ message }: {
       {signals.map((signal, index) => {
         const kind = signalKindName(signal.kind);
         const captured = kind === 'otp' && signalHasSecretRef(signal, 'otp');
-        return (
-          <Badge variant="secondary" key={`${kind}-${signal.label || index}`}>
-            {signalLabel(signal)}{captured ? ' 已捕获' : ''}
-          </Badge>
-        );
+        return <Badge variant="secondary" key={`${kind}-${signal.label || index}`}>{signalLabel(signal)}{captured ? ' 已捕获' : ''}</Badge>;
       })}
     </span>
   );
+}
+
+function inboxMessageKey(message: InboxMessage, index: number) {
+  return [message.provider_key || '', message.mailbox_email || '', message.id || index, message.received_at_unix || 0].join(':');
 }

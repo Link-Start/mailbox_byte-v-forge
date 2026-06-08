@@ -96,3 +96,14 @@ button, input, textarea { font: inherit; }
 .kvRow dt { color: var(--muted-foreground); font-size: 12px; }
 .kvRow dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cursorPager { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; color: var(--muted-foreground); font-size: 12px; }
+.mailboxInboxLayout { display: grid; gap: 12px; }
+@media (min-width: 960px) { .mailboxInboxLayout { grid-template-columns: minmax(0, 1fr) minmax(260px, 0.9fr); align-items: start; } }
+.inboxMessageRow { cursor: pointer; }
+.inboxMessageRow.selected { border-color: var(--primary); background: var(--secondary); }
+.mailboxInboxDetail { gap: 12px; padding: 12px; }
+.mailboxInboxDetailHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.mailboxInboxMetadata { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 6px 10px; font-size: 12px; }
+.mailboxInboxMetadata dt { color: var(--muted-foreground); }
+.mailboxInboxMetadata dd { margin: 0; }
+.mailboxInboxBody { border-top: 1px solid var(--border); padding-top: 10px; }
+.mailboxInboxBody pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: inherit; color: var(--foreground); }
