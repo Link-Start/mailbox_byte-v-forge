@@ -22,8 +22,10 @@ const (
 )
 
 type Config struct {
-	URL        string
-	ClientName string
+	URL          string
+	ClientName   string
+	Stream       string
+	EnsureStream bool
 }
 
 type Bus struct {
@@ -57,7 +59,14 @@ func Connect(cfg Config, opts ...nats.Option) (*Bus, error) {
 		conn.Close()
 		return nil, fmt.Errorf("initialize jetstream: %w", err)
 	}
-	return &Bus{conn: conn, js: js, stream: DefaultStream}, nil
+	bus := &Bus{conn: conn, js: js, stream: normalizedStreamName(cfg.Stream)}
+	if cfg.EnsureStream {
+		if err := bus.EnsureStream(DefaultSubject); err != nil {
+			conn.Close()
+			return nil, err
+		}
+	}
+	return bus, nil
 }
 
 func ConnectRequired(cfg Config, requiredMessage string, opts ...nats.Option) (*Bus, error) {
@@ -77,6 +86,51 @@ func (b *Bus) Close() {
 	}
 	b.conn.Drain()
 	b.conn.Close()
+}
+
+func (b *Bus) EnsureStream(subject string) error {
+	if b == nil || b.js == nil {
+		return errors.New("nats event bus is not connected")
+	}
+	subject = strings.TrimSpace(subject)
+	if subject == "" {
+		subject = DefaultSubject
+	}
+	info, err := b.js.StreamInfo(b.stream)
+	if errors.Is(err, nats.ErrStreamNotFound) {
+		_, addErr := b.js.AddStream(&nats.StreamConfig{
+			Name:       b.stream,
+			Subjects:   []string{subject},
+			Retention:  nats.LimitsPolicy,
+			Storage:    nats.FileStorage,
+			Duplicates: 10 * time.Minute,
+		})
+		if addErr != nil {
+			return fmt.Errorf("ensure nats stream %s: %w", b.stream, addErr)
+		}
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("inspect nats stream %s: %w", b.stream, err)
+	}
+	if streamHasSubject(info.Config.Subjects, subject) {
+		return nil
+	}
+	config := info.Config
+	config.Subjects = append(config.Subjects, subject)
+	if _, err := b.js.UpdateStream(&config); err != nil {
+		return fmt.Errorf("ensure nats stream %s subject %s: %w", b.stream, subject, err)
+	}
+	return nil
+}
+
+func streamHasSubject(subjects []string, subject string) bool {
+	for _, existing := range subjects {
+		if strings.TrimSpace(existing) == subject {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *Bus) Publish(ctx context.Context, message eventbus.Message) (eventbus.PublishAck, error) {

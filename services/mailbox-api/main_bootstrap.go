@@ -15,8 +15,10 @@ func newPlatformEventBus(_ context.Context, cfg config) (*natseventbus.Bus, func
 		return nil, func() {}, nil
 	}
 	bus, err := natseventbus.ConnectRequired(natseventbus.Config{
-		URL:        cfg.mailboxNATSURL,
-		ClientName: "mailbox-api",
+		URL:          cfg.mailboxNATSURL,
+		ClientName:   "mailbox-api",
+		Stream:       cfg.eventStreamName,
+		EnsureStream: true,
 	}, "MAILBOX_NATS_URL is required for mailbox event workers")
 	if err != nil {
 		return nil, nil, err
