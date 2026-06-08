@@ -2,7 +2,7 @@ import { normalizeMailboxProviderKey, type MailboxProviderTab } from './mailbox-
 
 type ProviderView = { value: string };
 
-type MailboxPanelQueryUpdate = {
+export type MailboxPanelQueryUpdate = {
   provider?: string;
   q?: string;
   importProvider?: string;

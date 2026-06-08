@@ -1,6 +1,4 @@
-import { useMemo } from 'react';
 import { Search, X } from 'lucide-react';
-import { useSearchParams } from 'react-router';
 import {
   Badge,
   Button,
@@ -9,29 +7,18 @@ import {
   PanelTabs,
   ToolbarActionButtons
 } from './dashboard-kit';
-import { normalizeUiEmail } from './email-utils';
 import { MailboxImportSheet } from './mailbox-import';
-import { mailboxProviderViews } from './mailbox-provider-registry';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
 import { providerToolbarActions } from './mailbox-toolbar-actions';
 import { capabilityForProvider } from './mailbox-provider-capabilities';
-import { activeMailboxPanelProvider, mailboxPanelImportProvider, mailboxPanelProvider, mailboxPanelQuery, nextMailboxPanelParams } from './mailbox-panel-query';
+import { useMailboxPanelState } from './mailbox-panel-state';
 import type { MailboxProviderTab } from './mailbox-provider-config';
 import type { Mailbox, MailboxDomain, MailboxOperation, MailboxProviderCapability } from './types';
 export { MailboxDetails } from './mailbox-details';
 
 export function MailboxPanel(props: MailboxPanelProps) {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const query = mailboxPanelQuery(searchParams);
-  const searchQuery = query.trim();
-  const importProvider = mailboxPanelImportProvider(searchParams);
-  const filteredMailboxes = useMemo(() => filterMailboxes(props.mailboxes, searchQuery), [props.mailboxes, searchQuery]);
-  const providerViews = useMemo(() => mailboxProviderViews(props.providerCapabilities, filteredMailboxes), [props.providerCapabilities, filteredMailboxes]);
-  const activeProvider = activeMailboxPanelProvider(providerViews, mailboxPanelProvider(searchParams));
+  const { query, searchQuery, filteredMailboxes, providerViews, activeProvider, importProvider, updateQuery } = useMailboxPanelState(props.mailboxes, props.providerCapabilities);
   const panelProps = providerPanelProps(props, searchQuery);
-  const updateQuery = (update: Parameters<typeof nextMailboxPanelParams>[1]) => {
-    setSearchParams((current) => nextMailboxPanelParams(current, update), { replace: true });
-  };
   if (providerViews.length === 0) return <EmptyBlock text={props.busy ? '加载中' : '暂无 Provider'} />;
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3">
@@ -114,14 +101,4 @@ function providerPanelProps(props: MailboxPanelProps, searchQuery: string): Omit
     onDone: props.onDone,
     onError: props.onError
   };
-}
-
-function filterMailboxes(mailboxes: Mailbox[], query: string) {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return mailboxes;
-  return mailboxes.filter((mailbox) => [
-    mailbox.email_address,
-    mailbox.domain,
-    mailbox.provider_key
-  ].some((value) => normalizeUiEmail(value || '').includes(needle)));
 }
