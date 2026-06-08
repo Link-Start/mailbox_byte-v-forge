@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"sort"
 	"strings"
 	"sync"
@@ -58,7 +57,7 @@ func (s *memoryOperationStore) insert(ctx context.Context, row mailboxOperationR
 		return nil, err
 	}
 	if row.OperationID == "" {
-		return nil, errors.New("operation_id is required")
+		return nil, errOperationIDRequired
 	}
 	now := time.Now().Unix()
 	row.CreatedAt = now
@@ -66,7 +65,7 @@ func (s *memoryOperationStore) insert(ctx context.Context, row mailboxOperationR
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, exists := s.rows[row.OperationID]; exists {
-		return nil, errors.New("mailbox operation already exists")
+		return nil, errOperationAlreadyExists
 	}
 	s.rows[row.OperationID] = row
 	return operationRowToProto(&row), nil
@@ -81,7 +80,7 @@ func (s *memoryOperationStore) update(ctx context.Context, operationID string, u
 	defer s.mu.Unlock()
 	row, ok := s.rows[operationID]
 	if !ok {
-		return nil, errors.New("mailbox operation not found")
+		return nil, errOperationNotFound
 	}
 	if value := strings.ToUpper(strings.TrimSpace(update.Status)); value != "" {
 		row.Status = value
@@ -113,7 +112,7 @@ func (s *memoryOperationStore) get(ctx context.Context, operationID string) (*ma
 	defer s.mu.Unlock()
 	row, ok := s.rows[operationID]
 	if !ok {
-		return nil, errors.New("mailbox operation not found")
+		return nil, errOperationNotFound
 	}
 	return operationRowToProto(&row), nil
 }

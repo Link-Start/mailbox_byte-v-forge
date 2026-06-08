@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 
@@ -23,7 +22,7 @@ func (s *memoryOperationStore) startWorkerRun(ctx context.Context, operationID s
 	}
 	operationID = strings.TrimSpace(operationID)
 	if operationID == "" {
-		return nil, errors.New("operation_id is required")
+		return nil, errOperationIDRequired
 	}
 	now := time.Now().Unix()
 	action = strings.ToUpper(strings.TrimSpace(action))
@@ -31,7 +30,7 @@ func (s *memoryOperationStore) startWorkerRun(ctx context.Context, operationID s
 	defer s.mu.Unlock()
 	row, ok := s.rows[operationID]
 	if !ok {
-		return nil, errors.New("mailbox operation not found")
+		return nil, errOperationNotFound
 	}
 	if row.Action != action {
 		return nil, errOperationInvalidAction

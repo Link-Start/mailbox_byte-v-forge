@@ -21,7 +21,7 @@ func (s *pgOperationStore) startOAuthWorkerRun(ctx context.Context, operationID 
 func (s *pgOperationStore) startWorkerRun(ctx context.Context, operationID string, action string, runStep string, workerID string) (*operationRunStart, error) {
 	operationID = strings.TrimSpace(operationID)
 	if operationID == "" {
-		return nil, errors.New("operation_id is required")
+		return nil, errOperationIDRequired
 	}
 	now := time.Now().Unix()
 	runLeaseUntil := dbclaim.Until(now, operationActionRunLeaseSeconds)

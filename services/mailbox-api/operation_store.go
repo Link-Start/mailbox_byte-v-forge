@@ -24,7 +24,9 @@ const operationActionRunLeaseSeconds int32 = 2 * 60 * 60
 
 var (
 	errOperationAlreadyRunning = errors.New("mailbox operation is already running")
+	errOperationAlreadyExists  = errors.New("mailbox operation already exists")
 	errOperationInvalidAction  = errors.New("mailbox operation action mismatch")
+	errOperationIDRequired     = errors.New("operation_id is required")
 	errOperationNotFound       = errors.New("mailbox operation not found")
 )
 
