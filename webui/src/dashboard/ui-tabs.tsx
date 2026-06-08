@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Segmented, Tabs } from 'antd';
+import { Tabs } from 'radix-ui';
 import { cx } from './text';
 
 export type TabDescriptor = {
@@ -28,20 +28,14 @@ export function ContentTabs(props: ManagedTabsProps) {
 }
 
 export function SegmentedControl<T extends string>({ value, options, onChange }: { value: T; options: { value: T; label: string }[]; onChange: (value: T) => void }) {
-  return <Segmented className="segmentedControl" block value={value} options={options} onChange={(next) => onChange(next as T)} />;
+  return <div className="segmentedControl">{options.map((option) => <button type="button" key={option.value} className={option.value === value ? 'active' : ''} onClick={() => onChange(option.value)}>{option.label}</button>)}</div>;
 }
 
 function ManagedTabs({ value, onValueChange, tabs, tabsClassName, tabsListClassName }: ManagedTabsProps) {
   return (
-    <Tabs
-      activeKey={value}
-      onChange={onValueChange}
-      className={cx('tabsRoot', tabsClassName, tabsListClassName)}
-      items={tabs.map((tab) => ({
-        key: tab.value,
-        label: <span className={tab.triggerClassName}>{tab.label}</span>,
-        children: <div className={cx('tabsContent', tab.contentClassName)}>{tab.content}</div>
-      }))}
-    />
+    <Tabs.Root value={value} onValueChange={onValueChange} className={cx('tabsRoot', tabsClassName)}>
+      <Tabs.List className={cx('tabsList', tabsListClassName)}>{tabs.map((tab) => <Tabs.Trigger key={tab.value} value={tab.value} className={cx('tabsTrigger', tab.triggerClassName)}>{tab.label}</Tabs.Trigger>)}</Tabs.List>
+      {tabs.map((tab) => <Tabs.Content key={tab.value} value={tab.value} className={cx('tabsContent', tab.contentClassName)}>{tab.content}</Tabs.Content>)}
+    </Tabs.Root>
   );
 }

@@ -1,5 +1,4 @@
-import { CopyOutlined } from '@ant-design/icons';
-import { Descriptions, Space } from 'antd';
+import { Copy } from 'lucide-react';
 import { Button } from './ui-basic';
 import { mask } from './text';
 
@@ -14,24 +13,7 @@ export type KVDescriptor = {
 };
 
 export function KVList({ items, onCopy }: { items: KVDescriptor[]; onCopy: (label: string, value: string) => void }) {
-  return (
-    <Descriptions
-      className="kvList"
-      bordered
-      column={1}
-      size="small"
-      items={items.map((item) => ({
-        key: item.id,
-        label: item.label,
-        children: (
-          <Space className="kvValue" size={8}>
-            <span className={item.mono ? 'font-mono' : ''}>{item.masked ? mask(item.value) : item.value}</span>
-            <Button variant="ghost" size="icon" disabled={item.copyDisabled} aria-label={`复制${item.label}`} onClick={() => onCopy(item.label, item.copyValue || item.value)}><CopyOutlined /></Button>
-          </Space>
-        )
-      }))}
-    />
-  );
+  return <dl className="kvList">{items.map((item) => <div className="kvRow" key={item.id}><dt>{item.label}</dt><dd className={item.mono ? 'font-mono' : ''}>{item.masked ? mask(item.value) : item.value}</dd><Button variant="ghost" size="icon" disabled={item.copyDisabled} aria-label={`复制${item.label}`} onClick={() => onCopy(item.label, item.copyValue || item.value)}><Copy size={14} /></Button></div>)}</dl>;
 }
 
 export function CursorPager({ itemCount, pageSize, hasNext, loading, onNext }: {
@@ -42,5 +24,5 @@ export function CursorPager({ itemCount, pageSize, hasNext, loading, onNext }: {
   onNext: () => void;
 }) {
   if (!hasNext && itemCount < pageSize) return null;
-  return <Space className="cursorPager"><span>{itemCount} 条</span>{hasNext && <Button variant="outline" size="sm" disabled={loading} onClick={onNext}>{loading ? '加载中' : '加载更多'}</Button>}</Space>;
+  return <div className="cursorPager"><span>{itemCount} 条</span>{hasNext && <Button variant="outline" size="sm" disabled={loading} onClick={onNext}>{loading ? '加载中' : '加载更多'}</Button>}</div>;
 }

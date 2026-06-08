@@ -1,4 +1,4 @@
-import { InboxOutlined } from '@ant-design/icons';
+import { Inbox } from 'lucide-react';
 import { DashboardNavSection, type DashboardModuleRegistration } from './dashboard-kit';
 import { MailboxPage } from './mailbox-page';
 
@@ -17,7 +17,7 @@ const registration: DashboardModuleRegistration = {
     ]
   },
   icons: {
-    mailbox: <InboxOutlined />
+    mailbox: <Inbox size={17} />
   },
   views: {
     mailboxes: () => <MailboxPage />

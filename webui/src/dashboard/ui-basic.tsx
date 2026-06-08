@@ -1,43 +1,25 @@
-import type { ButtonHTMLAttributes, HTMLAttributes } from 'react';
-import { Alert as AntAlert, Button as AntButton, Card as AntCard, Empty, List, Tag } from 'antd';
-import type { ButtonProps as AntButtonProps } from 'antd';
+import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 import { cx } from './text';
 
-export type ButtonProps = Omit<AntButtonProps, 'type' | 'size' | 'variant'> & {
+export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'default' | 'outline' | 'destructive' | 'ghost';
   size?: 'default' | 'sm' | 'icon';
-  type?: ButtonHTMLAttributes<HTMLButtonElement>['type'];
 };
 
-export function Button({ className, variant = 'default', size = 'default', type = 'button', children, ...props }: ButtonProps) {
-  return (
-    <AntButton
-      {...props}
-      htmlType={type}
-      type={buttonType(variant)}
-      danger={variant === 'destructive'}
-      size={size === 'sm' ? 'small' : 'middle'}
-      className={cx(size === 'icon' && 'iconButton', className)}
-    >
-      {children}
-    </AntButton>
-  );
+export function Button({ className, variant = 'default', size = 'default', ...props }: ButtonProps) {
+  return <button className={cx('uiButton', `uiButton-${variant}`, `uiButton-${size}`, className)} {...props} />;
 }
 
-export function Card({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <AntCard className="mailboxCard" styles={{ body: { padding: 0 } }}>
-      <div className={className} {...props}>{children}</div>
-    </AntCard>
-  );
+export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return <div className={cx('uiCard', className)} {...props} />;
 }
 
 export function Badge({ className, variant = 'default', ...props }: HTMLAttributes<HTMLSpanElement> & { variant?: 'default' | 'outline' | 'secondary' }) {
-  return <Tag className={cx('mailboxTag', `mailboxTag-${variant}`, className)} {...props} />;
+  return <span className={cx('uiBadge', `uiBadge-${variant}`, className)} {...props} />;
 }
 
-export function Alert({ className, variant = 'default', children }: HTMLAttributes<HTMLDivElement> & { variant?: 'default' | 'destructive' }) {
-  return <AntAlert className={className} type={variant === 'destructive' ? 'error' : 'info'} showIcon message={children} />;
+export function Alert({ className, variant = 'default', ...props }: HTMLAttributes<HTMLDivElement> & { variant?: 'default' | 'destructive' }) {
+  return <div role="alert" className={cx('uiAlert', `uiAlert-${variant}`, className)} {...props} />;
 }
 
 export function AlertDescription({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -45,7 +27,7 @@ export function AlertDescription({ className, ...props }: HTMLAttributes<HTMLDiv
 }
 
 export function EmptyBlock({ text }: { text: string }) {
-  return <Empty className="emptyBlock" image={Empty.PRESENTED_IMAGE_SIMPLE} description={text} />;
+  return <div className="emptyBlock">{text}</div>;
 }
 
 export function StatusBadge({ status }: { status: string }) {
@@ -53,7 +35,7 @@ export function StatusBadge({ status }: { status: string }) {
 }
 
 export function Item({ className, variant, ...props }: HTMLAttributes<HTMLDivElement> & { variant?: 'outline' }) {
-  return <List.Item className={cx('uiItem', variant === 'outline' && 'uiItem-outline', className)} {...props} />;
+  return <div className={cx('uiItem', variant === 'outline' && 'uiItem-outline', className)} {...props} />;
 }
 
 export function ItemContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -68,8 +50,6 @@ export function ItemDescription({ className, ...props }: HTMLAttributes<HTMLDivE
   return <div className={cx('uiItemDescription', className)} {...props} />;
 }
 
-function buttonType(variant: ButtonProps['variant']) {
-  if (variant === 'ghost') return 'text';
-  if (variant === 'outline' || variant === 'destructive') return 'default';
-  return 'primary';
+export function ThemeProvider({ children }: { children: ReactNode; defaultTheme?: string; storageKey?: string }) {
+  return <>{children}</>;
 }

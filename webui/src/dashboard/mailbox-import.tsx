@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
+import { Plus } from 'lucide-react';
 import {
   ActionButtonGroup,
-  AppDrawer,
   errorText,
-  Form,
   MailboxProviderAction,
-  SegmentedControl,
+  Sheet,
+  SheetContent,
+  SheetDescription,
   SheetFooter,
-  useAsyncActionRunner
+  SheetHeader,
+  SheetTitle,
+  SegmentedControl,
+  useAsyncActionRunner,
+  useForm
 } from './dashboard-kit';
 import type { ActionButtonDescriptor, MailboxCredentialKind } from './dashboard-kit';
 import { providerAction, providerDisplayName, type MailboxProviderTab } from './mailbox-utils';
@@ -28,19 +32,17 @@ export function MailboxImportSheet({ open, provider, capability, busy, onOpenCha
 }) {
   const [mode, setMode] = useState<MailboxImportMode>('single');
   const runner = useAsyncActionRunner();
-  const [singleForm] = Form.useForm<MailboxImportFormState>();
-  const [batchForm] = Form.useForm<MailboxBatchImportFormState>();
+  const singleForm = useForm<MailboxImportFormState>({ defaultValues: { email: '', password: '', refresh_token: '', access_token: '' } });
+  const batchForm = useForm<MailboxBatchImportFormState>({ defaultValues: { batchText: '' } });
   const importAction = providerAction(capability, MailboxProviderAction.MAILBOX_PROVIDER_ACTION_IMPORT_MAILBOX);
   const activeFormId = mode === 'single' ? 'mailbox-import-single' : 'mailbox-import-batch';
-  const singleEmail = Form.useWatch('email', singleForm) || '';
-  const batchText = Form.useWatch('batchText', batchForm) || '';
   if (!importAction) return null;
   const credentialKinds = importAction.required_credentials || [];
 
   async function saveSingle(values: MailboxImportFormState) {
     await runImport(async () => {
       const message = await importSingleMailbox(provider, credentialKinds, values);
-      singleForm.resetFields();
+      singleForm.reset({ email: '', password: '', refresh_token: '', access_token: '' });
       return message;
     });
   }
@@ -48,7 +50,7 @@ export function MailboxImportSheet({ open, provider, capability, busy, onOpenCha
   async function saveBatch(values: MailboxBatchImportFormState) {
     await runImport(async () => {
       const message = await importMailboxBatch(provider, credentialKinds, values);
-      batchForm.resetFields();
+      batchForm.reset({ batchText: '' });
       return message;
     });
   }
@@ -60,22 +62,25 @@ export function MailboxImportSheet({ open, provider, capability, busy, onOpenCha
   }
 
   return (
-    <AppDrawer
-      open={open}
-      title="添加邮箱账号"
-      description={`${providerDisplayName(capability, provider)} 可附带 provider 支持的凭据。`}
-      footer={<SheetFooter><ActionButtonGroup className="drawerActions" actions={footerActions({ busy: busy || runner.busy, form: activeFormId, disabled: submitDisabled(mode, singleEmail, batchText), onClose: () => onOpenChange(false) })} /></SheetFooter>}
-      onOpenChange={onOpenChange}
-    >
-      <div className="importDrawerBody">
-        <SegmentedControl value={mode} options={mailboxImportModeOptions} onChange={setMode} />
-        {mode === 'single' ? (
-          <SingleMailboxImportForm formId="mailbox-import-single" form={singleForm} credentialKinds={credentialKinds} onFinish={saveSingle} />
-        ) : (
-          <BatchMailboxImportForm formId="mailbox-import-batch" form={batchForm} placeholder={batchPlaceholder(credentialKinds)} onFinish={saveBatch} />
-        )}
-      </div>
-    </AppDrawer>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-[min(460px,100vw)] p-0 sm:max-w-none">
+        <SheetHeader className="border-b">
+          <SheetTitle>添加邮箱账号</SheetTitle>
+          <SheetDescription>{providerDisplayName(capability, provider)} 可附带 provider 支持的凭据。</SheetDescription>
+        </SheetHeader>
+        <div className="grid gap-3 p-4">
+          <SegmentedControl value={mode} options={mailboxImportModeOptions} onChange={setMode} />
+          {mode === 'single' ? (
+            <SingleMailboxImportForm formId="mailbox-import-single" control={singleForm.control} credentialKinds={credentialKinds} onSubmit={singleForm.handleSubmit(saveSingle)} />
+          ) : (
+            <BatchMailboxImportForm formId="mailbox-import-batch" control={batchForm.control} placeholder={batchPlaceholder(credentialKinds)} onSubmit={batchForm.handleSubmit(saveBatch)} />
+          )}
+        </div>
+        <SheetFooter className="border-t">
+          <ActionButtonGroup className="grid gap-2" actions={footerActions({ busy: busy || runner.busy, form: activeFormId, disabled: submitDisabled(mode, singleForm.watch('email'), batchForm.watch('batchText')), onClose: () => onOpenChange(false) })} />
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -101,7 +106,7 @@ function footerActions({ busy, form, disabled, onClose }: {
   }, {
     id: 'submit',
     label: '添加',
-    icon: <PlusOutlined />,
+    icon: <Plus />,
     type: 'submit',
     form,
     disabled: busy || disabled,

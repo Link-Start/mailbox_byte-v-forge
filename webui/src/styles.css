@@ -42,6 +42,7 @@
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; height: 100%; overflow: hidden; }
 body { margin: 0; background: var(--background); color: var(--foreground); }
+button, input, textarea { font: inherit; }
 
 .workspacePanel { height: 100%; padding: 14px; overflow: hidden; }
 .accountFrame { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; gap: 10px; }
@@ -49,48 +50,64 @@ body { margin: 0; background: var(--background); color: var(--foreground); }
 .panelTitle { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
 .panelBody { min-height: 0; display: grid; }
 
-.iconButton { width: 34px; padding-inline: 0; }
-.mailboxCard { background: var(--card); }
-.mailboxTag { display: inline-flex; align-items: center; margin-inline-end: 0; border-radius: 999px; font-weight: 700; }
-.mailboxTag-default { background: var(--primary); color: var(--primary-foreground); }
-.mailboxTag-outline { border-color: var(--border); background: var(--card); color: var(--foreground); }
-.mailboxTag-secondary { background: var(--secondary); color: var(--secondary-foreground); }
-.statusBadge.authorized { background: var(--success-soft); color: var(--success); }
-.statusBadge.auth-failed { background: var(--danger-soft); color: var(--destructive); }
-.emptyBlock { padding: 24px; color: var(--muted-foreground); }
+.uiButton { min-height: 34px; border: 1px solid var(--border); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; background: var(--primary); color: var(--primary-foreground); cursor: pointer; }
+.uiButton:disabled { cursor: not-allowed; opacity: .55; }
+.uiButton-outline { background: var(--card); color: var(--foreground); }
+.uiButton-destructive { background: var(--danger-soft); border-color: #f2c7c1; color: var(--destructive); }
+.uiButton-ghost { background: transparent; color: var(--foreground); border-color: transparent; }
+.uiButton-sm { min-height: 30px; padding: 5px 9px; font-size: 12px; }
+.uiButton-icon { width: 34px; padding: 0; }
+.uiCard, .recordCard, .uiItem { border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
+.uiBadge { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 700; background: var(--primary); color: var(--primary-foreground); }
+.uiBadge-outline { border: 1px solid var(--border); background: var(--card); color: var(--foreground); }
+.uiBadge-secondary { background: var(--secondary); color: var(--secondary-foreground); }
+.uiAlert { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--card); }
+.uiAlert-destructive { border-color: #f2c7c1; background: var(--danger-soft); color: var(--destructive); }
+.uiItem { display: flex; gap: 10px; padding: 10px; }
+.uiItemContent { display: grid; gap: 4px; flex: 1; }
+.uiItemTitle { display: flex; align-items: center; font-weight: 700; }
+.uiItemDescription { color: var(--muted-foreground); font-size: 12px; }
+.emptyBlock { border: 1px dashed var(--border); border-radius: 14px; padding: 24px; text-align: center; color: var(--muted-foreground); font-size: 14px; }
 
-.tabsRoot { min-height: 0; height: 100%; display: flex; flex-direction: column; }
-.tabsRoot > .ant-tabs-nav { margin-bottom: 10px; }
-.tabsRoot > .ant-tabs-content-holder { min-height: 0; overflow: hidden; }
-.tabsRoot .ant-tabs-content, .tabsRoot .ant-tabs-tabpane { height: 100%; min-height: 0; }
-.tabsContent { min-height: 0; height: 100%; overflow: hidden; }
-.segmentedControl { width: 100%; }
+.tabsRoot { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; gap: 10px; height: 100%; }
+.tabsList { display: inline-flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); }
+.tabsTrigger { border: 0; border-radius: 0; background: transparent; color: var(--muted-foreground); padding: 8px 10px; }
+.tabsTrigger[data-state="active"] { color: var(--foreground); box-shadow: inset 0 -2px var(--primary); }
+.tabsContent { min-height: 0; overflow: hidden; }
+.segmentedControl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted); }
+.segmentedControl button { border: 0; border-radius: 9px; background: transparent; min-height: 32px; }
+.segmentedControl button.active { background: var(--card); box-shadow: var(--shadow-sm); }
 
 .recordList { min-height: 0; overflow: auto; display: grid; align-content: start; gap: 8px; }
-.recordCard { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
+.recordCard { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; }
 .recordCard.clickable { cursor: pointer; }
 .recordCard.selected { border-color: var(--primary); background: var(--secondary); }
 .recordMain { display: grid; gap: 6px; min-width: 0; }
 .recordTop, .recordIdentity { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.recordIdentity small, .recordMeta, .uiItemDescription { color: var(--muted-foreground); }
+.recordIdentity small, .recordMeta { color: var(--muted-foreground); }
 .recordIcon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9px; background: var(--muted); }
 .recordTitle { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.recordActions, .rowActionsMain { display: flex; align-items: center; gap: 6px; }
+.recordActions, .rowActionsMain, .rowActionButtons, .toolbarActions, .actionButtonGroup { display: flex; align-items: center; gap: 6px; }
+.statusBadge.authorized { background: var(--success-soft); color: var(--success); }
+.statusBadge.auth-failed { background: var(--danger-soft); color: var(--destructive); }
 
-.uiItem { align-items: flex-start; border: 1px solid var(--border); border-radius: 14px; background: var(--card); padding: 10px; }
-.uiItemContent { display: grid; gap: 4px; min-width: 0; width: 100%; }
-.uiItemTitle { display: flex; align-items: center; font-weight: 700; }
-.uiItemDescription { font-size: 12px; }
+.sheetOverlay { position: fixed; inset: 0; background: rgba(20, 18, 16, .28); z-index: 40; }
+.sheetContent { position: fixed; right: 0; top: 0; bottom: 0; z-index: 50; width: min(460px, 100vw); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--card); border-left: 1px solid var(--border); box-shadow: -12px 0 40px rgba(0,0,0,.12); }
+.sheetContent.appDrawer { width: min(720px, 100vw); }
+.sheetHeader, .sheetFooter { padding: 14px; border-bottom: 1px solid var(--border); }
+.sheetFooter { border-top: 1px solid var(--border); border-bottom: 0; }
+.sheetTitle { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; }
+.sheetDescription { margin: 4px 0 0; color: var(--muted-foreground); font-size: 13px; }
+.sheetClose { position: absolute; right: 10px; top: 10px; }
+.drawerBody { min-height: 0; overflow: auto; padding: 12px; }
 
-.drawerTitle { display: grid; gap: 2px; }
-.drawerTitleMain { display: inline-flex; align-items: center; gap: 8px; }
-.drawerTitle small { color: var(--muted-foreground); font-weight: 400; }
-.drawerBody { min-height: 0; }
-.importDrawerBody { display: grid; gap: 12px; }
-.sheetFooter { display: flex; justify-content: flex-end; }
-.drawerActions { justify-content: flex-end; width: 100%; }
-
-.kvList .ant-descriptions-item-content { min-width: 0; }
-.kvValue { max-width: 100%; }
-.kvValue > span:first-child { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cursorPager { display: flex; align-items: center; justify-content: center; padding: 10px; color: var(--muted-foreground); font-size: 12px; }
+.formField { display: grid; gap: 5px; font-size: 13px; }
+.formField input, .textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; background: var(--card); padding: 8px 10px; }
+.textarea { min-height: 128px; resize: vertical; }
+.kvList { display: grid; gap: 6px; }
+.kvRow { display: grid; grid-template-columns: 88px minmax(0, 1fr) 34px; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.kvRow dt { color: var(--muted-foreground); font-size: 12px; }
+.kvRow dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cursorPager { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; color: var(--muted-foreground); font-size: 12px; }
+.toast { position: fixed; top: 14px; right: 14px; z-index: 80; max-width: 360px; border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow-sm); background: var(--foreground); color: white; }
+.toast.error { background: var(--destructive); }

@@ -1,4 +1,4 @@
-import { MailOutlined } from '@ant-design/icons';
+import { Mail } from 'lucide-react';
 import { AccountManagementFrame } from './dashboard-kit';
 import { MailboxRecordList } from './mailbox-list';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
@@ -7,7 +7,7 @@ import { providerDisplayName, providerShowsCredentialState } from './mailbox-uti
 export function OutlookMailboxProviderPanel(props: MailboxProviderPanelProps) {
   const label = providerDisplayName(props.capability, 'Outlook');
   return (
-    <AccountManagementFrame title={`${label}邮箱账号`} icon={<MailOutlined />} actions={props.actions}>
+    <AccountManagementFrame title={`${label}邮箱账号`} icon={<Mail size={16} />} actions={props.actions}>
       <MailboxRecordList {...props} providerCapability={props.capability} showStatus={providerShowsCredentialState(props.capability)} emptyText={`暂无 ${label} 邮箱。`} />
     </AccountManagementFrame>
   );

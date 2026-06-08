@@ -1,4 +1,4 @@
-import { DeleteOutlined, ExclamationCircleOutlined, KeyOutlined, MailOutlined } from '@ant-design/icons';
+import { AlertCircle, KeyRound, Mail, Trash2 } from 'lucide-react';
 import {
   RecordActionButtons,
   RecordActions,
@@ -36,7 +36,7 @@ export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, sh
       <RecordMain>
         <RecordTop>
           <RecordIdentity
-            icon={<MailOutlined />}
+            icon={<Mail className="size-4" />}
             title={<span title={displayEmail}>{displayEmail}</span>}
             subtitle={domainForEmail(mailbox.email_address) || '邮箱'}
           />
@@ -66,7 +66,7 @@ function mailboxRowActions({ mailbox, busy, oauthing, providerCapability, curren
   const actions: RowActionDescriptor[] = [{
     id: 'delete-mailbox',
     label: '删除邮箱',
-    icon: <DeleteOutlined />,
+    icon: <Trash2 className="size-4" />,
     disabled: busy || !!oauthing,
     kind: 'danger',
     onClick: () => void onDelete(mailbox),
@@ -76,7 +76,7 @@ function mailboxRowActions({ mailbox, busy, oauthing, providerCapability, curren
     actions.unshift({
       id: 'run-oauth',
       label: oauthing === mailbox.email_address || oauthing === '*' ? 'OAuth 提交中' : '补 OAuth',
-      icon: <KeyOutlined />,
+      icon: <KeyRound className="size-4" />,
       disabled: busy || !!oauthing,
       onClick: () => void onOAuth(mailbox.email_address),
     });
@@ -89,7 +89,7 @@ function MailboxErrorMeta({ error }: { error?: string }) {
   return (
     <RecordMeta className="grid-cols-1">
       <span className="flex min-w-0 items-center gap-1 truncate text-xs text-destructive" title={error}>
-        <ExclamationCircleOutlined className="shrink-0" />
+        <AlertCircle className="size-3.5 shrink-0" />
         {error}
       </span>
     </RecordMeta>
