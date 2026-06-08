@@ -36,8 +36,7 @@ func (s *dashboardServer) handleMailboxDomains(w http.ResponseWriter, r *http.Re
 }
 
 func (s *dashboardServer) handleMailboxProviderCapabilities(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 	resp, err := s.mailboxClient.ListMailboxProviderCapabilities(r.Context(), &mailboxv1.ListMailboxProviderCapabilitiesRequest{

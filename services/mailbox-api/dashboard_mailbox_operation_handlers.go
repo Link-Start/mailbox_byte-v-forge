@@ -10,8 +10,7 @@ import (
 )
 
 func (s *dashboardServer) handleMailboxOperations(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 	resp, err := s.mailboxClient.ListMailboxOperations(r.Context(), &mailboxv1.ListMailboxOperationsRequest{
@@ -28,8 +27,7 @@ func (s *dashboardServer) handleMailboxOperations(w http.ResponseWriter, r *http
 }
 
 func (s *dashboardServer) handleMailboxOperation(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 	operationID := strings.Trim(strings.TrimPrefix(r.URL.Path, "/operations/"), "/")

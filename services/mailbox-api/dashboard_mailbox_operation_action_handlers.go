@@ -13,8 +13,7 @@ import (
 )
 
 func (s *dashboardServer) handleMailboxRegister(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 
@@ -30,8 +29,7 @@ func (s *dashboardServer) handleMailboxRegister(w http.ResponseWriter, r *http.R
 }
 
 func (s *dashboardServer) handleMailboxOAuth(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 
@@ -59,8 +57,7 @@ func (s *dashboardServer) handleMailboxOAuth(w http.ResponseWriter, r *http.Requ
 }
 
 func (s *dashboardServer) handleMailboxInbox(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 

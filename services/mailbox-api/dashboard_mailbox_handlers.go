@@ -37,8 +37,7 @@ func (s *dashboardServer) handleMailbox(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *dashboardServer) handleMailboxStoredInbox(w http.ResponseWriter, r *http.Request, email string) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 	resp, err := s.mailboxClient.ListMailboxInbox(r.Context(), &mailboxv1.ListMailboxInboxRequest{
@@ -54,8 +53,7 @@ func (s *dashboardServer) handleMailboxStoredInbox(w http.ResponseWriter, r *htt
 }
 
 func (s *dashboardServer) handleMailboxStoredInboxMessage(w http.ResponseWriter, r *http.Request, email string, messageID string) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 	resp, err := s.mailboxClient.GetMailboxInboxMessage(r.Context(), &mailboxv1.GetMailboxInboxMessageRequest{
