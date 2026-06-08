@@ -9,6 +9,36 @@ export type MailboxBatchItem = {
   password: string;
 };
 
+const authStatusNames = [
+  'AUTHORIZED',
+  'OAUTH_PENDING',
+  'AUTH_FAILED',
+  'NEEDS_MANUAL_VERIFICATION',
+  'PASSWORD_ONLY',
+  'WEBHOOK_ONLY',
+  'DISABLED',
+  'UNKNOWN'
+] as const;
+
+type CanonicalMailboxAuthStatus = typeof authStatusNames[number];
+
+const authStatusEnumByName: Record<CanonicalMailboxAuthStatus, MailboxAuthStatus> = {
+  AUTHORIZED: MailboxAuthStatus.MAILBOX_AUTH_STATUS_AUTHORIZED,
+  OAUTH_PENDING: MailboxAuthStatus.MAILBOX_AUTH_STATUS_OAUTH_PENDING,
+  AUTH_FAILED: MailboxAuthStatus.MAILBOX_AUTH_STATUS_AUTH_FAILED,
+  NEEDS_MANUAL_VERIFICATION: MailboxAuthStatus.MAILBOX_AUTH_STATUS_NEEDS_MANUAL_VERIFICATION,
+  PASSWORD_ONLY: MailboxAuthStatus.MAILBOX_AUTH_STATUS_PASSWORD_ONLY,
+  WEBHOOK_ONLY: MailboxAuthStatus.MAILBOX_AUTH_STATUS_WEBHOOK_ONLY,
+  DISABLED: MailboxAuthStatus.MAILBOX_AUTH_STATUS_DISABLED,
+  UNKNOWN: MailboxAuthStatus.MAILBOX_AUTH_STATUS_UNKNOWN
+};
+
+const authStatusNameByValue = new Map<string, CanonicalMailboxAuthStatus>();
+for (const name of authStatusNames) {
+  authStatusNameByValue.set(name, name);
+  authStatusNameByValue.set(authStatusEnumByName[name], name);
+}
+
 export function domainForEmail(email: string) {
   const [, domain = ''] = normalizeUiEmail(email).split('@');
   return domain;
@@ -28,24 +58,7 @@ export function authStatus(mailbox: Mailbox) {
 }
 
 export function authStatusEnum(mailbox: Mailbox) {
-  switch (authStatus(mailbox)) {
-    case 'AUTHORIZED':
-      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_AUTHORIZED;
-    case 'OAUTH_PENDING':
-      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_OAUTH_PENDING;
-    case 'AUTH_FAILED':
-      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_AUTH_FAILED;
-    case 'NEEDS_MANUAL_VERIFICATION':
-      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_NEEDS_MANUAL_VERIFICATION;
-    case 'PASSWORD_ONLY':
-      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_PASSWORD_ONLY;
-    case 'WEBHOOK_ONLY':
-      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_WEBHOOK_ONLY;
-    case 'DISABLED':
-      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_DISABLED;
-    default:
-      return MailboxAuthStatus.MAILBOX_AUTH_STATUS_UNKNOWN;
-  }
+  return authStatusEnumByName[authStatus(mailbox)] || MailboxAuthStatus.MAILBOX_AUTH_STATUS_UNKNOWN;
 }
 
 export function parseMailboxBatch(value: string, credentialKinds: MailboxCredentialKind[]) {
@@ -125,32 +138,5 @@ export function mailboxCredentialPresent(mailbox: Mailbox, credential: MailboxCr
 }
 
 function normalizeAuthStatus(value: string) {
-  switch (value) {
-    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_AUTHORIZED:
-    case 'AUTHORIZED':
-      return 'AUTHORIZED';
-    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_OAUTH_PENDING:
-    case 'OAUTH_PENDING':
-      return 'OAUTH_PENDING';
-    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_AUTH_FAILED:
-    case 'AUTH_FAILED':
-      return 'AUTH_FAILED';
-    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_NEEDS_MANUAL_VERIFICATION:
-    case 'NEEDS_MANUAL_VERIFICATION':
-      return 'NEEDS_MANUAL_VERIFICATION';
-    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_PASSWORD_ONLY:
-    case 'PASSWORD_ONLY':
-      return 'PASSWORD_ONLY';
-    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_WEBHOOK_ONLY:
-    case 'WEBHOOK_ONLY':
-      return 'WEBHOOK_ONLY';
-    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_DISABLED:
-    case 'DISABLED':
-      return 'DISABLED';
-    case MailboxAuthStatus.MAILBOX_AUTH_STATUS_UNKNOWN:
-    case 'UNKNOWN':
-      return 'UNKNOWN';
-    default:
-      return '';
-  }
+  return authStatusNameByValue.get(value) || '';
 }
