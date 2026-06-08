@@ -565,17 +565,16 @@ func (x *MailboxCredentialState) GetPresentCredentials() []MailboxCredentialKind
 }
 
 type EmailMailbox struct {
-	state           protoimpl.MessageState    `protogen:"open.v1"`
-	EmailAddress    string                    `protobuf:"bytes,1,opt,name=email_address,json=emailAddress,proto3" json:"email_address,omitempty"`
-	LastError       string                    `protobuf:"bytes,7,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
-	CreatedAt       int64                     `protobuf:"varint,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt       int64                     `protobuf:"varint,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	AuthStatus      MailboxAuthStatus         `protobuf:"varint,15,opt,name=auth_status,json=authStatus,proto3,enum=byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus" json:"auth_status,omitempty"`
-	LatestSignal    *EmailSignal              `protobuf:"bytes,19,opt,name=latest_signal,json=latestSignal,proto3" json:"latest_signal,omitempty"`
-	Domain          string                    `protobuf:"bytes,20,opt,name=domain,proto3" json:"domain,omitempty"`
-	CredentialState *MailboxCredentialState   `protobuf:"bytes,21,opt,name=credential_state,json=credentialState,proto3" json:"credential_state,omitempty"`
-	ProviderKey     string                    `protobuf:"bytes,22,opt,name=provider_key,json=providerKey,proto3" json:"provider_key,omitempty"`
-	Credentials     []*MailboxCredentialValue `protobuf:"bytes,23,rep,name=credentials,proto3" json:"credentials,omitempty"`
+	state           protoimpl.MessageState  `protogen:"open.v1"`
+	EmailAddress    string                  `protobuf:"bytes,1,opt,name=email_address,json=emailAddress,proto3" json:"email_address,omitempty"`
+	LastError       string                  `protobuf:"bytes,7,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
+	CreatedAt       int64                   `protobuf:"varint,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt       int64                   `protobuf:"varint,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	AuthStatus      MailboxAuthStatus       `protobuf:"varint,15,opt,name=auth_status,json=authStatus,proto3,enum=byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus" json:"auth_status,omitempty"`
+	LatestSignal    *EmailSignal            `protobuf:"bytes,19,opt,name=latest_signal,json=latestSignal,proto3" json:"latest_signal,omitempty"`
+	Domain          string                  `protobuf:"bytes,20,opt,name=domain,proto3" json:"domain,omitempty"`
+	CredentialState *MailboxCredentialState `protobuf:"bytes,21,opt,name=credential_state,json=credentialState,proto3" json:"credential_state,omitempty"`
+	ProviderKey     string                  `protobuf:"bytes,22,opt,name=provider_key,json=providerKey,proto3" json:"provider_key,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -671,13 +670,6 @@ func (x *EmailMailbox) GetProviderKey() string {
 		return x.ProviderKey
 	}
 	return ""
-}
-
-func (x *EmailMailbox) GetCredentials() []*MailboxCredentialValue {
-	if x != nil {
-		return x.Credentials
-	}
-	return nil
 }
 
 type MailboxCredentialInput struct {
@@ -3212,7 +3204,7 @@ const file_byte_v_forge_contracts_mailbox_v1_mailbox_proto_rawDesc = "" +
 	"\x10password_present\x18\x01 \x01(\bR\x0fpasswordPresent\x12=\n" +
 	"\x1boauth_refresh_token_present\x18\x02 \x01(\bR\x18oauthRefreshTokenPresent\x12;\n" +
 	"\x1aoauth_access_token_present\x18\x03 \x01(\bR\x17oauthAccessTokenPresent\x12i\n" +
-	"\x13present_credentials\x18\x04 \x03(\x0e28.byte.v.forge.contracts.mailbox.v1.MailboxCredentialKindR\x12presentCredentials\"\xf7\x04\n" +
+	"\x13present_credentials\x18\x04 \x03(\x0e28.byte.v.forge.contracts.mailbox.v1.MailboxCredentialKindR\x12presentCredentials\"\xad\x04\n" +
 	"\fEmailMailbox\x12#\n" +
 	"\remail_address\x18\x01 \x01(\tR\femailAddress\x12\x1d\n" +
 	"\n" +
@@ -3227,8 +3219,7 @@ const file_byte_v_forge_contracts_mailbox_v1_mailbox_proto_rawDesc = "" +
 	"\rlatest_signal\x18\x13 \x01(\v2..byte.v.forge.contracts.mailbox.v1.EmailSignalR\flatestSignal\x12\x16\n" +
 	"\x06domain\x18\x14 \x01(\tR\x06domain\x12d\n" +
 	"\x10credential_state\x18\x15 \x01(\v29.byte.v.forge.contracts.mailbox.v1.MailboxCredentialStateR\x0fcredentialState\x12!\n" +
-	"\fprovider_key\x18\x16 \x01(\tR\vproviderKey\x12[\n" +
-	"\vcredentials\x18\x17 \x03(\v29.byte.v.forge.contracts.mailbox.v1.MailboxCredentialValueR\vcredentialsJ\x04\b\x02\x10\x05J\x04\b\x12\x10\x13R\bpasswordR\rrefresh_tokenR\faccess_tokenR\bprovider\"\xb3\x02\n" +
+	"\fprovider_key\x18\x16 \x01(\tR\vproviderKeyJ\x04\b\x02\x10\x05J\x04\b\x12\x10\x13J\x04\b\x17\x10\x18R\bpasswordR\rrefresh_tokenR\faccess_tokenR\bproviderR\vcredentials\"\xb3\x02\n" +
 	"\x16MailboxCredentialInput\x12#\n" +
 	"\remail_address\x18\x01 \x01(\tR\femailAddress\x12!\n" +
 	"\fprovider_key\x18\x02 \x01(\tR\vproviderKey\x12[\n" +
@@ -3540,52 +3531,51 @@ var file_byte_v_forge_contracts_mailbox_v1_mailbox_proto_depIdxs = []int32{
 	2,  // 3: byte.v.forge.contracts.mailbox.v1.EmailMailbox.auth_status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus
 	7,  // 4: byte.v.forge.contracts.mailbox.v1.EmailMailbox.latest_signal:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignal
 	8,  // 5: byte.v.forge.contracts.mailbox.v1.EmailMailbox.credential_state:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxCredentialState
-	11, // 6: byte.v.forge.contracts.mailbox.v1.EmailMailbox.credentials:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxCredentialValue
-	11, // 7: byte.v.forge.contracts.mailbox.v1.MailboxCredentialInput.credentials:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxCredentialValue
-	2,  // 8: byte.v.forge.contracts.mailbox.v1.MailboxCredentialInput.auth_status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus
-	1,  // 9: byte.v.forge.contracts.mailbox.v1.MailboxCredentialValue.kind:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxCredentialKind
-	2,  // 10: byte.v.forge.contracts.mailbox.v1.MarkEmailAuthStatusRequest.auth_status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus
-	9,  // 11: byte.v.forge.contracts.mailbox.v1.MarkEmailAuthStatusResponse.mailbox:type_name -> byte.v.forge.contracts.mailbox.v1.EmailMailbox
-	10, // 12: byte.v.forge.contracts.mailbox.v1.UpsertEmailMailboxRequest.mailbox:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxCredentialInput
-	9,  // 13: byte.v.forge.contracts.mailbox.v1.UpsertEmailMailboxResponse.mailbox:type_name -> byte.v.forge.contracts.mailbox.v1.EmailMailbox
-	2,  // 14: byte.v.forge.contracts.mailbox.v1.ListEmailMailboxesRequest.auth_status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus
-	9,  // 15: byte.v.forge.contracts.mailbox.v1.ListEmailMailboxesResponse.mailboxes:type_name -> byte.v.forge.contracts.mailbox.v1.EmailMailbox
-	51, // 16: byte.v.forge.contracts.mailbox.v1.EmailInboxMessage.body_artifact_ref:type_name -> byte.v.forge.contracts.common.v1.ArtifactRef
-	51, // 17: byte.v.forge.contracts.mailbox.v1.EmailInboxMessage.html_artifact_ref:type_name -> byte.v.forge.contracts.common.v1.ArtifactRef
-	7,  // 18: byte.v.forge.contracts.mailbox.v1.EmailInboxMessage.signals:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignal
-	7,  // 19: byte.v.forge.contracts.mailbox.v1.EmailInboxMessage.primary_signal:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignal
-	52, // 20: byte.v.forge.contracts.mailbox.v1.MailboxEmailReceivedEvent.metadata:type_name -> byte.v.forge.contracts.common.v1.EventMetadata
-	20, // 21: byte.v.forge.contracts.mailbox.v1.MailboxEmailReceivedEvent.message:type_name -> byte.v.forge.contracts.mailbox.v1.EmailInboxMessage
-	52, // 22: byte.v.forge.contracts.mailbox.v1.MailboxEmailSignalReceivedEvent.metadata:type_name -> byte.v.forge.contracts.common.v1.EventMetadata
-	20, // 23: byte.v.forge.contracts.mailbox.v1.MailboxEmailSignalReceivedEvent.message:type_name -> byte.v.forge.contracts.mailbox.v1.EmailInboxMessage
-	7,  // 24: byte.v.forge.contracts.mailbox.v1.MailboxEmailSignalReceivedEvent.signal:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignal
-	9,  // 25: byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxResult.mailbox:type_name -> byte.v.forge.contracts.mailbox.v1.EmailMailbox
-	20, // 26: byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxResult.messages:type_name -> byte.v.forge.contracts.mailbox.v1.EmailInboxMessage
-	0,  // 27: byte.v.forge.contracts.mailbox.v1.WaitForMailboxEmailRequest.signal_kind:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignalKind
-	20, // 28: byte.v.forge.contracts.mailbox.v1.WaitForMailboxEmailResponse.message:type_name -> byte.v.forge.contracts.mailbox.v1.EmailInboxMessage
-	0,  // 29: byte.v.forge.contracts.mailbox.v1.MailboxEmailPollRequest.signal_kind:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignalKind
-	23, // 30: byte.v.forge.contracts.mailbox.v1.ListMailboxInboxResponse.result:type_name -> byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxResult
-	23, // 31: byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxesResponse.results:type_name -> byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxResult
-	3,  // 32: byte.v.forge.contracts.mailbox.v1.MailboxOperation.action:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperationAction
-	4,  // 33: byte.v.forge.contracts.mailbox.v1.MailboxOperation.status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperationStatus
-	35, // 34: byte.v.forge.contracts.mailbox.v1.GetMailboxOperationResponse.operation:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperation
-	4,  // 35: byte.v.forge.contracts.mailbox.v1.ListMailboxOperationsRequest.status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperationStatus
-	3,  // 36: byte.v.forge.contracts.mailbox.v1.ListMailboxOperationsRequest.action:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperationAction
-	35, // 37: byte.v.forge.contracts.mailbox.v1.ListMailboxOperationsResponse.operations:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperation
-	40, // 38: byte.v.forge.contracts.mailbox.v1.ListMailboxDomainsResponse.domains:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxDomain
-	40, // 39: byte.v.forge.contracts.mailbox.v1.SyncMailboxDomainsResponse.domains:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxDomain
-	5,  // 40: byte.v.forge.contracts.mailbox.v1.MailboxMessageRetentionPolicy.scope:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxMessageRetentionScope
-	6,  // 41: byte.v.forge.contracts.mailbox.v1.MailboxProviderActionCapability.action:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxProviderAction
-	1,  // 42: byte.v.forge.contracts.mailbox.v1.MailboxProviderActionCapability.required_credentials:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxCredentialKind
-	2,  // 43: byte.v.forge.contracts.mailbox.v1.MailboxProviderActionCapability.required_auth_statuses:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus
-	46, // 44: byte.v.forge.contracts.mailbox.v1.MailboxProviderCapabilities.actions:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxProviderActionCapability
-	45, // 45: byte.v.forge.contracts.mailbox.v1.MailboxProviderCapabilities.retention_policy:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxMessageRetentionPolicy
-	47, // 46: byte.v.forge.contracts.mailbox.v1.ListMailboxProviderCapabilitiesResponse.providers:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxProviderCapabilities
-	47, // [47:47] is the sub-list for method output_type
-	47, // [47:47] is the sub-list for method input_type
-	47, // [47:47] is the sub-list for extension type_name
-	47, // [47:47] is the sub-list for extension extendee
-	0,  // [0:47] is the sub-list for field type_name
+	11, // 6: byte.v.forge.contracts.mailbox.v1.MailboxCredentialInput.credentials:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxCredentialValue
+	2,  // 7: byte.v.forge.contracts.mailbox.v1.MailboxCredentialInput.auth_status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus
+	1,  // 8: byte.v.forge.contracts.mailbox.v1.MailboxCredentialValue.kind:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxCredentialKind
+	2,  // 9: byte.v.forge.contracts.mailbox.v1.MarkEmailAuthStatusRequest.auth_status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus
+	9,  // 10: byte.v.forge.contracts.mailbox.v1.MarkEmailAuthStatusResponse.mailbox:type_name -> byte.v.forge.contracts.mailbox.v1.EmailMailbox
+	10, // 11: byte.v.forge.contracts.mailbox.v1.UpsertEmailMailboxRequest.mailbox:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxCredentialInput
+	9,  // 12: byte.v.forge.contracts.mailbox.v1.UpsertEmailMailboxResponse.mailbox:type_name -> byte.v.forge.contracts.mailbox.v1.EmailMailbox
+	2,  // 13: byte.v.forge.contracts.mailbox.v1.ListEmailMailboxesRequest.auth_status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus
+	9,  // 14: byte.v.forge.contracts.mailbox.v1.ListEmailMailboxesResponse.mailboxes:type_name -> byte.v.forge.contracts.mailbox.v1.EmailMailbox
+	51, // 15: byte.v.forge.contracts.mailbox.v1.EmailInboxMessage.body_artifact_ref:type_name -> byte.v.forge.contracts.common.v1.ArtifactRef
+	51, // 16: byte.v.forge.contracts.mailbox.v1.EmailInboxMessage.html_artifact_ref:type_name -> byte.v.forge.contracts.common.v1.ArtifactRef
+	7,  // 17: byte.v.forge.contracts.mailbox.v1.EmailInboxMessage.signals:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignal
+	7,  // 18: byte.v.forge.contracts.mailbox.v1.EmailInboxMessage.primary_signal:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignal
+	52, // 19: byte.v.forge.contracts.mailbox.v1.MailboxEmailReceivedEvent.metadata:type_name -> byte.v.forge.contracts.common.v1.EventMetadata
+	20, // 20: byte.v.forge.contracts.mailbox.v1.MailboxEmailReceivedEvent.message:type_name -> byte.v.forge.contracts.mailbox.v1.EmailInboxMessage
+	52, // 21: byte.v.forge.contracts.mailbox.v1.MailboxEmailSignalReceivedEvent.metadata:type_name -> byte.v.forge.contracts.common.v1.EventMetadata
+	20, // 22: byte.v.forge.contracts.mailbox.v1.MailboxEmailSignalReceivedEvent.message:type_name -> byte.v.forge.contracts.mailbox.v1.EmailInboxMessage
+	7,  // 23: byte.v.forge.contracts.mailbox.v1.MailboxEmailSignalReceivedEvent.signal:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignal
+	9,  // 24: byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxResult.mailbox:type_name -> byte.v.forge.contracts.mailbox.v1.EmailMailbox
+	20, // 25: byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxResult.messages:type_name -> byte.v.forge.contracts.mailbox.v1.EmailInboxMessage
+	0,  // 26: byte.v.forge.contracts.mailbox.v1.WaitForMailboxEmailRequest.signal_kind:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignalKind
+	20, // 27: byte.v.forge.contracts.mailbox.v1.WaitForMailboxEmailResponse.message:type_name -> byte.v.forge.contracts.mailbox.v1.EmailInboxMessage
+	0,  // 28: byte.v.forge.contracts.mailbox.v1.MailboxEmailPollRequest.signal_kind:type_name -> byte.v.forge.contracts.mailbox.v1.EmailSignalKind
+	23, // 29: byte.v.forge.contracts.mailbox.v1.ListMailboxInboxResponse.result:type_name -> byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxResult
+	23, // 30: byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxesResponse.results:type_name -> byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxResult
+	3,  // 31: byte.v.forge.contracts.mailbox.v1.MailboxOperation.action:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperationAction
+	4,  // 32: byte.v.forge.contracts.mailbox.v1.MailboxOperation.status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperationStatus
+	35, // 33: byte.v.forge.contracts.mailbox.v1.GetMailboxOperationResponse.operation:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperation
+	4,  // 34: byte.v.forge.contracts.mailbox.v1.ListMailboxOperationsRequest.status:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperationStatus
+	3,  // 35: byte.v.forge.contracts.mailbox.v1.ListMailboxOperationsRequest.action:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperationAction
+	35, // 36: byte.v.forge.contracts.mailbox.v1.ListMailboxOperationsResponse.operations:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxOperation
+	40, // 37: byte.v.forge.contracts.mailbox.v1.ListMailboxDomainsResponse.domains:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxDomain
+	40, // 38: byte.v.forge.contracts.mailbox.v1.SyncMailboxDomainsResponse.domains:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxDomain
+	5,  // 39: byte.v.forge.contracts.mailbox.v1.MailboxMessageRetentionPolicy.scope:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxMessageRetentionScope
+	6,  // 40: byte.v.forge.contracts.mailbox.v1.MailboxProviderActionCapability.action:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxProviderAction
+	1,  // 41: byte.v.forge.contracts.mailbox.v1.MailboxProviderActionCapability.required_credentials:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxCredentialKind
+	2,  // 42: byte.v.forge.contracts.mailbox.v1.MailboxProviderActionCapability.required_auth_statuses:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxAuthStatus
+	46, // 43: byte.v.forge.contracts.mailbox.v1.MailboxProviderCapabilities.actions:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxProviderActionCapability
+	45, // 44: byte.v.forge.contracts.mailbox.v1.MailboxProviderCapabilities.retention_policy:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxMessageRetentionPolicy
+	47, // 45: byte.v.forge.contracts.mailbox.v1.ListMailboxProviderCapabilitiesResponse.providers:type_name -> byte.v.forge.contracts.mailbox.v1.MailboxProviderCapabilities
+	46, // [46:46] is the sub-list for method output_type
+	46, // [46:46] is the sub-list for method input_type
+	46, // [46:46] is the sub-list for extension type_name
+	46, // [46:46] is the sub-list for extension extendee
+	0,  // [0:46] is the sub-list for field type_name
 }
 
 func init() { file_byte_v_forge_contracts_mailbox_v1_mailbox_proto_init() }

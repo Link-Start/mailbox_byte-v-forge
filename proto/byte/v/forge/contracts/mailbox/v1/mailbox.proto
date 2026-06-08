@@ -81,7 +81,8 @@ message EmailMailbox {
   string domain = 20;
   MailboxCredentialState credential_state = 21;
   string provider_key = 22;
-  repeated MailboxCredentialValue credentials = 23;
+  reserved 23;
+  reserved "credentials";
 }
 
 message MailboxCredentialInput {

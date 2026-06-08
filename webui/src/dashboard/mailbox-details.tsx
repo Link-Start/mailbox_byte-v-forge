@@ -14,7 +14,7 @@ import { mailboxStatusText } from './labels';
 import { MailboxInboxSection } from './mailbox-inbox';
 import { MailboxOtpPanel } from './otp-panel';
 import { latestOtpForInboxResult } from './mailbox-signal-utils';
-import { authStatus, mailboxCredentialValue, providerShowsCredentialState, tokenText } from './mailbox-utils';
+import { authStatus, mailboxCredentialPresent, providerShowsCredentialState, tokenText } from './mailbox-utils';
 import type { InboxResult, LatestOtp, Mailbox, MailboxProviderCapability } from './types';
 
 export function MailboxDetails({ mailbox, providerCapability, showSecrets, inboxResult, inboxLoading, canFetchInbox, onCopy, onFetchInbox, onDelete }: {
@@ -81,7 +81,7 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   if (showCredentialState) fields.push({
     id: 'password',
     label: '密码',
-    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD, showSecrets),
+    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD),
   }, {
     id: 'oauth',
     label: 'OAuth',
@@ -93,11 +93,11 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   }, {
     id: 'refresh-token',
     label: 'Refresh',
-    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN, showSecrets),
+    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN),
   }, {
     id: 'access-token',
     label: 'Access',
-    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN, showSecrets),
+    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN),
   });
   fields.push({
     id: 'latest-otp',
@@ -135,13 +135,13 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   );
 }
 
-function credentialDisplay(mailbox: Mailbox, kind: MailboxCredentialKind, showSecrets: boolean): Pick<KVDescriptor, 'value' | 'copyValue' | 'copyDisabled' | 'masked' | 'mono'> {
-  const value = mailboxCredentialValue(mailbox, kind);
+function credentialDisplay(mailbox: Mailbox, kind: MailboxCredentialKind): Pick<KVDescriptor, 'value' | 'copyValue' | 'copyDisabled' | 'masked' | 'mono'> {
+  const value = mailboxCredentialPresent(mailbox, kind) ? '已保存' : '-';
   return {
-    value: value || '-',
-    copyValue: value,
-    copyDisabled: !showSecrets || !value,
-    masked: !!value && !showSecrets,
-    mono: true,
+    value,
+    copyValue: '',
+    copyDisabled: true,
+    masked: false,
+    mono: false,
   };
 }

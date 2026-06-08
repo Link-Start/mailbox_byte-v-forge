@@ -26,7 +26,6 @@ func PublicMailbox(mailbox *mailboxmodel.Record) *mailboxv1.EmailMailbox {
 		LatestSignal:    mailbox.GetLatestSignal(),
 		Domain:          mailbox.GetDomain(),
 		CredentialState: credentialState(mailbox),
-		Credentials:     credentials(mailbox),
 	}
 }
 

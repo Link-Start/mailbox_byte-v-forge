@@ -120,12 +120,8 @@ export function mailboxCredentialPresent(mailbox: Mailbox, credential: MailboxCr
     case MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_UNSPECIFIED:
       return true;
     default:
-      return (mailbox.credential_state?.present_credentials || []).includes(credential) || mailboxCredentialValue(mailbox, credential) !== '';
+      return (mailbox.credential_state?.present_credentials || []).includes(credential);
   }
-}
-
-export function mailboxCredentialValue(mailbox: Mailbox, credential: MailboxCredentialKind) {
-  return (mailbox.credentials || []).find((item) => item.kind === credential)?.value || '';
 }
 
 function normalizeAuthStatus(value: string) {
