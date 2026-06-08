@@ -20,7 +20,7 @@ type config struct {
 	recentEmailCachePrefix string
 	recentEmailCacheTTL    time.Duration
 	recentEmailCacheMax    int
-	platformNATSURL        string
+	mailboxNATSURL         string
 	eventStreamName        string
 	inboxLockPrefix        string
 	inboxLockTTL           time.Duration
@@ -44,7 +44,7 @@ func loadConfig() config {
 		recentEmailCachePrefix: envx.StringDefault("MAILBOX_RECENT_EMAIL_CACHE_KEY_PREFIX", "byte-v-forge:mailbox:recent-email"),
 		recentEmailCacheTTL:    envx.PositiveDurationSeconds("MAILBOX_RECENT_EMAIL_CACHE_TTL_SECONDS", time.Hour),
 		recentEmailCacheMax:    envx.PositiveInt("MAILBOX_RECENT_EMAIL_CACHE_MAX_MESSAGES", 20),
-		platformNATSURL:        envx.StringDefault("PLATFORM_NATS_URL", ""),
+		mailboxNATSURL:         envx.StringDefault("MAILBOX_NATS_URL", ""),
 		eventStreamName:        envx.StringDefault("PLATFORM_EVENT_STREAM_NAME", natseventbus.DefaultStream),
 		inboxLockPrefix:        envx.StringDefault("MAILBOX_INBOX_LOCK_KEY_PREFIX", "byte-v-forge:mailbox:locks"),
 		inboxLockTTL:           envx.PositiveDurationSeconds("MAILBOX_INBOX_LOCK_TTL_SECONDS", 10*time.Minute),
