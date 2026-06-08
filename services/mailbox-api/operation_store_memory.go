@@ -84,7 +84,7 @@ func (s *memoryOperationStore) update(ctx context.Context, operationID string, u
 	}
 	if value := strings.ToUpper(strings.TrimSpace(update.Status)); value != "" {
 		row.Status = value
-		if value == operationStatusSucceeded || value == operationStatusFailed {
+		if operationRowIsFinal(&row) {
 			row.ClaimOwner = ""
 			row.ClaimUntil = 0
 		}

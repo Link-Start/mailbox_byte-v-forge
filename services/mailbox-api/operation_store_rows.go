@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
+)
 
 type operationRowScanner interface {
 	Scan(dest ...any) error
@@ -40,4 +44,43 @@ func operationColumns() string {
 	return `operation_id, action, status, email_address, last_step, error_message,
 		import_only, only_missing, "limit", claim_owner, claim_until, attempt_count,
 		exit_code, mailbox_count, fetched_count, failed_count, message_count, created_at, updated_at`
+}
+
+func operationRowToProto(row *mailboxOperationRow) *mailboxv1.MailboxOperation {
+	if row == nil {
+		return nil
+	}
+	return &mailboxv1.MailboxOperation{
+		OperationId:  row.OperationID,
+		Action:       publicOperationAction(row.Action),
+		Status:       publicOperationStatus(row.Status),
+		EmailAddress: row.EmailAddress,
+		LastStep:     row.LastStep,
+		ErrorMessage: row.ErrorMessage,
+		ExitCode:     row.ExitCode,
+		MailboxCount: row.MailboxCount,
+		FetchedCount: row.FetchedCount,
+		FailedCount:  row.FailedCount,
+		MessageCount: row.MessageCount,
+		CreatedAt:    row.CreatedAt,
+		UpdatedAt:    row.UpdatedAt,
+	}
+}
+
+func operationRunStartFromRow(row *mailboxOperationRow) *operationRunStart {
+	if row == nil {
+		return nil
+	}
+	return &operationRunStart{
+		Operation:    operationRowToProto(row),
+		EmailAddress: row.EmailAddress,
+		ImportOnly:   row.ImportOnly,
+		OnlyMissing:  row.OnlyMissing,
+		Limit:        row.Limit,
+		Final:        operationRowIsFinal(row),
+	}
+}
+
+func operationRowIsFinal(row *mailboxOperationRow) bool {
+	return row != nil && (row.Status == operationStatusSucceeded || row.Status == operationStatusFailed)
 }

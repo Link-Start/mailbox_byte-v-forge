@@ -105,24 +105,3 @@ func appendOperationArg(args *[]any, value any) int {
 	*args = append(*args, value)
 	return len(*args)
 }
-
-func operationRowToProto(row *mailboxOperationRow) *mailboxv1.MailboxOperation {
-	if row == nil {
-		return nil
-	}
-	return &mailboxv1.MailboxOperation{
-		OperationId:  row.OperationID,
-		Action:       publicOperationAction(row.Action),
-		Status:       publicOperationStatus(row.Status),
-		EmailAddress: row.EmailAddress,
-		LastStep:     row.LastStep,
-		ErrorMessage: row.ErrorMessage,
-		ExitCode:     row.ExitCode,
-		MailboxCount: row.MailboxCount,
-		FetchedCount: row.FetchedCount,
-		FailedCount:  row.FailedCount,
-		MessageCount: row.MessageCount,
-		CreatedAt:    row.CreatedAt,
-		UpdatedAt:    row.UpdatedAt,
-	}
-}

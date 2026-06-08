@@ -67,14 +67,7 @@ func (s *pgOperationStore) startWorkerRun(ctx context.Context, operationID strin
 		return nil, err
 	}
 	committed = true
-	return &operationRunStart{
-		Operation:    operationRowToProto(&row),
-		EmailAddress: row.EmailAddress,
-		ImportOnly:   row.ImportOnly,
-		OnlyMissing:  row.OnlyMissing,
-		Limit:        row.Limit,
-		Final:        row.Status == operationStatusSucceeded || row.Status == operationStatusFailed,
-	}, nil
+	return operationRunStartFromRow(&row), nil
 }
 
 func (s *pgOperationStore) claimWorkerRun(ctx context.Context, tx pgx.Tx, operationID string, runStep string, workerID string, claimUntil int64, now int64) (mailboxOperationRow, error) {

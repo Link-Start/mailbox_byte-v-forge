@@ -35,7 +35,7 @@ func (s *memoryOperationStore) startWorkerRun(ctx context.Context, operationID s
 	if row.Action != action {
 		return nil, errOperationInvalidAction
 	}
-	if row.Status != operationStatusSucceeded && row.Status != operationStatusFailed {
+	if !operationRowIsFinal(&row) {
 		if row.Status == operationStatusRunning && row.LastStep == runStep && row.ClaimUntil > now {
 			return nil, errOperationAlreadyRunning
 		}
@@ -48,12 +48,5 @@ func (s *memoryOperationStore) startWorkerRun(ctx context.Context, operationID s
 		row.UpdatedAt = now
 		s.rows[operationID] = row
 	}
-	return &operationRunStart{
-		Operation:    operationRowToProto(&row),
-		EmailAddress: row.EmailAddress,
-		ImportOnly:   row.ImportOnly,
-		OnlyMissing:  row.OnlyMissing,
-		Limit:        row.Limit,
-		Final:        row.Status == operationStatusSucceeded || row.Status == operationStatusFailed,
-	}, nil
+	return operationRunStartFromRow(&row), nil
 }
