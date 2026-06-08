@@ -94,5 +94,3 @@ body { margin: 0; background: var(--background); color: var(--foreground); }
 .kvValue { max-width: 100%; }
 .kvValue > span:first-child { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cursorPager { display: flex; align-items: center; justify-content: center; padding: 10px; color: var(--muted-foreground); font-size: 12px; }
-.toast { position: fixed; top: 14px; right: 14px; z-index: 80; max-width: 360px; border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow-sm); background: var(--foreground); color: white; }
-.toast.error { background: var(--destructive); }

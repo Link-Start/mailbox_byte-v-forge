@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MailOutlined } from '@ant-design/icons';
-import { AppDrawer, MailboxProviderAction, ToastMessage, WorkspacePanel } from './dashboard-kit';
+import { AppDrawer, MailboxProviderAction, WorkspacePanel } from './dashboard-kit';
 import { useMailboxActions } from './mailbox-actions';
 import { useMailboxData } from './mailbox-data';
 import { useMailboxEmailEventCache } from './mailbox-events';
@@ -16,7 +16,6 @@ export function MailboxPage() {
 
   return (
     <>
-      <ToastMessage toast={actions.toast.toast} />
       <WorkspacePanel>
         <MailboxPanel mailboxes={data.mailboxes} domains={data.domains} providerCapabilities={data.providerCapabilities} selected={selectedEmail} busy={data.busy} showSecrets={showSecrets} oauthing={actions.oauthing} inboxLoading={actions.inboxLoading} domainSyncing={actions.domainSyncing} runningOperationByEmail={data.runningOperationByEmail} hasMoreMailboxes={data.hasMoreMailboxes} loadingMoreMailboxes={data.loadingMoreMailboxes} onLoadMoreMailboxes={data.loadMoreMailboxes} onSelect={(mailbox) => setSelectedEmail(mailbox.email_address)} onOAuth={actions.runOAuth} onFetchInbox={() => actions.fetchInbox()} onSyncDomains={actions.syncProviderDomains} onToggleSecrets={() => setShowSecrets((value) => !value)} onDelete={actions.deleteMailbox} onDone={actions.done} onError={actions.toast.showError} />
       </WorkspacePanel>
