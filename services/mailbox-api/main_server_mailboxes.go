@@ -42,18 +42,6 @@ func (s *server) UpsertMailbox(ctx context.Context, req *mailboxv1.UpsertEmailMa
 	return resp, nil
 }
 
-func (s *server) ListMailboxDomains(ctx context.Context, req *mailboxv1.ListMailboxDomainsRequest) (*mailboxv1.ListMailboxDomainsResponse, error) {
-	return s.providers.ListDomains(req), nil
-}
-
-func (s *server) SyncMailboxDomains(ctx context.Context, req *mailboxv1.SyncMailboxDomainsRequest) (*mailboxv1.SyncMailboxDomainsResponse, error) {
-	return s.providers.SyncDomains(req), nil
-}
-
-func (s *server) ListMailboxProviderCapabilities(ctx context.Context, req *mailboxv1.ListMailboxProviderCapabilitiesRequest) (*mailboxv1.ListMailboxProviderCapabilitiesResponse, error) {
-	return s.providers.ListCapabilities(req), nil
-}
-
 func (s *server) DeleteMailbox(ctx context.Context, req *mailboxv1.DeleteMailboxRequest) (*mailboxv1.DeleteMailboxResponse, error) {
 	email := emailx.Normalize(req.GetEmailAddress())
 	if email == "" {
