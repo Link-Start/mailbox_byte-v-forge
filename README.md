@@ -32,7 +32,7 @@ Outlook 注册和 OAuth 通过 mailbox 内置 MQ worker 编排：`RegisterMailbo
 
 Outlook 注册/OAuth 浏览器 profile 通过 `BROWSER_AUTOMATION_ADDR`、`OUTLOOK_REGISTER_AUTOMATION_PROXY_REF`、`OUTLOOK_REGISTER_AUTOMATION_LOCALE` 和 `OUTLOOK_REGISTER_AUTOMATION_TIMEZONE` 配置。
 
-Outlook 邮件读取使用 Microsoft Graph Go SDK，默认读取当前 OAuth 用户的 messages，并用 `Prefer: outlook.body-content-type="text"` 请求文本正文；只有显式覆盖 `OUTLOOK_GRAPH_MESSAGES_URL` 时才走兼容 REST adapter。
+Outlook 邮件读取使用 Microsoft Graph Go SDK 读取当前 OAuth 用户的 messages，并用 `Prefer: outlook.body-content-type="text"` 请求文本正文；不再保留手写 Graph REST adapter 或额外 URL 覆盖。
 
 Cloudflare 邮件是主动推送链路：Email Routing Worker 收到邮件后把标准化事件 POST 到 `/webhooks/email/cloudflare`，mailbox 服务使用 `MAILBOX_WEBHOOK_HTTP_ADDR` 开启 HTTP webhook，并只通过 `X-Webhook-Token` 读取 `MAILBOX_WEBHOOK_TOKEN` 校验转发请求。Outlook Graph webhook 使用 `/webhooks/email/microsoft-graph`，验证 URL 必须带同一个 token，POST 通知的 `clientState` 也必须等于同一个 token。Cloudflare 域名池来自 Cloudflare API：`MAILBOX_CLOUDFLARE_API_TOKEN` 读取 `MAILBOX_CLOUDFLARE_EMAIL_CONFIG_FILE` 中声明的 zones，并从 Email Routing catch-all 规则与 Cloudflare MX DNS 记录推导可用邮箱域名；token 限制到目标 zone，并授予 `Zone Read`、`DNS Read` 和 `Email Routing Rules Read` 即可。Cloudflare 地址不需要手动导入，邮件到达后按 recipient 自动形成虚拟邮箱并按 domain 分组展示。需要公网入口时在 deploy 的 `ingress.webhook` 暴露 mailbox webhook，或使用受管 HTTPS 隧道把该入口映射到公网域名；业务代码不管理公网隧道。
 
