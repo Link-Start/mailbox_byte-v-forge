@@ -4,10 +4,10 @@ import (
 	"context"
 	"log"
 
-	"github.com/byte-v-forge/common-lib/eventbus"
-	"github.com/byte-v-forge/common-lib/eventcatalog"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/eventbus"
+	"mailboxapi/internal/eventcatalog"
 )
 
 type mailboxEmailPollWorker struct {

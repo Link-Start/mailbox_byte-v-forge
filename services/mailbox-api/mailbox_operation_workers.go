@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/eventbus"
+	"mailboxapi/internal/eventbus"
 
 	"mailboxapi/pb"
 )

@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/hotstream"
-	"github.com/byte-v-forge/common-lib/hotstreamnats"
-	"github.com/byte-v-forge/common-lib/natseventbus"
+	"mailboxapi/internal/hotstream"
+	"mailboxapi/internal/hotstreamnats"
+	"mailboxapi/internal/natseventbus"
 )
 
 func newPlatformEventBus(_ context.Context, cfg config) (*natseventbus.Bus, func(), error) {

@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/eventcatalog"
 	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"mailboxapi/internal/eventcatalog"
 	"mailboxapi/internal/grpcclient"
 	"mailboxapi/internal/grpchealth"
 	"mailboxapi/internal/redisx"

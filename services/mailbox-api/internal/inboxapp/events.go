@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/eventbus"
-	"github.com/byte-v-forge/common-lib/eventcatalog"
-	"github.com/byte-v-forge/common-lib/eventoutbox"
 	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"google.golang.org/protobuf/proto"
+	"mailboxapi/internal/eventbus"
+	"mailboxapi/internal/eventcatalog"
+	"mailboxapi/internal/eventoutbox"
 )
 
 const EventVersion = eventcatalog.EventVersionV1

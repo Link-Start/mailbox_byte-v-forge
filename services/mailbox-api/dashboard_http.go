@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/hotstream"
-	"github.com/byte-v-forge/common-lib/httpsse"
 	"google.golang.org/protobuf/proto"
+	"mailboxapi/internal/hotstream"
+	"mailboxapi/internal/httpsse"
 	"mailboxapi/internal/protojsonhttp"
 
 	"mailboxapi/pb"

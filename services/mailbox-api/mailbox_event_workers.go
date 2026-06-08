@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/eventbus"
 	"gorm.io/gorm"
+	"mailboxapi/internal/eventbus"
 )
 
 const defaultMailboxWorkRetryDelay = 5 * time.Second

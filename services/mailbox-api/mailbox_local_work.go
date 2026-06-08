@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
-	"github.com/byte-v-forge/common-lib/eventbus"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"google.golang.org/protobuf/proto"
+	"mailboxapi/internal/eventbus"
 
 	"mailboxapi/pb"
 )

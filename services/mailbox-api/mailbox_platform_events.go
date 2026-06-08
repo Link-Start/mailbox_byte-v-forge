@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/byte-v-forge/common-lib/eventbus"
+	"mailboxapi/internal/eventbus"
 )
 
 const mailboxPlatformEventSource = "mailbox-api"

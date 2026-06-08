@@ -1,6 +1,6 @@
 package main
 
-import "github.com/byte-v-forge/common-lib/eventcatalog"
+import "mailboxapi/internal/eventcatalog"
 
 var (
 	mailboxInboxFetchRequested = eventcatalog.Definition{

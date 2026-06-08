@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/eventoutbox"
+	"mailboxapi/internal/eventoutbox"
 )
 
 func (r *Repository) EnsureSchema(ctx context.Context, outboxTable string) error {

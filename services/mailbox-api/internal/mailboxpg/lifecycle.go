@@ -5,9 +5,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/eventbus"
-	"github.com/byte-v-forge/common-lib/eventoutbox"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"mailboxapi/internal/eventbus"
+	"mailboxapi/internal/eventoutbox"
 
 	"mailboxapi/internal/mailboxprovider"
 )

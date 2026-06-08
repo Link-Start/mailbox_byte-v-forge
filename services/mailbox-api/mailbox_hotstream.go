@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/eventbus"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	observabilityv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/observability/v1"
-	"github.com/byte-v-forge/common-lib/hotstream"
+	"mailboxapi/internal/eventbus"
+	"mailboxapi/internal/hotstream"
 
 	"mailboxapi/internal/inboxapp"
 )

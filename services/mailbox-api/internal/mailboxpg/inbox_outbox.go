@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/byte-v-forge/common-lib/eventoutbox"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"github.com/jackc/pgx/v5"
+	"mailboxapi/internal/eventoutbox"
 
 	"mailboxapi/internal/inboxapp"
 )
