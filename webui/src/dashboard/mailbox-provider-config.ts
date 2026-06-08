@@ -1,7 +1,7 @@
 export type MailboxProviderTab = string;
 
 export function mailboxProviderValue(provider: string): string {
-  return normalizeMailboxProviderKey(provider) || 'outlook';
+  return normalizeMailboxProviderKey(provider);
 }
 
 export function mailboxProviderMatches(provider: string, target: string) {
