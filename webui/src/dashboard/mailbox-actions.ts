@@ -18,6 +18,7 @@ import {
 } from './dashboard-kit';
 import { maskEmail, normalizeUiEmail } from './email-utils';
 import type { MailboxData } from './mailbox-data';
+import { capabilityForProvider, providerDisplayName } from './mailbox-utils';
 import type { DeleteMailboxResponse, InboxResponse, InboxResult, Mailbox } from './types';
 
 export const mailboxInboxQueryKey = (email: string) => ['mailbox', 'inbox', normalizeUiEmail(email)] as const;
@@ -37,7 +38,6 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, onMai
   const runner = useAsyncActionRunner();
 
   useEffect(() => { if (data.loadError) toast.showError(data.loadError); }, [data.loadError, toast]);
-
 
   async function runOAuth(emailAddress = '') {
     const target = emailAddress.trim() || '*';
@@ -75,7 +75,8 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, onMai
         method: 'POST',
         body: JSON.stringify(input)
       });
-      toast.showToast(resp.error_message ? 'error' : 'ok', resp.error_message || `${providerDisplayName(data, targetProvider)} 域名已同步: ${resp.synced_count || 0}`);
+      const capability = capabilityForProvider(data.providerCapabilities, targetProvider);
+      toast.showToast(resp.error_message ? 'error' : 'ok', resp.error_message || `${providerDisplayName(capability, targetProvider)} 域名已同步: ${resp.synced_count || 0}`);
       await data.invalidate();
     }, { onError: toast.showError });
   }
@@ -123,9 +124,4 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, onMai
 async function fetchStoredInbox(email: string) {
   const resp = await api<ListMailboxInboxResponse>(`/api/mailbox/mailboxes/${encodeURIComponent(email)}/inbox?limit=20`);
   return resp.result || null;
-}
-
-function providerDisplayName(data: MailboxData, providerKey: string) {
-  const normalized = providerKey.trim().toLowerCase();
-  return data.providerCapabilities.find((item) => item.key.trim().toLowerCase() === normalized)?.display_name || providerKey;
 }
