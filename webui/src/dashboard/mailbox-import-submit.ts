@@ -1,6 +1,7 @@
 import { api, errorText, MailboxAuthStatus, MailboxCredentialKind } from './dashboard-kit';
 import { mailboxApiPaths } from './mailbox-api-paths';
-import { parseMailboxBatch, type MailboxProviderTab } from './mailbox-utils';
+import { parseMailboxBatch } from './mailbox-batch';
+import type { MailboxProviderTab } from './mailbox-provider-config';
 import type { MailboxBatchImportFormState, MailboxImportFormState, MailboxImportPayloadInput } from './mailbox-import-types';
 import type { UpsertEmailMailboxRequest, UpsertEmailMailboxResponse } from './types';
 

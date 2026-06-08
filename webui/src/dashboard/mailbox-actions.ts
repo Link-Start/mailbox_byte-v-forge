@@ -19,7 +19,7 @@ import {
 import { maskEmail, normalizeUiEmail } from './email-utils';
 import { mailboxApiPaths, mailboxInboxURL, mailboxURL } from './mailbox-api-paths';
 import type { MailboxData } from './mailbox-data';
-import { capabilityForProvider, providerDisplayName } from './mailbox-utils';
+import { capabilityForProvider, providerDisplayName } from './mailbox-provider-capabilities';
 import type { DeleteMailboxResponse, InboxResponse, InboxResult, Mailbox } from './types';
 
 export const mailboxInboxQueryKey = (email: string) => ['mailbox', 'inbox', normalizeUiEmail(email)] as const;

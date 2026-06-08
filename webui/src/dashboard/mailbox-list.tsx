@@ -1,7 +1,7 @@
 import { DEFAULT_CURSOR_PAGE_SIZE, CursorPager, RecordList } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
 import { uniqueStrings } from './dashboard-kit';
-import { domainForEmail } from './mailbox-utils';
+import { domainForEmail } from './mailbox-email';
 import { MailboxCard } from './mailbox-card';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
 

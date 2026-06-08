@@ -13,7 +13,8 @@ import { MailboxImportSheet } from './mailbox-import';
 import { mailboxProviderViews } from './mailbox-provider-registry';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
 import { providerToolbarActions } from './mailbox-toolbar-actions';
-import { capabilityForProvider, type MailboxProviderTab } from './mailbox-utils';
+import { capabilityForProvider } from './mailbox-provider-capabilities';
+import type { MailboxProviderTab } from './mailbox-provider-config';
 import type { Mailbox, MailboxDomain, MailboxOperation, MailboxProviderCapability } from './types';
 export { MailboxDetails } from './mailbox-details';
 

@@ -10,7 +10,7 @@ import { useMailboxEmailEventCache } from './mailbox-events';
 import { MailboxPageStatus } from './mailbox-page-status';
 import { mailboxDetailPath, mailboxIndexPath, type MailboxDetailTab } from './mailbox-route-paths';
 import { MailboxDetails, MailboxPanel } from './mailboxes';
-import { canRunProviderMailboxAction, capabilityForProvider } from './mailbox-utils';
+import { canRunProviderMailboxAction, capabilityForProvider } from './mailbox-provider-capabilities';
 
 type MailboxPageContext = {
   data: ReturnType<typeof useMailboxData>;

@@ -13,7 +13,8 @@ import {
 } from './dashboard-kit';
 import { maskEmail } from './email-utils';
 import { mailboxDetailPath } from './mailbox-route-paths';
-import { authStatus, canRunMailboxAction, providerAction } from './mailbox-utils';
+import { authStatus } from './mailbox-auth-status';
+import { canRunMailboxAction, providerAction } from './mailbox-provider-capabilities';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
 
 export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, showStatus, providerCapability, currentOperation, onOAuth, onDelete }: {

@@ -1,6 +1,7 @@
 import { Eye, EyeOff, Inbox, KeyRound, Plus, RefreshCcw } from 'lucide-react';
 import { MailboxProviderAction, type ToolbarActionDescriptor } from './dashboard-kit';
-import { bulkMailboxActionCount, type MailboxProviderTab } from './mailbox-utils';
+import { bulkMailboxActionCount } from './mailbox-provider-capabilities';
+import type { MailboxProviderTab } from './mailbox-provider-config';
 import type { Mailbox, MailboxProviderActionCapability, MailboxProviderCapability } from './types';
 
 type ProviderToolbarView = {

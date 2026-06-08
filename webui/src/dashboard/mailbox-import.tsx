@@ -15,7 +15,8 @@ import {
   useForm
 } from './dashboard-kit';
 import type { ActionButtonDescriptor, MailboxCredentialKind } from './dashboard-kit';
-import { providerAction, providerDisplayName, type MailboxProviderTab } from './mailbox-utils';
+import { providerAction, providerDisplayName } from './mailbox-provider-capabilities';
+import type { MailboxProviderTab } from './mailbox-provider-config';
 import { BatchMailboxImportForm, SingleMailboxImportForm } from './mailbox-import-form';
 import { importMailboxBatch, importSingleMailbox } from './mailbox-import-submit';
 import { mailboxImportModeOptions, type MailboxBatchImportFormState, type MailboxImportFormState, type MailboxImportMode } from './mailbox-import-types';

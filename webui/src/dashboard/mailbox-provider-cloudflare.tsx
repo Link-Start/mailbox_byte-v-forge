@@ -1,6 +1,7 @@
 import { AccountManagementFrame } from './dashboard-kit';
 import { MailboxDomainGroups } from './mailbox-list';
-import { mailboxProviderMatches, providerShowsCredentialState } from './mailbox-utils';
+import { mailboxProviderMatches } from './mailbox-provider-config';
+import { providerShowsCredentialState } from './mailbox-provider-capabilities';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
 
 export function CloudflareMailboxProviderPanel(props: MailboxProviderPanelProps) {

@@ -3,7 +3,7 @@ import { GenericMailboxProviderPanel } from './mailbox-provider-generic';
 import { CloudflareMailboxProviderPanel } from './mailbox-provider-cloudflare';
 import { OutlookMailboxProviderPanel } from './mailbox-provider-outlook';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
-import { mailboxProviderMatches, normalizeMailboxProviderKey } from './mailbox-utils';
+import { mailboxProviderMatches, normalizeMailboxProviderKey } from './mailbox-provider-config';
 import type { Mailbox, MailboxProviderCapability } from './types';
 
 export type MailboxProviderView = {

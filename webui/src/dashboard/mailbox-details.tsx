@@ -12,7 +12,9 @@ import { MailboxInboxSection } from './mailbox-inbox';
 import { MailboxOtpPanel } from './otp-panel';
 import type { MailboxDetailTab } from './mailbox-route-paths';
 import { latestOtpForInboxResult } from './mailbox-signal-utils';
-import { authStatus, mailboxCredentialPresent, providerShowsCredentialState } from './mailbox-utils';
+import { authStatus } from './mailbox-auth-status';
+import { mailboxCredentialPresent } from './mailbox-credentials';
+import { providerShowsCredentialState } from './mailbox-provider-capabilities';
 import type { InboxResult, LatestOtp, Mailbox, MailboxProviderCapability } from './types';
 
 export function MailboxDetails({ mailbox, providerCapability, activeTab, showSecrets, inboxResult, inboxLoading, canFetchInbox, onTabChange, onCopy, onFetchInbox, onDelete }: {

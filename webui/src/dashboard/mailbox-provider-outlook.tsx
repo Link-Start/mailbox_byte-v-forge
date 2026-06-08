@@ -1,7 +1,7 @@
 import { AccountManagementFrame } from './dashboard-kit';
 import { MailboxRecordList } from './mailbox-list';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
-import { providerShowsCredentialState } from './mailbox-utils';
+import { providerShowsCredentialState } from './mailbox-provider-capabilities';
 
 export function OutlookMailboxProviderPanel(props: MailboxProviderPanelProps) {
   return (
