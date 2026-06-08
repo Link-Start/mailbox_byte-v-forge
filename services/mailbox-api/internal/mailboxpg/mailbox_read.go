@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/accountmodel"
 	"github.com/jackc/pgx/v5"
 	"mailboxapi/internal/emailx"
 	"mailboxapi/internal/pagex"
@@ -111,7 +110,7 @@ func (r *Repository) newMailboxListQuery(authStatus string, provider string, ema
 		Provider:     r.providers.NormalizeProviderInput(provider),
 		EmailAddress: emailx.Normalize(emailAddress),
 		Cursor:       cursor,
-		Limit:        accountmodel.NormalizePageLimit(int(limit)),
+		Limit:        pagex.NormalizePageLimit(int(limit)),
 	}, nil
 }
 

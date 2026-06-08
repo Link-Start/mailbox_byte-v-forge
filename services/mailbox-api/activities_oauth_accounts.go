@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/accountmodel"
 	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/pagex"
 
 	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/pb"
@@ -19,7 +19,7 @@ func (a *mailboxActivities) oauthAccounts(ctx context.Context, emailAddress stri
 	if requestedEmail != "" {
 		return a.oauthAccountByEmail(ctx, requestedEmail, onlyMissing)
 	}
-	selectedLimit := accountmodel.NormalizePageLimit(int(limit))
+	selectedLimit := pagex.NormalizePageLimit(int(limit))
 	accounts := make([]*pb.MailboxRegistrationAccount, 0, selectedLimit)
 	cursor := ""
 	for page := 0; len(accounts) < selectedLimit && page < oauthAccountScanMaxPages; page++ {
