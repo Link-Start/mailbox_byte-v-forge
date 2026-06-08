@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/redis/go-redis/v9"
 	"mailboxapi/internal/hotstream"
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxapp"
@@ -26,8 +25,6 @@ type mailboxRuntime struct {
 	emailBackend   *EmailService
 	workDispatcher *mailboxWorkDispatcher
 }
-
-type mailboxRuntimeClosers []func()
 
 func newMailboxRuntime(ctx context.Context, cfg config) (*mailboxRuntime, func(), error) {
 	var closers mailboxRuntimeClosers
@@ -120,27 +117,6 @@ func newMailboxRuntime(ctx context.Context, cfg config) (*mailboxRuntime, func()
 	}, closers.close, nil
 }
 
-func newMailboxInboxService(repository mailboxRepository, recentEmailClient redis.Cmdable, cfg config) *inboxapp.Service {
-	return inboxapp.NewService(inboxapp.Config{
-		Repository:  repository,
-		Providers:   cfg.providers.registry,
-		Recent:      newRecentEmailCache(recentEmailClient, cfg.recentEmailCachePrefix, cfg.recentEmailCacheTTL, cfg.recentEmailCacheMax),
-		Secrets:     newMailboxSecretStore(recentEmailClient, cfg.recentEmailCachePrefix+":secrets", cfg.recentEmailCacheTTL),
-		SecretTTL:   cfg.recentEmailCacheTTL,
-		OutboxTable: mailboxEventOutboxTable,
-		EventSource: mailboxEventSource,
-		Logf:        logWarning,
-	})
-}
-
-func newMailboxRuntimeWorkDispatcher(eventBus *natseventbus.Bus, operations *pgOperationStore) *mailboxWorkDispatcher {
-	if eventBus != nil && operations != nil {
-		return newMailboxWorkDispatcher(operations.pool, "mailbox-api")
-	}
-	logInfo("mailbox MQ dispatcher is disabled; mailbox operations run in local worker goroutines")
-	return nil
-}
-
 func (r *mailboxRuntime) serverRuntime() mailboxServerRuntime {
 	return mailboxServerRuntime{
 		emailBackend:    r.emailBackend,
@@ -153,17 +129,5 @@ func (r *mailboxRuntime) serverRuntime() mailboxServerRuntime {
 		watcher:         r.watcher,
 		inboxLock:       r.inboxLock,
 		dashboardEvents: r.hotBus,
-	}
-}
-
-func (c *mailboxRuntimeClosers) add(close func()) {
-	if close != nil {
-		*c = append(*c, close)
-	}
-}
-
-func (c mailboxRuntimeClosers) close() {
-	for i := len(c) - 1; i >= 0; i-- {
-		c[i]()
 	}
 }
