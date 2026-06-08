@@ -7,13 +7,11 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
-	browserautomationv1 "mailboxapi/internal/contracts/browserautomationv1"
 	"mailboxapi/internal/eventcatalog"
 	"mailboxapi/internal/grpcclient"
 	"mailboxapi/internal/grpchealth"
@@ -21,8 +19,6 @@ import (
 
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxapp"
-	"mailboxapi/internal/mailboxmem"
-	"mailboxapi/internal/mailboxpg"
 	"mailboxapi/pb"
 )
 
@@ -34,47 +30,23 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	var browserClient browserautomationv1.BrowserAutomationServiceClient
-	if strings.TrimSpace(cfg.browserAutomationAddr) == "" {
-		logInfo("MAILBOX_BROWSER_AUTOMATION_ADDR is not configured; Outlook registration/OAuth browser actions are disabled")
-	} else {
-		browserConn, err := grpcclient.NewRequiredInsecure("browser automation", cfg.browserAutomationAddr)
-		if err != nil {
-			log.Fatalf("failed to connect browser automation: %s", safeMailboxError(err))
-		}
-		defer browserConn.Close()
-		browserClient = browserautomationv1.NewBrowserAutomationServiceClient(browserConn)
+	browserClient, closeBrowserClient, err := newBrowserAutomationClient(cfg.browserAutomationAddr)
+	if err != nil {
+		log.Fatalf("failed to initialize browser automation client: %s", safeMailboxError(err))
 	}
+	defer closeBrowserClient()
 
-	coordinationClient, err := newOptionalRedisClient(ctx, cfg.coordinationRedisURL, "coordination")
+	coordinationClient, recentEmailClient, closeRedisClients, err := newMailboxRedisClients(ctx, cfg)
 	if err != nil {
-		log.Fatalf("failed to initialize mailbox coordination redis client: %s", safeMailboxError(err))
+		log.Fatalf("failed to initialize mailbox redis clients: %s", safeMailboxError(err))
 	}
-	if coordinationClient != nil {
-		defer func() { _ = coordinationClient.Close() }()
-	}
-	recentEmailClient, err := newOptionalRedisClient(ctx, cfg.recentEmailRedisURL, "recent email")
-	if err != nil {
-		log.Fatalf("failed to initialize mailbox recent email redis client: %s", safeMailboxError(err))
-	}
-	if recentEmailClient != nil {
-		defer func() { _ = recentEmailClient.Close() }()
-	}
+	defer closeRedisClients()
 
 	recentCache := newRecentEmailCache(recentEmailClient, cfg.recentEmailCachePrefix, cfg.recentEmailCacheTTL, cfg.recentEmailCacheMax)
 	secretStore := newMailboxSecretStore(recentEmailClient, cfg.recentEmailCachePrefix+":secrets", cfg.recentEmailCacheTTL)
-	var mailboxRepo mailboxRepository
-	if cfg.pgDSN == "" {
-		mailboxRepo, err = mailboxmem.NewRepository(cfg.providers.registry)
-		if err != nil {
-			log.Fatalf("failed to initialize mailbox memory repository: %s", safeMailboxError(err))
-		}
-		logInfo("mailbox postgres is disabled; mailbox data uses non-persistent in-process storage")
-	} else {
-		mailboxRepo, err = mailboxpg.OpenRepository(ctx, cfg.pgDSN, cfg.providers.registry, mailboxEventOutboxTable)
-		if err != nil {
-			log.Fatalf("failed to initialize mailbox repository: %s", safeMailboxError(err))
-		}
+	mailboxRepo, err := newMailboxRepository(ctx, cfg)
+	if err != nil {
+		log.Fatalf("failed to initialize mailbox repository: %s", safeMailboxError(err))
 	}
 	defer mailboxRepo.Close()
 	inboxService := inboxapp.NewService(inboxapp.Config{
@@ -107,17 +79,12 @@ func main() {
 	inboxSources := newMailboxInboxSourceRegistryForProviders(cfg.providers, mailboxInboxSourceDependencies{mailboxes: mailboxRepo})
 	mailWatcher := NewMailWatcher(inboxService, mailboxRepo, inboxSources, hotEvents)
 
-	var operations operationStore
-	var pgOperations *pgOperationStore
-	if cfg.pgDSN == "" {
-		operations = newMemoryOperationStore()
-	} else {
-		pgOperations, err = newPgOperationStore(ctx, cfg.pgDSN)
-		if err != nil {
-			log.Fatalf("failed to initialize mailbox operation store: %s", safeMailboxError(err))
-		}
+	operations, pgOperations, err := newMailboxOperationStore(ctx, cfg)
+	if err != nil {
+		log.Fatalf("failed to initialize mailbox operation store: %s", safeMailboxError(err))
+	}
+	if pgOperations != nil {
 		defer pgOperations.Close()
-		operations = pgOperations
 	}
 	var workDispatcher *mailboxWorkDispatcher
 	if mailboxEventBus != nil && pgOperations != nil {
