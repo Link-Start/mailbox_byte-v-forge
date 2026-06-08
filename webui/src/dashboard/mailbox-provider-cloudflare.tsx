@@ -1,5 +1,5 @@
 import { AccountManagementFrame } from './dashboard-kit';
-import { MailboxDomainGroups } from './mailbox-list';
+import { MailboxDomainGroups } from './mailbox-domain-groups';
 import { mailboxProviderMatches } from './mailbox-provider-config';
 import { providerShowsCredentialState } from './mailbox-provider-capabilities';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
