@@ -8,11 +8,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
-	"mailboxapi/internal/eventcatalog"
 	"mailboxapi/internal/grpcclient"
 	"mailboxapi/internal/grpchealth"
 	"mailboxapi/internal/redisx"
@@ -98,33 +96,8 @@ func main() {
 
 	errCh := make(chan error, 3)
 	group, groupCtx := errgroup.WithContext(ctx)
-	if mailboxEventBus != nil {
-		mailboxEmailEvents := newMailboxEvents(mailboxEventBus)
-		pollConsumer, err := mailboxEventBus.PullWorkerForDefinition(cfg.eventStreamName, eventcatalog.MailboxEmailPollRequested, 10, 60*time.Second)
-		if err != nil {
-			log.Fatalf("failed to initialize mailbox email poll worker: %s", safeMailboxError(err))
-		}
-		fetchConsumer, err := mailboxEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxInboxFetchRequested, 5, 5*time.Minute)
-		if err != nil {
-			log.Fatalf("failed to initialize mailbox inbox fetch worker: %s", safeMailboxError(err))
-		}
-		registrationConsumer, err := mailboxEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxRegistrationRequested, 2, 5*time.Minute)
-		if err != nil {
-			log.Fatalf("failed to initialize mailbox registration worker: %s", safeMailboxError(err))
-		}
-		oauthConsumer, err := mailboxEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxOAuthRequested, 2, 5*time.Minute)
-		if err != nil {
-			log.Fatalf("failed to initialize mailbox OAuth worker: %s", safeMailboxError(err))
-		}
-		group.Go(func() error {
-			return mailboxRepo.RunOutboxWorker(groupCtx, mailboxEventOutboxTable, mailboxEmailEvents, logWarning)
-		})
-		group.Go(func() error { return runMailboxEmailPollWorker(groupCtx, pollConsumer, emailBackend) })
-		group.Go(func() error { return runMailboxInboxFetchWorker(groupCtx, fetchConsumer, emailBackend, operations) })
-		group.Go(func() error {
-			return runMailboxRegistrationWorker(groupCtx, registrationConsumer, operations, activities)
-		})
-		group.Go(func() error { return runMailboxOAuthWorker(groupCtx, oauthConsumer, operations, activities) })
+	if err := startMailboxEventWorkers(groupCtx, group, cfg, mailboxEventBus, mailboxRepo, emailBackend, operations, activities); err != nil {
+		log.Fatalf("failed to initialize mailbox event workers: %s", safeMailboxError(err))
 	}
 	startWebhookServer(groupCtx, cfg.webhookHTTPAddr, cfg.webhook, cfg.providers, inboxService, mailWatcher, inboxLock, errCh)
 
