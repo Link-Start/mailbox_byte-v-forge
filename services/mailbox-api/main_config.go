@@ -38,7 +38,7 @@ func loadConfig() config {
 		dashboardHTTPAddr:      envx.StringDefault("MAILBOX_DASHBOARD_HTTP_ADDR", ":8080"),
 		dashboardStaticDir:     envx.StringDefault("MAILBOX_DASHBOARD_STATIC_DIR", "/app/dashboard/mailbox"),
 		dashboard:              loadDashboardConfig(),
-		browserAutomationAddr:  envx.StringDefault("BROWSER_AUTOMATION_ADDR", "browser-automation:50051"),
+		browserAutomationAddr:  envx.StringDefault("BROWSER_AUTOMATION_ADDR", ""),
 		coordinationRedisURL:   envx.StringDefault("MAILBOX_COORDINATION_REDIS_URL", ""),
 		recentEmailRedisURL:    envx.StringDefault("MAILBOX_RECENT_EMAIL_REDIS_URL", ""),
 		recentEmailCachePrefix: envx.StringDefault("MAILBOX_RECENT_EMAIL_CACHE_KEY_PREFIX", "byte-v-forge:mailbox:recent-email"),

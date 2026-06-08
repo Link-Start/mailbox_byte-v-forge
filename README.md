@@ -28,9 +28,9 @@ sh scripts/generate-proto.sh
 
 Dashboard 由 mailbox 服务自身托管，不再发布 Module Federation remote。静态资源默认从 `MAILBOX_DASHBOARD_STATIC_DIR=/app/dashboard/mailbox` 读取，服务在 `/dashboard/mailbox/` 和根路径提供独立 SPA，在 `/api/mailbox/*` 提供 dashboard BFF API。
 
-Outlook 注册和 OAuth 通过 mailbox 内置 MQ worker 编排：`RegisterMailbox` / `RunMailboxOAuth` 只创建 operation 并发布 `mailbox.registration.operation_requested` / `mailbox.oauth.operation_requested` 到 `platform-nats`，由 mailbox worker 消费后调用 `browser-automation` 执行并更新 operation 投影。claim owner、lease、attempt count、OAuth limit/only_missing 只保存在 mailbox 内部表中，不进入 dashboard/API 对外 `MailboxOperation` 模型。
+Outlook 注册和 OAuth 通过 mailbox 内置 worker 编排：`RegisterMailbox` / `RunMailboxOAuth` 只创建 operation；配置 `MAILBOX_NATS_URL` 时发布 `mailbox.registration.operation_requested` / `mailbox.oauth.operation_requested` 到 mailbox JetStream，由 mailbox worker 消费后调用可选 `browser-automation` 执行并更新 operation 投影；未配置 MQ 时由本进程 local worker 执行。claim owner、lease、attempt count、OAuth limit/only_missing 只保存在 mailbox 内部表中，不进入 dashboard/API 对外 `MailboxOperation` 模型。
 
-Outlook 注册/OAuth 浏览器 profile 通过 `BROWSER_AUTOMATION_ADDR`、`OUTLOOK_REGISTER_AUTOMATION_PROXY_REF`、`OUTLOOK_REGISTER_AUTOMATION_LOCALE` 和 `OUTLOOK_REGISTER_AUTOMATION_TIMEZONE` 配置。
+`BROWSER_AUTOMATION_ADDR` 是可选配置；未配置时 mailbox 仍可启动，Outlook 注册/OAuth 浏览器动作会返回不可用错误，收件、Cloudflare webhook 和 dashboard 继续工作。配置该地址后，Outlook 注册/OAuth 浏览器 profile 通过 `OUTLOOK_REGISTER_AUTOMATION_PROXY_REF`、`OUTLOOK_REGISTER_AUTOMATION_LOCALE` 和 `OUTLOOK_REGISTER_AUTOMATION_TIMEZONE` 控制。
 
 Outlook 邮件读取使用 Microsoft Graph Go SDK 读取当前 OAuth 用户的 messages，并用 `Prefer: outlook.body-content-type="text"` 请求文本正文；不再保留手写 Graph REST adapter 或额外 URL 覆盖。
 

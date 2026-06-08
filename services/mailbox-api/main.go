@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -30,11 +31,17 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	browserConn, err := grpcclient.NewRequiredInsecure("browser automation", cfg.browserAutomationAddr)
-	if err != nil {
-		log.Fatalf("failed to connect browser automation: %s", safeMailboxError(err))
+	var browserClient browserautomationv1.BrowserAutomationServiceClient
+	if strings.TrimSpace(cfg.browserAutomationAddr) == "" {
+		logInfo("BROWSER_AUTOMATION_ADDR is not configured; Outlook registration/OAuth browser actions are disabled")
+	} else {
+		browserConn, err := grpcclient.NewRequiredInsecure("browser automation", cfg.browserAutomationAddr)
+		if err != nil {
+			log.Fatalf("failed to connect browser automation: %s", safeMailboxError(err))
+		}
+		defer browserConn.Close()
+		browserClient = browserautomationv1.NewBrowserAutomationServiceClient(browserConn)
 	}
-	defer browserConn.Close()
 
 	coordinationClient, err := newOptionalRedisClient(ctx, cfg.coordinationRedisURL, "coordination")
 	if err != nil {
@@ -94,7 +101,6 @@ func main() {
 		defer closeHotStream()
 	}
 	hotEvents := newMailboxHotStream(hotBus)
-	browserClient := browserautomationv1.NewBrowserAutomationServiceClient(browserConn)
 	inboxSources := newMailboxInboxSourceRegistryForProviders(cfg.providers, mailboxInboxSourceDependencies{mailboxes: mailboxRepo})
 	mailWatcher := NewMailWatcher(inboxService, mailboxRepo, inboxSources, hotEvents)
 
