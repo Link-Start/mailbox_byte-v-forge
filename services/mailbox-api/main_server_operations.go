@@ -2,17 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"strings"
-	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 	"mailboxapi/internal/emailx"
-	"mailboxapi/internal/pagex"
-	"mailboxapi/internal/randx"
 )
 
 func (s *server) RegisterMailbox(ctx context.Context, req *mailboxv1.RegisterMailboxRequest) (*mailboxv1.RegisterMailboxResponse, error) {
@@ -84,49 +78,4 @@ func (s *server) FetchMailboxInboxes(ctx context.Context, req *mailboxv1.FetchMa
 		return nil, status.Errorf(codes.Unavailable, "queue mailbox inbox fetch: %s", safeMailboxError(err))
 	}
 	return &mailboxv1.FetchMailboxInboxesResponse{OperationId: operationID}, nil
-}
-
-func (s *server) GetMailboxOperation(ctx context.Context, req *mailboxv1.GetMailboxOperationRequest) (*mailboxv1.GetMailboxOperationResponse, error) {
-	operationID := strings.TrimSpace(req.GetOperationId())
-	if operationID == "" {
-		return &mailboxv1.GetMailboxOperationResponse{ErrorMessage: "operation_id is required"}, nil
-	}
-	operation, err := s.operations.get(ctx, operationID)
-	if err != nil {
-		return &mailboxv1.GetMailboxOperationResponse{ErrorMessage: safeMailboxError(err)}, nil
-	}
-	return &mailboxv1.GetMailboxOperationResponse{Operation: operation}, nil
-}
-
-func (s *server) ListMailboxOperations(ctx context.Context, req *mailboxv1.ListMailboxOperationsRequest) (*mailboxv1.ListMailboxOperationsResponse, error) {
-	operations, err := s.operations.list(ctx, operationListFilter{
-		Limit:        int(req.GetLimit()),
-		Status:       req.GetStatus(),
-		Action:       req.GetAction(),
-		EmailAddress: req.GetEmailAddress(),
-	})
-	if err != nil {
-		return &mailboxv1.ListMailboxOperationsResponse{ErrorMessage: safeMailboxError(err)}, nil
-	}
-	return &mailboxv1.ListMailboxOperationsResponse{Operations: operations}, nil
-}
-
-func (s *server) updateOperation(ctx context.Context, operationID string, update operationUpdate) {
-	operation, err := s.operations.update(ctx, operationID, update)
-	if err != nil {
-		log.Printf("update mailbox operation failed operation=%s: %s", operationID, safeMailboxError(err))
-		return
-	}
-	s.hot.PublishOperation(ctx, operation)
-}
-
-func normalizedLimit(limit int32) int32 {
-	return int32(pagex.NormalizePageLimit(int(limit)))
-}
-
-func operationID(prefix string) string {
-	if id, err := randx.Hex(8); err == nil {
-		return prefix + "-" + id
-	}
-	return fmt.Sprintf("%s-%d", prefix, time.Now().UnixNano())
 }
