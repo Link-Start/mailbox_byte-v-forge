@@ -1,10 +1,10 @@
 import { AlertCircle, KeyRound, Mail, Trash2 } from 'lucide-react';
+import { NavLink } from 'react-router';
 import {
   RecordActionButtons,
   RecordActions,
   RecordCard,
   RecordIdentity,
-  RecordMain,
   RecordMeta,
   RecordTop,
   StatusBadge,
@@ -12,10 +12,11 @@ import {
   type RowActionDescriptor
 } from './dashboard-kit';
 import { maskEmail } from './email-utils';
+import { mailboxDetailPath } from './mailbox-route-paths';
 import { authStatus, canRunMailboxAction, providerAction } from './mailbox-utils';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
 
-export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, showStatus, providerCapability, currentOperation, onSelect, onOAuth, onDelete }: {
+export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, showStatus, providerCapability, currentOperation, onOAuth, onDelete }: {
   mailbox: Mailbox;
   selected: boolean;
   busy: boolean;
@@ -24,7 +25,6 @@ export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, sh
   showStatus: boolean;
   providerCapability?: MailboxProviderCapability;
   currentOperation?: MailboxOperation;
-  onSelect: (mailbox: Mailbox) => void;
   onOAuth: (emailAddress?: string) => Promise<void>;
   onDelete: (mailbox: Mailbox) => void;
 }) {
@@ -32,8 +32,8 @@ export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, sh
   const rowActions = mailboxRowActions({ mailbox, busy, oauthing, providerCapability, currentOperation, onOAuth, onDelete });
 
   return (
-    <RecordCard selected={selected} onClick={() => onSelect(mailbox)}>
-      <RecordMain>
+    <RecordCard selected={selected}>
+      <NavLink to={mailboxDetailPath(mailbox.email_address)} className="recordMain rounded-md text-inherit no-underline outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
         <RecordTop>
           <RecordIdentity
             icon={<Mail className="size-4" />}
@@ -43,7 +43,7 @@ export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, sh
         </RecordTop>
         <MailboxErrorMeta error={mailbox.last_error} />
         <MailboxOperationMeta operation={currentOperation} />
-      </RecordMain>
+      </NavLink>
       <RecordActions className="rowActions">
         <div className="rowActionsMain">
           <RecordActionButtons actions={rowActions} />

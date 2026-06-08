@@ -22,7 +22,7 @@ import type { DeleteMailboxResponse, InboxResponse, InboxResult, Mailbox } from 
 
 export const mailboxInboxQueryKey = (email: string) => ['mailbox', 'inbox', normalizeUiEmail(email)] as const;
 
-export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSelectedEmail: (value: string | ((prev: string) => string)) => void) {
+export function useMailboxActions(data: MailboxData, showSecrets: boolean, onMailboxDeleted: (email: string) => void) {
   const toast = useToastMessage();
   const queryClient = useQueryClient();
   const selectedEmail = normalizeUiEmail(data.selected?.email_address || '');
@@ -90,7 +90,7 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSe
     setDeleteTarget(null);
     await runner.tryRun(actionTargetStateKey('delete-mailbox', mailbox.email_address), async () => {
       await api<DeleteMailboxResponse>(`/api/mailbox/mailboxes/${encodeURIComponent(mailbox.email_address)}`, { method: 'DELETE' });
-      setSelectedEmail((prev) => prev === mailbox.email_address ? '' : prev);
+      onMailboxDeleted(mailbox.email_address);
       toast.showOK('邮箱已删除');
       await data.invalidate();
     }, { onError: toast.showError });

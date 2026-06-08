@@ -79,7 +79,6 @@ type MailboxPanelProps = {
   hasMoreMailboxes?: boolean;
   loadingMoreMailboxes?: boolean;
   onLoadMoreMailboxes: () => void | Promise<void>;
-  onSelect: (mailbox: Mailbox) => void;
   onOAuth: (emailAddress?: string) => Promise<void>;
   onFetchInbox: () => Promise<void>;
   onSyncDomains: (providerKey: string) => Promise<void>;
@@ -103,7 +102,6 @@ function providerPanelProps(props: MailboxPanelProps, searchQuery: string): Omit
     hasMoreMailboxes: props.hasMoreMailboxes,
     loadingMoreMailboxes: props.loadingMoreMailboxes,
     onLoadMoreMailboxes: props.onLoadMoreMailboxes,
-    onSelect: props.onSelect,
     onOAuth: props.onOAuth,
     onFetchInbox: props.onFetchInbox,
     onSyncDomains: props.onSyncDomains,

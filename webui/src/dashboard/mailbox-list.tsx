@@ -5,7 +5,7 @@ import { domainForEmail } from './mailbox-utils';
 import { MailboxCard } from './mailbox-card';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
 
-export function MailboxRecordList({ mailboxes, emptyText, providerCapability, showStatus, selected, busy, showSecrets, oauthing, runningOperationByEmail, hasMoreMailboxes, loadingMoreMailboxes, onLoadMoreMailboxes, onSelect, onOAuth, onDelete }: {
+export function MailboxRecordList({ mailboxes, emptyText, providerCapability, showStatus, selected, busy, showSecrets, oauthing, runningOperationByEmail, hasMoreMailboxes, loadingMoreMailboxes, onLoadMoreMailboxes, onOAuth, onDelete }: {
   mailboxes: Mailbox[];
   emptyText: string;
   providerCapability?: MailboxProviderCapability;
@@ -18,7 +18,6 @@ export function MailboxRecordList({ mailboxes, emptyText, providerCapability, sh
   hasMoreMailboxes?: boolean;
   loadingMoreMailboxes?: boolean;
   onLoadMoreMailboxes?: () => void | Promise<void>;
-  onSelect: (mailbox: Mailbox) => void;
   onOAuth: (emailAddress?: string) => Promise<void>;
   onDelete: (mailbox: Mailbox) => void;
 }) {
@@ -36,7 +35,6 @@ export function MailboxRecordList({ mailboxes, emptyText, providerCapability, sh
             showStatus={showStatus ?? true}
             providerCapability={providerCapability}
             currentOperation={runningOperationByEmail.get(normalizeUiEmail(mailbox.email_address))}
-            onSelect={onSelect}
             onOAuth={onOAuth}
             onDelete={onDelete}
           />
@@ -62,7 +60,6 @@ export function MailboxDomainGroups(props: {
   hasMoreMailboxes?: boolean;
   loadingMoreMailboxes?: boolean;
   onLoadMoreMailboxes: () => void | Promise<void>;
-  onSelect: (mailbox: Mailbox) => void;
   onOAuth: (emailAddress?: string) => Promise<void>;
   onDelete: (mailbox: Mailbox) => void;
 }) {
