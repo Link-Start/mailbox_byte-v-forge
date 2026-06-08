@@ -11,7 +11,8 @@ import (
 
 func (s *EmailService) acquireInboxLock(ctx context.Context) (func(), error) {
 	if s.inboxLock == nil {
-		return nil, status.Error(codes.Unavailable, "mailbox inbox lock is not configured")
+		logWarning("mailbox inbox lock is not configured; running fetch without distributed lock")
+		return func() {}, nil
 	}
 	lock, err := s.inboxLock.Lock(ctx, "fetch-inboxes")
 	if err != nil {

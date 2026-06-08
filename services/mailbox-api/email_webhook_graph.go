@@ -88,7 +88,8 @@ func (h *emailWebhookHandler) validGraphWebhookRequestToken(r *http.Request) boo
 
 func (h *emailWebhookHandler) triggerRefresh() {
 	if h.refreshLock == nil {
-		logWarning("Outlook webhook refresh lock is not configured")
+		logWarning("Outlook webhook refresh lock is not configured; running refresh without distributed lock")
+		go h.refreshMailboxes(nil)
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -103,6 +104,9 @@ func (h *emailWebhookHandler) triggerRefresh() {
 
 func (h *emailWebhookHandler) refreshMailboxes(lock *redisx.Lock) {
 	defer func() {
+		if lock == nil {
+			return
+		}
 		unlockCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 		if err := lock.Unlock(unlockCtx); err != nil {

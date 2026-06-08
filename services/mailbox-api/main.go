@@ -35,16 +35,20 @@ func main() {
 	}
 	defer browserConn.Close()
 
-	coordinationClient, err := redisx.NewRequiredClient(ctx, cfg.coordinationRedisURL, "MAILBOX_COORDINATION_REDIS_URL is required for mailbox coordination")
+	coordinationClient, err := newOptionalRedisClient(ctx, cfg.coordinationRedisURL, "coordination")
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox coordination redis client: %s", safeMailboxError(err))
 	}
-	defer func() { _ = coordinationClient.Close() }()
-	recentEmailClient, err := redisx.NewRequiredClient(ctx, cfg.recentEmailRedisURL, "MAILBOX_RECENT_EMAIL_REDIS_URL is required for mailbox recent email cache")
+	if coordinationClient != nil {
+		defer func() { _ = coordinationClient.Close() }()
+	}
+	recentEmailClient, err := newOptionalRedisClient(ctx, cfg.recentEmailRedisURL, "recent email")
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox recent email redis client: %s", safeMailboxError(err))
 	}
-	defer func() { _ = recentEmailClient.Close() }()
+	if recentEmailClient != nil {
+		defer func() { _ = recentEmailClient.Close() }()
+	}
 
 	recentCache := newRecentEmailCache(recentEmailClient, cfg.recentEmailCachePrefix, cfg.recentEmailCacheTTL, cfg.recentEmailCacheMax)
 	secretStore := newMailboxSecretStore(recentEmailClient, cfg.recentEmailCachePrefix+":secrets", cfg.recentEmailCacheTTL)
@@ -63,7 +67,10 @@ func main() {
 		EventSource: mailboxPlatformEventSource,
 		Logf:        logWarning,
 	})
-	inboxLock := redisx.NewBestEffortLocker(coordinationClient, cfg.inboxLockPrefix, cfg.inboxLockTTL, cfg.inboxLockRetry)
+	var inboxLock *redisx.BestEffortLocker
+	if coordinationClient != nil {
+		inboxLock = redisx.NewBestEffortLocker(coordinationClient, cfg.inboxLockPrefix, cfg.inboxLockTTL, cfg.inboxLockRetry)
+	}
 	platformEventBus, closePlatformEventBus, err := newPlatformEventBus(ctx, cfg)
 	if err != nil {
 		log.Fatalf("failed to initialize platform event bus: %s", safeMailboxError(err))

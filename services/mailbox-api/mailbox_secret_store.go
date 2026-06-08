@@ -18,6 +18,9 @@ type mailboxSecretStore struct {
 }
 
 func newMailboxSecretStore(client redis.Cmdable, prefix string, ttl time.Duration) *mailboxSecretStore {
+	if client == nil {
+		return nil
+	}
 	return &mailboxSecretStore{store: redisx.NewStringStore(client, prefix, ttl), ttl: ttl}
 }
 
