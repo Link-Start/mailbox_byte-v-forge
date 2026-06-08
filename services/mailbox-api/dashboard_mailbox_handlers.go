@@ -101,11 +101,7 @@ func (s *dashboardServer) handleMailboxStoredInbox(w http.ResponseWriter, r *htt
 		writeError(w, http.StatusBadGateway, err)
 		return
 	}
-	if resp.GetErrorMessage() != "" {
-		writeError(w, http.StatusBadGateway, errors.New(resp.GetErrorMessage()))
-		return
-	}
-	writeProtoJSON(w, http.StatusOK, resp)
+	writeProtoJSONWithErrorMessage(w, http.StatusOK, http.StatusBadGateway, resp)
 }
 
 func (s *dashboardServer) handleMailboxStoredInboxMessage(w http.ResponseWriter, r *http.Request, email string, messageID string) {
@@ -123,9 +119,5 @@ func (s *dashboardServer) handleMailboxStoredInboxMessage(w http.ResponseWriter,
 		writeError(w, http.StatusBadGateway, err)
 		return
 	}
-	if resp.GetErrorMessage() != "" {
-		writeError(w, http.StatusBadGateway, errors.New(resp.GetErrorMessage()))
-		return
-	}
-	writeProtoJSON(w, http.StatusOK, resp)
+	writeProtoJSONWithErrorMessage(w, http.StatusOK, http.StatusBadGateway, resp)
 }

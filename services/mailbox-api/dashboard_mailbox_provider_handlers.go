@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
@@ -18,11 +17,7 @@ func (s *dashboardServer) handleMailboxDomains(w http.ResponseWriter, r *http.Re
 			writeError(w, http.StatusBadGateway, err)
 			return
 		}
-		if resp.GetErrorMessage() != "" {
-			writeError(w, http.StatusBadGateway, errors.New(resp.GetErrorMessage()))
-			return
-		}
-		writeProtoJSON(w, http.StatusOK, resp)
+		writeProtoJSONWithErrorMessage(w, http.StatusOK, http.StatusBadGateway, resp)
 	case http.MethodPost:
 		var req mailboxv1.SyncMailboxDomainsRequest
 		if err := readProtoJSON(r, &req); err != nil {
@@ -34,11 +29,7 @@ func (s *dashboardServer) handleMailboxDomains(w http.ResponseWriter, r *http.Re
 			writeError(w, http.StatusBadGateway, err)
 			return
 		}
-		if resp.GetErrorMessage() != "" {
-			writeError(w, http.StatusBadGateway, errors.New(resp.GetErrorMessage()))
-			return
-		}
-		writeProtoJSON(w, http.StatusOK, resp)
+		writeProtoJSONWithErrorMessage(w, http.StatusOK, http.StatusBadGateway, resp)
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
@@ -56,11 +47,7 @@ func (s *dashboardServer) handleMailboxProviderCapabilities(w http.ResponseWrite
 		writeError(w, http.StatusBadGateway, err)
 		return
 	}
-	if resp.GetErrorMessage() != "" {
-		writeError(w, http.StatusBadGateway, errors.New(resp.GetErrorMessage()))
-		return
-	}
-	writeProtoJSON(w, http.StatusOK, resp)
+	writeProtoJSONWithErrorMessage(w, http.StatusOK, http.StatusBadGateway, resp)
 }
 
 func requestProviderKey(r *http.Request) string {

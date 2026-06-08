@@ -89,6 +89,19 @@ func writeProtoJSON(w http.ResponseWriter, status int, value proto.Message) {
 	_ = protojsonhttp.WriteResponse(w, status, value)
 }
 
+type dashboardErrorMessageResponse interface {
+	proto.Message
+	GetErrorMessage() string
+}
+
+func writeProtoJSONWithErrorMessage(w http.ResponseWriter, status int, errorStatus int, value dashboardErrorMessageResponse) {
+	if value.GetErrorMessage() != "" {
+		writeError(w, errorStatus, errors.New(value.GetErrorMessage()))
+		return
+	}
+	writeProtoJSON(w, status, value)
+}
+
 func writeJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

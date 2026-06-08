@@ -24,11 +24,7 @@ func (s *dashboardServer) handleMailboxOperations(w http.ResponseWriter, r *http
 		writeError(w, http.StatusBadGateway, err)
 		return
 	}
-	if resp.GetErrorMessage() != "" {
-		writeError(w, http.StatusBadGateway, errors.New(resp.GetErrorMessage()))
-		return
-	}
-	writeProtoJSON(w, http.StatusOK, resp)
+	writeProtoJSONWithErrorMessage(w, http.StatusOK, http.StatusBadGateway, resp)
 }
 
 func (s *dashboardServer) handleMailboxOperation(w http.ResponseWriter, r *http.Request) {
@@ -46,9 +42,5 @@ func (s *dashboardServer) handleMailboxOperation(w http.ResponseWriter, r *http.
 		writeError(w, http.StatusBadGateway, err)
 		return
 	}
-	if resp.GetErrorMessage() != "" {
-		writeError(w, http.StatusNotFound, errors.New(resp.GetErrorMessage()))
-		return
-	}
-	writeProtoJSON(w, http.StatusOK, resp)
+	writeProtoJSONWithErrorMessage(w, http.StatusOK, http.StatusNotFound, resp)
 }
