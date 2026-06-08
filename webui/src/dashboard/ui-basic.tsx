@@ -5,10 +5,21 @@ import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
+export {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
 export { Alert, AlertDescription, Badge, Button, Card };
 
 export function EmptyBlock({ text }: { text: string }) {
-  return <div className="emptyBlock">{text}</div>;
+  return <Card className="emptyBlock shadow-none">{text}</Card>;
 }
 
 export function StatusBadge({ status }: { status: string }) {
@@ -16,7 +27,7 @@ export function StatusBadge({ status }: { status: string }) {
 }
 
 export function Item({ className, variant, ...props }: HTMLAttributes<HTMLDivElement> & { variant?: 'outline' }) {
-  return <div className={cn('uiItem', variant === 'outline' && 'uiItem-outline', className)} {...props} />;
+  return <Card className={cn('uiItem shadow-none', variant === 'outline' && 'uiItem-outline', className)} {...props} />;
 }
 
 export function ItemContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {

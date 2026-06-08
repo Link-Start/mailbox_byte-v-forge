@@ -26,7 +26,7 @@ export function MailboxDetails({ mailbox, providerCapability, showSecrets, inbox
   canFetchInbox: boolean;
   onCopy: (label: string, value: string) => void;
   onFetchInbox: (emailAddress?: string) => Promise<void>;
-  onDelete: (mailbox: Mailbox) => Promise<void>;
+  onDelete: (mailbox: Mailbox) => void;
 }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'inbox'>('overview');
   const inboxMessageCount = inboxResult?.messages?.length || 0;
@@ -67,7 +67,7 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   showSecrets: boolean;
   latestOtp: LatestOtp | null;
   onCopy: (label: string, value: string) => void;
-  onDelete: (mailbox: Mailbox) => Promise<void>;
+  onDelete: (mailbox: Mailbox) => void;
 }) {
   const showCredentialState = providerShowsCredentialState(providerCapability);
   const fields: KVDescriptor[] = [{

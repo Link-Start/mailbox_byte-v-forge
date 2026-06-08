@@ -71,8 +71,6 @@ button, input, textarea { font: inherit; }
 .tabsContent { min-height: 0; overflow: hidden; }
 .appDrawer { width: min(720px, 100vw); max-width: none; }
 .segmentedControl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted); }
-.segmentedControl button { border: 0; border-radius: 9px; background: transparent; min-height: 32px; }
-.segmentedControl button.active { background: var(--card); box-shadow: var(--shadow-sm); }
 
 .recordList { min-height: 0; overflow: auto; display: grid; align-content: start; gap: 8px; }
 .recordCard { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; }

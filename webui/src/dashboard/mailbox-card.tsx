@@ -26,7 +26,7 @@ export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, sh
   currentOperation?: MailboxOperation;
   onSelect: (mailbox: Mailbox) => void;
   onOAuth: (emailAddress?: string) => Promise<void>;
-  onDelete: (mailbox: Mailbox) => Promise<void>;
+  onDelete: (mailbox: Mailbox) => void;
 }) {
   const displayEmail = showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address);
   const rowActions = mailboxRowActions({ mailbox, busy, oauthing, providerCapability, currentOperation, onOAuth, onDelete });
@@ -61,7 +61,7 @@ function mailboxRowActions({ mailbox, busy, oauthing, providerCapability, curren
   providerCapability?: MailboxProviderCapability;
   currentOperation?: MailboxOperation;
   onOAuth: (emailAddress?: string) => Promise<void>;
-  onDelete: (mailbox: Mailbox) => Promise<void>;
+  onDelete: (mailbox: Mailbox) => void;
 }) {
   const actions: RowActionDescriptor[] = [{
     id: 'delete-mailbox',

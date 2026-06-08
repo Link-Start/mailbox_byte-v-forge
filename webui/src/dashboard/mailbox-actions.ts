@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   activeActionTargets,
   api,
@@ -27,6 +27,7 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSe
   const queryClient = useQueryClient();
   const selectedEmail = normalizeUiEmail(data.selected?.email_address || '');
   const selectedInboxKey = useMemo(() => mailboxInboxQueryKey(selectedEmail), [selectedEmail]);
+  const [deleteTarget, setDeleteTarget] = useState<Mailbox | null>(null);
   const inboxQuery = useQuery<InboxResult | null>({
     queryKey: selectedInboxKey,
     queryFn: () => selectedEmail ? fetchStoredInbox(selectedEmail) : Promise.resolve(null),
@@ -79,8 +80,14 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSe
     }, { onError: toast.showError });
   }
 
-  async function deleteMailbox(mailbox: Mailbox) {
-    if (!window.confirm(`删除邮箱 ${showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address)}？`)) return;
+  function requestDeleteMailbox(mailbox: Mailbox) {
+    setDeleteTarget(mailbox);
+  }
+
+  async function confirmDeleteMailbox() {
+    const mailbox = deleteTarget;
+    if (!mailbox) return;
+    setDeleteTarget(null);
     await runner.tryRun(actionTargetStateKey('delete-mailbox', mailbox.email_address), async () => {
       await api<DeleteMailboxResponse>(`/api/mailbox/mailboxes/${encodeURIComponent(mailbox.email_address)}`, { method: 'DELETE' });
       setSelectedEmail((prev) => prev === mailbox.email_address ? '' : prev);
@@ -96,15 +103,19 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, setSe
 
   return {
     toast,
+    deleteTarget,
     inboxResult: inboxQuery.data ?? null,
     inboxQueryKey: selectedInboxKey,
     oauthing: activeActionTargets(runner.activeKeys, 'oauth')[0] || '',
     inboxLoading: inboxQuery.isFetching || hasActiveAction(runner.activeKeys, 'fetch-inbox'),
     domainSyncing: hasActiveAction(runner.activeKeys, 'sync-domains'),
+    deleting: hasActiveAction(runner.activeKeys, 'delete-mailbox'),
     runOAuth,
     fetchInbox,
     syncProviderDomains,
-    deleteMailbox,
+    requestDeleteMailbox,
+    cancelDeleteMailbox: () => setDeleteTarget(null),
+    confirmDeleteMailbox,
     done
   };
 }

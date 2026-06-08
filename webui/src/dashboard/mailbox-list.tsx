@@ -20,7 +20,7 @@ export function MailboxRecordList({ mailboxes, emptyText, providerCapability, sh
   onLoadMoreMailboxes?: () => void | Promise<void>;
   onSelect: (mailbox: Mailbox) => void;
   onOAuth: (emailAddress?: string) => Promise<void>;
-  onDelete: (mailbox: Mailbox) => Promise<void>;
+  onDelete: (mailbox: Mailbox) => void;
 }) {
   return (
     <>
@@ -64,7 +64,7 @@ export function MailboxDomainGroups(props: {
   onLoadMoreMailboxes: () => void | Promise<void>;
   onSelect: (mailbox: Mailbox) => void;
   onOAuth: (emailAddress?: string) => Promise<void>;
-  onDelete: (mailbox: Mailbox) => Promise<void>;
+  onDelete: (mailbox: Mailbox) => void;
 }) {
   const configuredDomains = props.configuredDomains.map((domain) => domain.toLowerCase());
   const allDomains = uniqueStrings([...configuredDomains, ...props.mailboxes.map((mailbox) => domainForEmail(mailbox.email_address)).filter(Boolean)]).sort();

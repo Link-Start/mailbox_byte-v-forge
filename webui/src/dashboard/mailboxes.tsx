@@ -93,7 +93,7 @@ type MailboxPanelProps = {
   onFetchInbox: () => Promise<void>;
   onSyncDomains: (providerKey: string) => Promise<void>;
   onToggleSecrets: () => void;
-  onDelete: (mailbox: Mailbox) => Promise<void>;
+  onDelete: (mailbox: Mailbox) => void;
   onDone: (message: string) => void;
   onError: (message: string) => void;
 };
