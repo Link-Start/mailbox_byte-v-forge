@@ -2,11 +2,9 @@ import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import {
   ActionButtonGroup,
-  Card,
   ContentTabs,
   KVList,
   MailboxCredentialKind,
-  StatusBadge
 } from './dashboard-kit';
 import type { ActionButtonDescriptor, KVDescriptor } from './dashboard-kit';
 import { maskEmail } from './email-utils';
@@ -14,7 +12,7 @@ import { mailboxStatusText } from './labels';
 import { MailboxInboxSection } from './mailbox-inbox';
 import { MailboxOtpPanel } from './otp-panel';
 import { latestOtpForInboxResult } from './mailbox-signal-utils';
-import { authStatus, mailboxCredentialPresent, providerShowsCredentialState, tokenText } from './mailbox-utils';
+import { authStatus, mailboxCredentialPresent, providerShowsCredentialState } from './mailbox-utils';
 import type { InboxResult, LatestOtp, Mailbox, MailboxProviderCapability } from './types';
 
 export function MailboxDetails({ mailbox, providerCapability, showSecrets, inboxResult, inboxLoading, canFetchInbox, onCopy, onFetchInbox, onDelete }: {
@@ -79,30 +77,15 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
     masked: !showSecrets,
   }];
   if (showCredentialState) fields.push({
-    id: 'password',
-    label: '密码',
-    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD),
-  }, {
     id: 'oauth',
-    label: 'OAuth',
+    label: '授权',
     value: mailboxStatusText(authStatus(mailbox)),
-  }, {
-    id: 'token',
-    label: 'Token',
-    value: tokenText(mailbox),
-  }, {
-    id: 'refresh-token',
-    label: 'Refresh',
-    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN),
-  }, {
-    id: 'access-token',
-    label: 'Access',
-    ...credentialDisplay(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN),
   });
-  fields.push({
-    id: 'latest-otp',
-    label: '验证码',
-    value: latestOtp?.secret_resolvable ? '已保存' : latestOtp?.detected ? '已检测' : '-',
+  const credentials = credentialSummary(mailbox);
+  if (showCredentialState && credentials) fields.push({
+    id: 'credentials',
+    label: '凭据',
+    value: credentials,
     copyValue: '',
     copyDisabled: true,
     masked: false,
@@ -118,15 +101,7 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
 
   return (
     <section className="grid gap-3">
-      <Card className="grid gap-2 p-3 shadow-none">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <strong className="block truncate text-sm">{showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address)}</strong>
-          </div>
-          {showCredentialState && <StatusBadge status={authStatus(mailbox)} />}
-        </div>
-        <MailboxOtpPanel latestOtp={latestOtp} showSecrets={showSecrets} loading={false} onCopy={onCopy} />
-      </Card>
+      <MailboxOtpPanel latestOtp={latestOtp} showSecrets={showSecrets} loading={false} />
       <div>
         <KVList items={fields} onCopy={onCopy} />
       </div>
@@ -135,13 +110,10 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   );
 }
 
-function credentialDisplay(mailbox: Mailbox, kind: MailboxCredentialKind): Pick<KVDescriptor, 'value' | 'copyValue' | 'copyDisabled' | 'masked' | 'mono'> {
-  const value = mailboxCredentialPresent(mailbox, kind) ? '已保存' : '-';
-  return {
-    value,
-    copyValue: '',
-    copyDisabled: true,
-    masked: false,
-    mono: false,
-  };
+function credentialSummary(mailbox: Mailbox) {
+  const labels: string[] = [];
+  if (mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_PASSWORD)) labels.push('密码');
+  if (mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN)) labels.push('Refresh');
+  if (mailboxCredentialPresent(mailbox, MailboxCredentialKind.MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN)) labels.push('Access');
+  return labels.join(' / ');
 }

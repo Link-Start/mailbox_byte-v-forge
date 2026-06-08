@@ -63,10 +63,10 @@ export function MailboxImportSheet({ open, provider, capability, busy, onOpenCha
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[min(460px,100vw)] p-0 sm:max-w-none">
-        <SheetHeader className="border-b">
-          <SheetTitle>添加邮箱账号</SheetTitle>
-          <SheetDescription>{providerDisplayName(capability, provider)} 可附带 provider 支持的凭据。</SheetDescription>
+        <SheetContent className="w-[min(460px,100vw)] p-0 sm:max-w-none">
+          <SheetHeader className="border-b">
+          <SheetTitle>添加邮箱</SheetTitle>
+          <SheetDescription>{providerDisplayName(capability, provider)}</SheetDescription>
         </SheetHeader>
         <div className="grid gap-3 p-4">
           <SegmentedControl value={mode} options={mailboxImportModeOptions} onChange={setMode} />

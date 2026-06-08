@@ -21,22 +21,23 @@ export function MailboxPanel(props: MailboxPanelProps) {
   const [activeProvider, setActiveProvider] = useState<MailboxProviderTab>('');
   const [importProvider, setImportProvider] = useState<MailboxProviderTab>();
   const [query, setQuery] = useState('');
-  const filteredMailboxes = useMemo(() => filterMailboxes(props.mailboxes, query), [props.mailboxes, query]);
-  const panelProps = providerPanelProps(props, query);
+  const searchQuery = query.trim();
+  const filteredMailboxes = useMemo(() => filterMailboxes(props.mailboxes, searchQuery), [props.mailboxes, searchQuery]);
+  const panelProps = providerPanelProps(props, searchQuery);
   const providerViews = useMemo(() => mailboxProviderViews(props.providerCapabilities, filteredMailboxes), [props.providerCapabilities, filteredMailboxes]);
   useEffect(() => {
     if (providerViews.length > 0 && !providerViews.some((view) => view.value === activeProvider)) setActiveProvider(providerViews[0].value);
   }, [activeProvider, providerViews]);
-  if (providerViews.length === 0) return <EmptyBlock text={props.busy ? '正在加载邮箱 provider。' : '暂无可用邮箱 provider。'} />;
+  if (providerViews.length === 0) return <EmptyBlock text={props.busy ? '加载中' : '暂无 Provider'} />;
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[240px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9 pr-9" value={query} placeholder="搜索邮箱、域名或 provider" onChange={(event) => setQuery(event.target.value)} />
+          <Input className="pl-9 pr-9" value={query} placeholder="搜索" onChange={(event) => setQuery(event.target.value)} />
           {query && <Button className="absolute right-1 top-1/2 size-7 -translate-y-1/2" variant="ghost" size="icon" aria-label="清空搜索" onClick={() => setQuery('')}><X className="size-4" /></Button>}
         </div>
-        <Badge variant="secondary">{filteredMailboxes.length}/{props.mailboxes.length}</Badge>
+        {searchQuery && <Badge variant="secondary">{filteredMailboxes.length}/{props.mailboxes.length}</Badge>}
       </div>
       <PanelTabs
         value={activeProvider}

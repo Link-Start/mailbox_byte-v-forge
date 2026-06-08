@@ -14,8 +14,9 @@ export function WorkspacePanel({ children }: { children: ReactNode }) {
   return <main className="workspacePanel">{children}</main>;
 }
 
-export function AccountManagementFrame({ title, icon, actions, children }: { title: string; icon?: ReactNode; actions?: ReactNode; children: ReactNode }) {
-  return <section className="accountFrame"><header className="panelHeader"><div className="panelTitle">{icon}{title}</div>{actions}</header><div className="panelBody">{children}</div></section>;
+export function AccountManagementFrame({ title, icon, actions, children }: { title?: string; icon?: ReactNode; actions?: ReactNode; children: ReactNode }) {
+  const hasTitle = Boolean(title || icon);
+  return <section className="accountFrame"><header className="panelHeader">{hasTitle ? <div className="panelTitle">{icon}{title}</div> : <span />}{actions}</header><div className="panelBody">{children}</div></section>;
 }
 
 export function AppDrawer({ open, title, description, icon, children, onOpenChange }: {

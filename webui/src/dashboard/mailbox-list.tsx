@@ -79,7 +79,6 @@ export function MailboxDomainGroups(props: {
             key={domain}
             {...props}
             domain={domain}
-            configured={configuredDomains.includes(domain)}
             mailboxes={props.mailboxes.filter((mailbox) => domainForEmail(mailbox.email_address) === domain)}
           />
         ))}
@@ -89,7 +88,7 @@ export function MailboxDomainGroups(props: {
   );
 }
 
-function MailboxDomainGroup(props: Parameters<typeof MailboxDomainGroups>[0] & { domain: string; configured: boolean }) {
+function MailboxDomainGroup(props: Parameters<typeof MailboxDomainGroups>[0] & { domain: string }) {
   const { hasMoreMailboxes, loadingMoreMailboxes, onLoadMoreMailboxes, ...listProps } = props;
   void hasMoreMailboxes;
   void loadingMoreMailboxes;
@@ -98,7 +97,6 @@ function MailboxDomainGroup(props: Parameters<typeof MailboxDomainGroups>[0] & {
     <section className="grid gap-2">
       <div className="flex min-h-8 items-center justify-between border-b text-sm">
         <strong>{props.domain}</strong>
-        <span className="text-xs text-muted-foreground">{props.configured ? '已配置' : '自动归组'}</span>
       </div>
       <MailboxRecordList {...listProps} emptyText={props.emptyDomainText} />
     </section>

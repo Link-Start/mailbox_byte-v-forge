@@ -12,7 +12,7 @@ import {
   type RowActionDescriptor
 } from './dashboard-kit';
 import { maskEmail } from './email-utils';
-import { authStatus, canRunMailboxAction, domainForEmail, providerAction } from './mailbox-utils';
+import { authStatus, canRunMailboxAction, providerAction } from './mailbox-utils';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
 
 export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, showStatus, providerCapability, currentOperation, onSelect, onOAuth, onDelete }: {
@@ -38,7 +38,6 @@ export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, sh
           <RecordIdentity
             icon={<Mail className="size-4" />}
             title={<span title={displayEmail}>{displayEmail}</span>}
-            subtitle={domainForEmail(mailbox.email_address) || '邮箱'}
           />
           {showStatus && <StatusBadge status={authStatus(mailbox)} />}
         </RecordTop>
@@ -101,7 +100,7 @@ function MailboxOperationMeta({ operation }: { operation?: MailboxOperation }) {
   return (
     <RecordMeta className="grid-cols-1">
       <span className="truncate text-xs text-muted-foreground" title={operation.operation_id}>
-        操作运行中 · {operation.last_step || operation.action || operation.status}
+        运行中 · {operation.last_step || operation.action || operation.status}
       </span>
     </RecordMeta>
   );

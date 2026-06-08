@@ -2,14 +2,12 @@ import {
   Alert,
   AlertDescription,
   Badge,
-  Card,
   compactToast,
   errorText
 } from './dashboard-kit';
 
-export function MailboxPageStatus({ total, providerCount, runningCount, showSecrets, error }: {
+export function MailboxPageStatus({ total, runningCount, showSecrets, error }: {
   total: number;
-  providerCount: number;
   runningCount: number;
   showSecrets: boolean;
   error?: unknown;
@@ -21,12 +19,11 @@ export function MailboxPageStatus({ total, providerCount, runningCount, showSecr
           <AlertDescription>{compactToast(errorText(error))}</AlertDescription>
         </Alert>
       )}
-      <Card className="flex flex-wrap items-center gap-2 p-3 shadow-none">
-        <Badge variant="secondary">邮箱 {total}</Badge>
-        <Badge variant="secondary">Provider {providerCount}</Badge>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="secondary">{total} 邮箱</Badge>
         {runningCount > 0 && <Badge variant="outline">运行中 {runningCount}</Badge>}
-        <Badge variant={showSecrets ? 'outline' : 'secondary'}>{showSecrets ? '显示邮箱地址' : '隐私模式'}</Badge>
-      </Card>
+        {!showSecrets && <Badge variant="secondary">隐私</Badge>}
+      </div>
     </div>
   );
 }

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Inbox } from 'lucide-react';
+import { RefreshCcw } from 'lucide-react';
 import {
   Alert,
   AlertDescription,
-  Badge,
   Button,
   EmptyBlock,
   Item,
@@ -16,7 +15,7 @@ import {
 } from './dashboard-kit';
 import { formatEmailList, maskEmail } from './email-utils';
 import { MailboxInboxDetail } from './mailbox-inbox-detail';
-import { messageHasVerificationSignal, messageSignals, signalHasSecretRef, signalKindName, signalLabel } from './mailbox-signal-utils';
+import { MessageSignalBadges } from './mailbox-signal-badges';
 import type { InboxMessage, InboxResult, Mailbox } from './types';
 
 export function MailboxInboxSection({ mailbox, result, showSecrets, loading, canFetch, onFetch }: {
@@ -43,14 +42,7 @@ export function MailboxInboxSection({ mailbox, result, showSecrets, loading, can
 
   return (
     <section className="grid gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">收件箱</h3>
-        {canFetch && (
-          <Button variant="outline" size="sm" disabled={loading} onClick={() => onFetch(mailbox.email_address)}>
-            <Inbox />{loading ? '刷新中' : '刷新'}
-          </Button>
-        )}
-      </div>
+      {canFetch && <div className="flex justify-end"><Button variant="outline" size="icon" title={loading ? '刷新中' : '刷新'} aria-label={loading ? '刷新中' : '刷新'} disabled={loading} onClick={() => onFetch(mailbox.email_address)}><RefreshCcw className="size-4" /></Button></div>}
       {result?.error_message && (
         <Alert variant="destructive">
           <AlertDescription>{compactToast(result.error_message)}</AlertDescription>
@@ -62,8 +54,8 @@ export function MailboxInboxSection({ mailbox, result, showSecrets, loading, can
             const key = inboxMessageKey(message, index);
             return <InboxMessageRow message={message} selected={key === selectedKey} showSecrets={showSecrets} key={key} onSelect={() => setSelectedKey(key)} />;
           })}
-          {!result && <EmptyBlock text={loading ? '正在读取收件箱。' : '暂无邮件。'} />}
-          {result && !result.error_message && messages.length === 0 && <EmptyBlock text="当前邮箱没有新邮件。" />}
+          {!result && <EmptyBlock text={loading ? '读取中' : '暂无邮件'} />}
+          {result && !result.error_message && messages.length === 0 && <EmptyBlock text="暂无邮件" />}
         </div>
         {messages.length > 0 && <MailboxInboxDetail message={selectedMessage} showSecrets={showSecrets} />}
       </div>
@@ -85,33 +77,15 @@ function InboxMessageRow({ message, selected, showSecrets, onSelect }: {
           <span className="shrink-0 text-xs font-normal text-muted-foreground">{formatUnix(message.received_at_unix)}</span>
         </ItemTitle>
         <ItemDescription className="flex items-center justify-between gap-2">
-          <span className="truncate">发件人 {showSecrets ? (message.from_address || '-') : maskEmail(message.from_address)}</span>
-          <MessageSignalStrip message={message} />
+          <span className="truncate">{showSecrets ? (message.from_address || '-') : maskEmail(message.from_address)}</span>
+          <MessageSignalBadges message={message} />
         </ItemDescription>
         <ItemDescription className="line-clamp-1" title={formatEmailList(message.recipients, true)}>
-          收件人 {formatEmailList(message.recipients, showSecrets)}
+          {formatEmailList(message.recipients, showSecrets)}
         </ItemDescription>
         <ItemDescription className="line-clamp-3">{showSecrets ? (message.body_preview || '-') : maskPreview(message.body_preview || '-')}</ItemDescription>
       </ItemContent>
     </Item>
-  );
-}
-
-function MessageSignalStrip({ message }: { message: InboxMessage }) {
-  const signals = messageSignals(message);
-  const fallbackSignal = messageHasVerificationSignal(message);
-  if (signals.length === 0 && fallbackSignal) {
-    return <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">验证码 已检测</Badge>;
-  }
-  if (signals.length === 0) return null;
-  return (
-    <span className="flex shrink-0 items-center gap-1">
-      {signals.map((signal, index) => {
-        const kind = signalKindName(signal.kind);
-        const captured = kind === 'otp' && signalHasSecretRef(signal, 'otp');
-        return <Badge variant="secondary" key={`${kind}-${signal.label || index}`}>{signalLabel(signal)}{captured ? ' 已保存' : ''}</Badge>;
-      })}
-    </span>
   );
 }
 

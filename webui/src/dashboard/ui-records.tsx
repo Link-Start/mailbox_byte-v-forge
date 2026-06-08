@@ -27,5 +27,5 @@ export function RecordActions(props: HTMLAttributes<HTMLDivElement>) {
 }
 
 export function RecordIdentity({ icon, title, subtitle }: { icon: ReactNode; title: ReactNode; subtitle?: ReactNode }) {
-  return <div className="recordIdentity"><span className="recordIcon">{icon}</span><div className="min-w-0"><strong className="recordTitle">{title}</strong><small>{subtitle}</small></div></div>;
+  return <div className="recordIdentity"><span className="recordIcon">{icon}</span><div className="min-w-0"><strong className="recordTitle">{title}</strong>{subtitle && <small>{subtitle}</small>}</div></div>;
 }

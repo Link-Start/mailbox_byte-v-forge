@@ -31,7 +31,7 @@ type ToolbarActionFactory = (ctx: {
 const toolbarActionFactories: Partial<Record<MailboxProviderAction, ToolbarActionFactory>> = {
   [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_IMPORT_MAILBOX]: ({ view, openImport }) => ({
     id: 'import-mailbox',
-    label: '添加邮箱账号',
+    label: '添加邮箱',
     icon: <Plus className="size-4" />,
     onClick: () => openImport(view.value),
   }),
@@ -49,7 +49,7 @@ const toolbarActionFactories: Partial<Record<MailboxProviderAction, ToolbarActio
     const count = bulkMailboxActionCount(view.mailboxes, action);
     return {
       id: 'fetch-inbox',
-      label: props.inboxLoading ? '收信中' : '拉取邮箱',
+      label: props.inboxLoading ? '收信中' : '收信',
       icon: <Inbox className="size-4" />,
       disabled: props.busy || props.inboxLoading || count === 0,
       onClick: () => void props.onFetchInbox(),
@@ -74,7 +74,7 @@ export function providerToolbarActions(view: ProviderToolbarView, props: Provide
 function secretsAction(props: ProviderToolbarProps): ToolbarActionDescriptor {
   return {
     id: 'toggle-secrets',
-    label: props.showSecrets ? '隐藏敏感信息' : '显示敏感信息',
+    label: props.showSecrets ? '隐藏明文' : '显示明文',
     icon: props.showSecrets ? <EyeOff className="size-4" /> : <Eye className="size-4" />,
     onClick: props.onToggleSecrets,
   };
