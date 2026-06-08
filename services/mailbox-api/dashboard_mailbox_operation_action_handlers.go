@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"net/http"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -38,13 +37,7 @@ func (s *dashboardServer) handleMailboxOAuth(w http.ResponseWriter, r *http.Requ
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	if req.GetLimit() <= 0 {
-		req.Limit = 100
-	}
-	req.EmailAddress = strings.TrimSpace(req.GetEmailAddress())
-	if req.GetEmailAddress() == "" {
-		req.OnlyMissing = true
-	}
+	normalizeDashboardOAuthRequest(&req)
 
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
@@ -66,20 +59,7 @@ func (s *dashboardServer) handleMailboxInbox(w http.ResponseWriter, r *http.Requ
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	if req.GetLimitPerMailbox() <= 0 {
-		req.LimitPerMailbox = 10
-	}
-	if req.GetLimitPerMailbox() > 100 {
-		req.LimitPerMailbox = 100
-	}
-	if req.GetMaxMailboxes() <= 0 {
-		req.MaxMailboxes = 100
-	}
-	if req.GetMaxMailboxes() > 500 {
-		req.MaxMailboxes = 500
-	}
-	req.EmailAddress = strings.TrimSpace(req.GetEmailAddress())
-	req.ParserProfile = strings.TrimSpace(req.GetParserProfile())
+	normalizeDashboardInboxFetchRequest(&req)
 
 	ctx, cancel := context.WithTimeout(r.Context(), s.config.inboxTimeout)
 	defer cancel()
