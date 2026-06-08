@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 
 	"gorm.io/driver/postgres"
@@ -52,7 +53,18 @@ func (mailboxOperationRow) TableName() string {
 	return "mailbox_operations"
 }
 
-type operationStore struct {
+type operationStore interface {
+	create(ctx context.Context, operationID, action, emailAddress string) (*mailboxv1.MailboxOperation, error)
+	createRegistration(ctx context.Context, operationID string, importOnly bool) (*mailboxv1.MailboxOperation, error)
+	createOAuth(ctx context.Context, operationID string, emailAddress string, onlyMissing bool, limit int32) (*mailboxv1.MailboxOperation, error)
+	update(ctx context.Context, operationID string, update operationUpdate) (*mailboxv1.MailboxOperation, error)
+	get(ctx context.Context, operationID string) (*mailboxv1.MailboxOperation, error)
+	list(ctx context.Context, filter operationListFilter) ([]*mailboxv1.MailboxOperation, error)
+	startRegistrationWorkerRun(ctx context.Context, operationID string) (*operationRunStart, error)
+	startOAuthWorkerRun(ctx context.Context, operationID string) (*operationRunStart, error)
+}
+
+type pgOperationStore struct {
 	db *gorm.DB
 }
 
@@ -83,7 +95,7 @@ type operationRunStart struct {
 	Final        bool
 }
 
-func newOperationStore(dsn string) (*operationStore, error) {
+func newPgOperationStore(dsn string) (*pgOperationStore, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
@@ -91,5 +103,5 @@ func newOperationStore(dsn string) (*operationStore, error) {
 	if !db.Migrator().HasTable((&mailboxOperationRow{}).TableName()) {
 		return nil, errors.New("database schema is not migrated: missing table mailbox_operations")
 	}
-	return &operationStore{db: db}, nil
+	return &pgOperationStore{db: db}, nil
 }

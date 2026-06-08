@@ -11,11 +11,11 @@ import (
 )
 
 type mailboxRegistrationWorker struct {
-	operations *operationStore
+	operations operationStore
 	activities *mailboxActivities
 }
 
-func runMailboxRegistrationWorker(ctx context.Context, consumer eventbus.Consumer, operations *operationStore, activities *mailboxActivities) error {
+func runMailboxRegistrationWorker(ctx context.Context, consumer eventbus.Consumer, operations operationStore, activities *mailboxActivities) error {
 	worker := &mailboxRegistrationWorker{operations: operations, activities: activities}
 	return eventbus.RunTypedConsumerWorker(ctx, eventbus.TypedConsumerWorkerConfig[*pb.MailboxRegistrationOperationRequest]{
 		Name:       "mailbox registration requests",
@@ -47,11 +47,11 @@ func (w *mailboxRegistrationWorker) handle(ctx context.Context, request *pb.Mail
 }
 
 type mailboxOAuthWorker struct {
-	operations *operationStore
+	operations operationStore
 	activities *mailboxActivities
 }
 
-func runMailboxOAuthWorker(ctx context.Context, consumer eventbus.Consumer, operations *operationStore, activities *mailboxActivities) error {
+func runMailboxOAuthWorker(ctx context.Context, consumer eventbus.Consumer, operations operationStore, activities *mailboxActivities) error {
 	worker := &mailboxOAuthWorker{operations: operations, activities: activities}
 	return eventbus.RunTypedConsumerWorker(ctx, eventbus.TypedConsumerWorkerConfig[*pb.MailboxOAuthOperationRequest]{
 		Name:       "mailbox OAuth requests",

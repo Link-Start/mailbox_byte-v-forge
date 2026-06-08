@@ -8,7 +8,7 @@ import (
 	"mailboxapi/internal/emailx"
 )
 
-func (s *operationStore) create(ctx context.Context, operationID, action, emailAddress string) (*mailboxv1.MailboxOperation, error) {
+func (s *pgOperationStore) create(ctx context.Context, operationID, action, emailAddress string) (*mailboxv1.MailboxOperation, error) {
 	row := &mailboxOperationRow{
 		OperationID:  strings.TrimSpace(operationID),
 		Action:       strings.ToUpper(strings.TrimSpace(action)),
@@ -22,7 +22,7 @@ func (s *operationStore) create(ctx context.Context, operationID, action, emailA
 	return operationRowToProto(row), nil
 }
 
-func (s *operationStore) createRegistration(ctx context.Context, operationID string, importOnly bool) (*mailboxv1.MailboxOperation, error) {
+func (s *pgOperationStore) createRegistration(ctx context.Context, operationID string, importOnly bool) (*mailboxv1.MailboxOperation, error) {
 	row := &mailboxOperationRow{
 		OperationID: strings.TrimSpace(operationID),
 		Action:      operationActionRegisterMailbox,
@@ -36,7 +36,7 @@ func (s *operationStore) createRegistration(ctx context.Context, operationID str
 	return operationRowToProto(row), nil
 }
 
-func (s *operationStore) createOAuth(ctx context.Context, operationID string, emailAddress string, onlyMissing bool, limit int32) (*mailboxv1.MailboxOperation, error) {
+func (s *pgOperationStore) createOAuth(ctx context.Context, operationID string, emailAddress string, onlyMissing bool, limit int32) (*mailboxv1.MailboxOperation, error) {
 	row := &mailboxOperationRow{
 		OperationID:  strings.TrimSpace(operationID),
 		Action:       operationActionMailboxOAuth,

@@ -11,10 +11,10 @@ import (
 
 type mailboxInboxFetchWorker struct {
 	service    *EmailService
-	operations *operationStore
+	operations operationStore
 }
 
-func runMailboxInboxFetchWorker(ctx context.Context, consumer eventbus.Consumer, service *EmailService, operations *operationStore) error {
+func runMailboxInboxFetchWorker(ctx context.Context, consumer eventbus.Consumer, service *EmailService, operations operationStore) error {
 	worker := &mailboxInboxFetchWorker{service: service, operations: operations}
 	return eventbus.RunTypedConsumerWorker(ctx, eventbus.TypedConsumerWorkerConfig[*pb.MailboxInboxFetchRequest]{
 		Name:           "mailbox inbox fetch requests",

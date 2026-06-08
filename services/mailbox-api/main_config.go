@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"time"
 
 	"mailboxapi/internal/envx"
@@ -34,7 +33,7 @@ func loadConfig() config {
 	outlook := loadOutlookRuntimeConfig()
 	return config{
 		listenAddr:             envx.StringDefault("LISTEN_ADDR", ":50051"),
-		pgDSN:                  requiredEnv("MAILBOX_PG_DSN"),
+		pgDSN:                  envx.StringDefault("MAILBOX_PG_DSN", ""),
 		webhookHTTPAddr:        envx.StringDefault("MAILBOX_WEBHOOK_HTTP_ADDR", ":8082"),
 		dashboardHTTPAddr:      envx.StringDefault("MAILBOX_DASHBOARD_HTTP_ADDR", ":8080"),
 		dashboardStaticDir:     envx.StringDefault("MAILBOX_DASHBOARD_STATIC_DIR", "/app/dashboard/mailbox"),
@@ -53,12 +52,4 @@ func loadConfig() config {
 		providers:              loadMailboxProviderRuntimeConfig(loadMailboxProviderConfig(), outlook),
 		webhook:                loadEmailWebhookConfig(),
 	}
-}
-
-func requiredEnv(name string) string {
-	if value := envx.String(name); value != "" {
-		return value
-	}
-	log.Fatalf("%s is required", name)
-	return ""
 }

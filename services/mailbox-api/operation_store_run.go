@@ -10,15 +10,15 @@ import (
 	"mailboxapi/internal/dbclaim"
 )
 
-func (s *operationStore) startRegistrationWorkerRun(ctx context.Context, operationID string) (*operationRunStart, error) {
+func (s *pgOperationStore) startRegistrationWorkerRun(ctx context.Context, operationID string) (*operationRunStart, error) {
 	return s.startWorkerRun(ctx, operationID, operationActionRegisterMailbox, "run_registration", "mailbox-registration-worker")
 }
 
-func (s *operationStore) startOAuthWorkerRun(ctx context.Context, operationID string) (*operationRunStart, error) {
+func (s *pgOperationStore) startOAuthWorkerRun(ctx context.Context, operationID string) (*operationRunStart, error) {
 	return s.startWorkerRun(ctx, operationID, operationActionMailboxOAuth, "run_oauth", "mailbox-oauth-worker")
 }
 
-func (s *operationStore) startWorkerRun(ctx context.Context, operationID string, action string, runStep string, workerID string) (*operationRunStart, error) {
+func (s *pgOperationStore) startWorkerRun(ctx context.Context, operationID string, action string, runStep string, workerID string) (*operationRunStart, error) {
 	operationID = strings.TrimSpace(operationID)
 	if operationID == "" {
 		return nil, errors.New("operation_id is required")

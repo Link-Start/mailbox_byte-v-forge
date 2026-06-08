@@ -20,6 +20,7 @@ import (
 
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxapp"
+	"mailboxapi/internal/mailboxmem"
 	"mailboxapi/internal/mailboxpg"
 	"mailboxapi/pb"
 )
@@ -52,9 +53,18 @@ func main() {
 
 	recentCache := newRecentEmailCache(recentEmailClient, cfg.recentEmailCachePrefix, cfg.recentEmailCacheTTL, cfg.recentEmailCacheMax)
 	secretStore := newMailboxSecretStore(recentEmailClient, cfg.recentEmailCachePrefix+":secrets", cfg.recentEmailCacheTTL)
-	mailboxRepo, err := mailboxpg.OpenRepository(ctx, cfg.pgDSN, cfg.providers.registry, mailboxPlatformEventOutboxTable)
-	if err != nil {
-		log.Fatalf("failed to initialize mailbox repository: %s", safeMailboxError(err))
+	var mailboxRepo mailboxRepository
+	if cfg.pgDSN == "" {
+		mailboxRepo, err = mailboxmem.NewRepository(cfg.providers.registry)
+		if err != nil {
+			log.Fatalf("failed to initialize mailbox memory repository: %s", safeMailboxError(err))
+		}
+		logInfo("mailbox postgres is disabled; mailbox data uses non-persistent in-process storage")
+	} else {
+		mailboxRepo, err = mailboxpg.OpenRepository(ctx, cfg.pgDSN, cfg.providers.registry, mailboxPlatformEventOutboxTable)
+		if err != nil {
+			log.Fatalf("failed to initialize mailbox repository: %s", safeMailboxError(err))
+		}
 	}
 	defer mailboxRepo.Close()
 	inboxService := inboxapp.NewService(inboxapp.Config{
@@ -88,13 +98,20 @@ func main() {
 	inboxSources := newMailboxInboxSourceRegistryForProviders(cfg.providers, mailboxInboxSourceDependencies{mailboxes: mailboxRepo})
 	mailWatcher := NewMailWatcher(inboxService, mailboxRepo, inboxSources, hotEvents)
 
-	operations, err := newOperationStore(cfg.pgDSN)
-	if err != nil {
-		log.Fatalf("failed to initialize mailbox operation store: %s", safeMailboxError(err))
+	var operations operationStore
+	var pgOperations *pgOperationStore
+	if cfg.pgDSN == "" {
+		operations = newMemoryOperationStore()
+	} else {
+		pgOperations, err = newPgOperationStore(cfg.pgDSN)
+		if err != nil {
+			log.Fatalf("failed to initialize mailbox operation store: %s", safeMailboxError(err))
+		}
+		operations = pgOperations
 	}
 	var workDispatcher *mailboxWorkDispatcher
-	if platformEventBus != nil {
-		workDispatcher = newMailboxWorkDispatcher(operations.db, "mailbox-api")
+	if platformEventBus != nil && pgOperations != nil {
+		workDispatcher = newMailboxWorkDispatcher(pgOperations.db, "mailbox-api")
 	} else {
 		logInfo("mailbox MQ dispatcher is disabled; mailbox operations run in local worker goroutines")
 	}

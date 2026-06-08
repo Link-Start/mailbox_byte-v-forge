@@ -5,7 +5,6 @@ import (
 	"mailboxapi/internal/emailx"
 
 	"mailboxapi/internal/mailboxmodel"
-	"mailboxapi/internal/mailboxpg"
 )
 
 func (c mailboxProviderRuntimeConfig) ListCapabilities(req *mailboxv1.ListMailboxProviderCapabilitiesRequest) *mailboxv1.ListMailboxProviderCapabilitiesResponse {
@@ -59,7 +58,7 @@ func (c mailboxProviderRuntimeConfig) IsStoredInboxOnlyAddress(email string) boo
 	return ok
 }
 
-func newMailboxActivitiesForProviders(cfg mailboxProviderRuntimeConfig, actionDeps mailboxProviderActionDependencies, emailBackend emailBackend, mailboxRepo *mailboxpg.Repository, operations *operationStore, hot *mailboxHotStream) *mailboxActivities {
+func newMailboxActivitiesForProviders(cfg mailboxProviderRuntimeConfig, actionDeps mailboxProviderActionDependencies, emailBackend emailBackend, mailboxRepo mailboxRepository, operations operationStore, hot *mailboxHotStream) *mailboxActivities {
 	return &mailboxActivities{
 		providerActions: newMailboxProviderActionRegistryForProviders(cfg, actionDeps),
 		emailBackend:    emailBackend,

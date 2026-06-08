@@ -5,11 +5,10 @@ import (
 
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxapp"
-	"mailboxapi/internal/mailboxpg"
 )
 
 type EmailService struct {
-	mailboxRepo *mailboxpg.Repository
+	mailboxRepo mailboxRepository
 	mailboxes   *mailboxapp.Service
 	inbox       *inboxapp.Service
 	watcher     *MailWatcher

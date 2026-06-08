@@ -12,7 +12,7 @@ type server struct {
 	pb.UnimplementedMailboxServiceServer
 
 	emailBackend emailBackend
-	operations   *operationStore
+	operations   operationStore
 	activities   *mailboxActivities
 	providers    mailboxProviderRuntimeConfig
 	hot          *mailboxHotStream

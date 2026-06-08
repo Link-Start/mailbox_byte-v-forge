@@ -7,17 +7,16 @@ import (
 
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxmodel"
-	"mailboxapi/internal/mailboxpg"
 )
 
 type MailWatcher struct {
 	inbox     *inboxapp.Service
-	mailboxes *mailboxpg.Repository
+	mailboxes mailboxRepository
 	sources   *mailboxInboxSourceRegistry
 	events    *mailboxHotStream
 }
 
-func NewMailWatcher(inbox *inboxapp.Service, mailboxes *mailboxpg.Repository, sources *mailboxInboxSourceRegistry, events *mailboxHotStream) *MailWatcher {
+func NewMailWatcher(inbox *inboxapp.Service, mailboxes mailboxRepository, sources *mailboxInboxSourceRegistry, events *mailboxHotStream) *MailWatcher {
 	return &MailWatcher{
 		inbox:     inbox,
 		mailboxes: mailboxes,

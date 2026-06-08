@@ -9,7 +9,7 @@ import (
 	"mailboxapi/internal/emailx"
 )
 
-func (s *operationStore) update(ctx context.Context, operationID string, update operationUpdate) (*mailboxv1.MailboxOperation, error) {
+func (s *pgOperationStore) update(ctx context.Context, operationID string, update operationUpdate) (*mailboxv1.MailboxOperation, error) {
 	updates := map[string]any{}
 	if value := strings.ToUpper(strings.TrimSpace(update.Status)); value != "" {
 		updates["status"] = value
@@ -37,7 +37,7 @@ func (s *operationStore) update(ctx context.Context, operationID string, update 
 	return s.get(ctx, operationID)
 }
 
-func (s *operationStore) get(ctx context.Context, operationID string) (*mailboxv1.MailboxOperation, error) {
+func (s *pgOperationStore) get(ctx context.Context, operationID string) (*mailboxv1.MailboxOperation, error) {
 	var row mailboxOperationRow
 	if err := s.db.WithContext(ctx).First(&row, "operation_id = ?", strings.TrimSpace(operationID)).Error; err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (s *operationStore) get(ctx context.Context, operationID string) (*mailboxv
 	return operationRowToProto(&row), nil
 }
 
-func (s *operationStore) list(ctx context.Context, filter operationListFilter) ([]*mailboxv1.MailboxOperation, error) {
+func (s *pgOperationStore) list(ctx context.Context, filter operationListFilter) ([]*mailboxv1.MailboxOperation, error) {
 	limit := filter.Limit
 	if limit <= 0 || limit > 200 {
 		limit = 50

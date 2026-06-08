@@ -3,8 +3,6 @@ package main
 import (
 	"net/http"
 	"sync"
-
-	"mailboxapi/internal/mailboxpg"
 )
 
 type oauthEntry struct {
@@ -19,12 +17,12 @@ type outlookInboxSource struct {
 	inboxOverlap  int
 	httpClient    *http.Client
 	oauthConfig   outlookOAuthConfig
-	mailboxes     *mailboxpg.Repository
+	mailboxes     mailboxRepository
 	mu            sync.Mutex
 	oauthManagers map[string]oauthEntry
 }
 
-func newOutlookInboxSource(providerKey string, cfg outlookWatcherConfig, mailboxes *mailboxpg.Repository) *outlookInboxSource {
+func newOutlookInboxSource(providerKey string, cfg outlookWatcherConfig, mailboxes mailboxRepository) *outlookInboxSource {
 	return &outlookInboxSource{
 		providerKey:   providerKey,
 		messageLimit:  cfg.messageLimit,

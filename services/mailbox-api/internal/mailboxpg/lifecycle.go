@@ -14,7 +14,7 @@ import (
 
 func OpenRepository(ctx context.Context, dsn string, providers *mailboxprovider.Registry, outboxTable string) (*Repository, error) {
 	if strings.TrimSpace(dsn) == "" {
-		return nil, errors.New("PG_DSN is required")
+		return nil, errors.New("mailbox postgres DSN is required")
 	}
 	if providers == nil {
 		return nil, errors.New("mailbox providers are required")

@@ -24,7 +24,7 @@ sh scripts/generate-proto.sh
 
 ## 配置
 
-`services/mailbox-api` 直接内置 Outlook 和 Cloudflare provider adapter，并通过 `MAILBOX_PG_DSN` 维护邮箱、邮件和操作状态投影。
+`services/mailbox-api` 直接内置 Outlook 和 Cloudflare provider adapter。配置 `MAILBOX_PG_DSN` 时使用 PostgreSQL 维护邮箱、邮件、operation 和平台事件 outbox 投影；未配置时使用本进程内存仓储，适合 standalone 试用，进程重启后邮箱、邮件和 operation 状态不会保留。
 
 Dashboard 由 mailbox 服务自身托管，不再发布 Module Federation remote。静态资源默认从 `MAILBOX_DASHBOARD_STATIC_DIR=/app/dashboard/mailbox` 读取，服务在 `/dashboard/mailbox/` 和根路径提供独立 SPA，在 `/api/mailbox/*` 提供 dashboard BFF API。
 
@@ -40,9 +40,9 @@ Cloudflare 邮件是主动推送链路：Email Routing Worker 收到邮件后把
 
 邮件内容会先落库，再通过 mailbox 通用解析器生成 `EmailSignal`。通用解析器只识别验证码等可复用邮件信号；验证码原文写入 mailbox 自有 Redis TTL secret store，对外 `EmailSignal.secret_ref` 只返回可解析引用与过期时间，dashboard 不展示或复制验证码原文。业务状态判断由业务服务通过 webhook 或查询读取邮件后自行完成。
 
-Redis 是可选运行增强而非启动前置条件。配置 `MAILBOX_RECENT_EMAIL_REDIS_URL` 后，新入库邮件按邮箱写入近期热缓存，并用同一 TTL 维护邮箱验证码 secret；未配置时跳过近期缓存和 TTL secret store，`WaitForMailboxEmail` 直接回查 PostgreSQL 投影。配置 `MAILBOX_COORDINATION_REDIS_URL` 后，`MAILBOX_INBOX_LOCK_KEY_PREFIX` 用于跨副本抓取锁和 Outlook webhook refresh 锁；未配置时按单副本 standalone 模式无分布式锁执行。需要 Outlook provider 拉取时仍先发布 `mailbox.email.poll_requested` 到 `platform-nats`，由 mailbox poll worker 消费执行。UI 实时刷新通过 HotStream/NATS Core 的非持久化通知触发前端重新查询。Redis 仅作为热点读取、短期 secret 与协调层，不作为邮件领域状态真源。
+Redis 是可选运行增强而非启动前置条件。配置 `MAILBOX_RECENT_EMAIL_REDIS_URL` 后，新入库邮件按邮箱写入近期热缓存，并用同一 TTL 维护邮箱验证码 secret；未配置时跳过近期缓存和 TTL secret store，`WaitForMailboxEmail` 直接回查 mailbox 仓储投影。配置 `MAILBOX_COORDINATION_REDIS_URL` 后，`MAILBOX_INBOX_LOCK_KEY_PREFIX` 用于跨副本抓取锁和 Outlook webhook refresh 锁；未配置时按单副本 standalone 模式无分布式锁执行。UI 实时刷新通过 HotStream/NATS Core 或进程内 HotStream 的非持久化通知触发前端重新查询。Redis 仅作为热点读取、短期 secret 与协调层，不作为邮件领域状态真源。
 
-配置 `PLATFORM_NATS_URL` 时，邮件入库会在同一 DB transaction 写入 `mailbox_platform_event_outbox`，再由 outbox worker 发布公共 `mailbox.email.received` / `mailbox.email.signal.received` 事件，避免邮件已落库但 NATS 临时失败导致下游投影丢失；`FetchMailboxInboxes`、注册/OAuth 和入站 poll 通过 mailbox command event worker 异步执行。未配置 `PLATFORM_NATS_URL` 时不启动平台事件 worker，dashboard HotStream 使用进程内订阅，注册/OAuth/fetch operation 由 mailbox 本进程 local worker goroutine 执行，`WaitForMailboxEmail` 直接触发本地 Outlook poll。业务服务需要消费邮箱事件时应订阅 platform events 并在自身服务内维护幂等投影，不再通过 mailbox outbound HTTP webhook 旁路投递。
+同时配置 `MAILBOX_PG_DSN` 和 `PLATFORM_NATS_URL` 时，邮件入库会在同一 DB transaction 写入 `mailbox_platform_event_outbox`，再由 outbox worker 发布公共 `mailbox.email.received` / `mailbox.email.signal.received` 事件，避免邮件已落库但 NATS 临时失败导致下游投影丢失；`FetchMailboxInboxes`、注册/OAuth 和入站 poll 通过 mailbox command event worker 异步执行。未配置 `PLATFORM_NATS_URL` 或未配置 `MAILBOX_PG_DSN` 时不使用 DB outbox 派发 command，注册/OAuth/fetch operation 由 mailbox 本进程 local worker goroutine 执行，`WaitForMailboxEmail` 直接触发本地 Outlook poll。业务服务需要消费邮箱事件时应订阅 platform events 并在自身服务内维护幂等投影，不再通过 mailbox outbound HTTP webhook 旁路投递。
 
 ## 检查
 

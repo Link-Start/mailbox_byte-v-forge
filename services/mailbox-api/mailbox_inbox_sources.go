@@ -7,7 +7,6 @@ import (
 	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 
 	"mailboxapi/internal/mailboxmodel"
-	"mailboxapi/internal/mailboxpg"
 	"mailboxapi/internal/mailboxprovider"
 )
 
@@ -20,7 +19,7 @@ type mailboxInboxSource interface {
 }
 
 type mailboxInboxSourceDependencies struct {
-	mailboxes *mailboxpg.Repository
+	mailboxes mailboxRepository
 }
 
 type mailboxInboxSourcePlugin interface {
