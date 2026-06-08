@@ -4,8 +4,8 @@ FROM docker.m.daocloud.io/library/node:22-bookworm-slim AS dashboard_builder
 
 WORKDIR /mailbox/webui
 RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources     && apt-get update     && apt-get install -y --no-install-recommends libprotobuf-dev protobuf-compiler     && rm -rf /var/lib/apt/lists/*
-COPY mailbox/proto /mailbox/proto
-COPY mailbox/webui ./
+COPY proto /mailbox/proto
+COPY webui ./
 RUN npm ci && SOURCE_ROOT=/ npm run build
 
 FROM docker.m.daocloud.io/library/golang:1.26-alpine AS builder
@@ -19,10 +19,10 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
     && go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11 \
     && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 
-COPY mailbox/services/mailbox-api/go.mod mailbox/services/mailbox-api/go.sum* ./
+COPY services/mailbox-api/go.mod services/mailbox-api/go.sum* ./
 RUN go mod download
 
-COPY mailbox/proto ./proto
+COPY proto ./proto
 RUN mkdir -p /generated/pb /generated/internal/contracts \
     && protoc -I proto --go_out=/generated --go_opt=module=mailboxapi \
       proto/byte/v/forge/contracts/common/v1/common.proto \
@@ -38,7 +38,7 @@ RUN mkdir -p /generated/pb /generated/internal/contracts \
       proto/mailbox_commands.proto \
       proto/mailbox_service.proto
 
-COPY mailbox/services/mailbox-api ./
+COPY services/mailbox-api ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
     rm -rf pb internal/contracts \
     && cp -R /generated/pb ./pb \
