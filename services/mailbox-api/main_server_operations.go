@@ -21,8 +21,11 @@ func (s *server) RegisterMailbox(ctx context.Context, req *mailboxv1.RegisterMai
 		return nil, status.Errorf(codes.Internal, "create mailbox operation: %s", safeMailboxError(err))
 	}
 	if s.work == nil {
-		s.updateOperation(ctx, operationID, operationUpdate{Status: operationStatusFailed, LastStep: "queue_registration", ErrorMessage: "mailbox event dispatcher is not configured"})
-		return nil, status.Error(codes.Unavailable, "mailbox event dispatcher is not configured")
+		s.runRegistrationLocally(ctx, operationID)
+		return &mailboxv1.RegisterMailboxResponse{
+			OperationId: operationID,
+			Started:     true,
+		}, nil
 	}
 	if err := s.work.PublishRegistrationRequested(ctx, operationID); err != nil {
 		s.updateOperation(ctx, operationID, operationUpdate{Status: operationStatusFailed, LastStep: "queue_registration", ErrorMessage: safeMailboxError(err)})
@@ -42,8 +45,11 @@ func (s *server) RunMailboxOAuth(ctx context.Context, req *mailboxv1.StartMailbo
 		return nil, status.Errorf(codes.Internal, "create mailbox operation: %s", safeMailboxError(err))
 	}
 	if s.work == nil {
-		s.updateOperation(ctx, operationID, operationUpdate{Status: operationStatusFailed, LastStep: "queue_oauth", ErrorMessage: "mailbox event dispatcher is not configured"})
-		return nil, status.Error(codes.Unavailable, "mailbox event dispatcher is not configured")
+		s.runOAuthLocally(ctx, operationID)
+		return &mailboxv1.StartMailboxOAuthResponse{
+			OperationId: operationID,
+			Started:     true,
+		}, nil
 	}
 	if err := s.work.PublishOAuthRequested(ctx, operationID); err != nil {
 		s.updateOperation(ctx, operationID, operationUpdate{Status: operationStatusFailed, LastStep: "queue_oauth", ErrorMessage: safeMailboxError(err)})
@@ -70,8 +76,8 @@ func (s *server) FetchMailboxInboxes(ctx context.Context, req *mailboxv1.FetchMa
 		ReceivedAfterUnix: req.GetReceivedAfterUnix(),
 	}
 	if s.work == nil {
-		s.updateOperation(ctx, operationID, operationUpdate{Status: operationStatusFailed, LastStep: "queue_fetch_inboxes", ErrorMessage: "mailbox event dispatcher is not configured"})
-		return nil, status.Error(codes.Unavailable, "mailbox event dispatcher is not configured")
+		s.runInboxFetchLocally(ctx, operationID, request)
+		return &mailboxv1.FetchMailboxInboxesResponse{OperationId: operationID}, nil
 	}
 	if err := s.work.PublishInboxFetchRequested(ctx, operationID, request); err != nil {
 		s.updateOperation(ctx, operationID, operationUpdate{Status: operationStatusFailed, LastStep: "queue_fetch_inboxes", ErrorMessage: safeMailboxError(err)})

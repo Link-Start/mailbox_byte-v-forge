@@ -84,7 +84,6 @@ func main() {
 		defer closeHotStream()
 	}
 	hotEvents := newMailboxHotStream(hotBus)
-	platformEmailEvents := newMailboxPlatformEvents(platformEventBus)
 	browserClient := browserautomationv1.NewBrowserAutomationServiceClient(browserConn)
 	inboxSources := newMailboxInboxSourceRegistryForProviders(cfg.providers, mailboxInboxSourceDependencies{mailboxes: mailboxRepo})
 	mailWatcher := NewMailWatcher(inboxService, mailboxRepo, inboxSources, hotEvents)
@@ -93,42 +92,46 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox operation store: %s", safeMailboxError(err))
 	}
-	workDispatcher := newMailboxWorkDispatcher(operations.db, "mailbox-api")
+	var workDispatcher *mailboxWorkDispatcher
+	if platformEventBus != nil {
+		workDispatcher = newMailboxWorkDispatcher(operations.db, "mailbox-api")
+	} else {
+		logInfo("mailbox MQ dispatcher is disabled; mailbox operations run in local worker goroutines")
+	}
 	emailBackend := &EmailService{mailboxRepo: mailboxRepo, mailboxes: mailboxapp.NewService(mailboxRepo), inbox: inboxService, watcher: mailWatcher, providers: cfg.providers, inboxLock: inboxLock, work: workDispatcher}
-
-	pollConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, eventcatalog.MailboxEmailPollRequested, 10, 60*time.Second)
-	if err != nil {
-		log.Fatalf("failed to initialize mailbox email poll worker: %s", safeMailboxError(err))
-	}
-
-	fetchConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxInboxFetchRequested, 5, 5*time.Minute)
-	if err != nil {
-		log.Fatalf("failed to initialize mailbox inbox fetch worker: %s", safeMailboxError(err))
-	}
 
 	activities := newMailboxActivitiesForProviders(cfg.providers, mailboxProviderActionDependencies{browserClient: browserClient}, emailBackend, mailboxRepo, operations, hotEvents)
 
-	registrationConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxRegistrationRequested, 2, 5*time.Minute)
-	if err != nil {
-		log.Fatalf("failed to initialize mailbox registration worker: %s", safeMailboxError(err))
-	}
-
-	oauthConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxOAuthRequested, 2, 5*time.Minute)
-	if err != nil {
-		log.Fatalf("failed to initialize mailbox OAuth worker: %s", safeMailboxError(err))
-	}
-
 	errCh := make(chan error, 3)
 	group, groupCtx := errgroup.WithContext(ctx)
-	group.Go(func() error {
-		return mailboxRepo.RunOutboxWorker(groupCtx, mailboxPlatformEventOutboxTable, platformEmailEvents, logWarning)
-	})
-	group.Go(func() error { return runMailboxEmailPollWorker(groupCtx, pollConsumer, emailBackend) })
-	group.Go(func() error { return runMailboxInboxFetchWorker(groupCtx, fetchConsumer, emailBackend, operations) })
-	group.Go(func() error {
-		return runMailboxRegistrationWorker(groupCtx, registrationConsumer, operations, activities)
-	})
-	group.Go(func() error { return runMailboxOAuthWorker(groupCtx, oauthConsumer, operations, activities) })
+	if platformEventBus != nil {
+		platformEmailEvents := newMailboxPlatformEvents(platformEventBus)
+		pollConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, eventcatalog.MailboxEmailPollRequested, 10, 60*time.Second)
+		if err != nil {
+			log.Fatalf("failed to initialize mailbox email poll worker: %s", safeMailboxError(err))
+		}
+		fetchConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxInboxFetchRequested, 5, 5*time.Minute)
+		if err != nil {
+			log.Fatalf("failed to initialize mailbox inbox fetch worker: %s", safeMailboxError(err))
+		}
+		registrationConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxRegistrationRequested, 2, 5*time.Minute)
+		if err != nil {
+			log.Fatalf("failed to initialize mailbox registration worker: %s", safeMailboxError(err))
+		}
+		oauthConsumer, err := platformEventBus.PullWorkerForDefinition(cfg.eventStreamName, mailboxOAuthRequested, 2, 5*time.Minute)
+		if err != nil {
+			log.Fatalf("failed to initialize mailbox OAuth worker: %s", safeMailboxError(err))
+		}
+		group.Go(func() error {
+			return mailboxRepo.RunOutboxWorker(groupCtx, mailboxPlatformEventOutboxTable, platformEmailEvents, logWarning)
+		})
+		group.Go(func() error { return runMailboxEmailPollWorker(groupCtx, pollConsumer, emailBackend) })
+		group.Go(func() error { return runMailboxInboxFetchWorker(groupCtx, fetchConsumer, emailBackend, operations) })
+		group.Go(func() error {
+			return runMailboxRegistrationWorker(groupCtx, registrationConsumer, operations, activities)
+		})
+		group.Go(func() error { return runMailboxOAuthWorker(groupCtx, oauthConsumer, operations, activities) })
+	}
 	startWebhookServer(groupCtx, cfg.webhookHTTPAddr, cfg.webhook, cfg.providers, inboxService, mailWatcher, inboxLock, errCh)
 
 	listener, err := net.Listen("tcp", cfg.listenAddr)

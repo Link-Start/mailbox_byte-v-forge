@@ -28,7 +28,8 @@ func (s *EmailService) WaitForEmail(ctx context.Context, request *mailboxv1.Wait
 	deadline := time.Now().Add(time.Duration(timeoutSeconds) * time.Second)
 	if !s.providers.IsStoredInboxOnlyAddress(email) {
 		if s.work == nil {
-			logWarning("mailbox email poll dispatcher is not configured email=%s", emailx.Redact(email))
+			logWarning("mailbox email poll dispatcher is not configured; polling locally email=%s", emailx.Redact(email))
+			go s.pollMailboxEmailLocally(ctx, email)
 		} else if err := s.work.PublishEmailPollRequested(ctx, &mailboxv1.MailboxEmailPollRequest{
 			EmailAddress:    email,
 			SubjectKeyword:  strings.TrimSpace(request.GetSubjectKeyword()),
@@ -42,6 +43,15 @@ func (s *EmailService) WaitForEmail(ctx context.Context, request *mailboxv1.Wait
 		}
 	}
 	return s.waitForPersistedEmail(ctx, request, timeoutSeconds, issuedAfterUnix)
+}
+
+func (s *EmailService) pollMailboxEmailLocally(ctx context.Context, email string) {
+	if s == nil || s.watcher == nil {
+		return
+	}
+	if err := s.watcher.PollForEmail(context.WithoutCancel(ctx), email); err != nil {
+		logWarning("local mailbox email poll failed email=%s: %s", emailx.Redact(email), safeMailboxError(err))
+	}
 }
 
 func (s *EmailService) waitForPersistedEmail(ctx context.Context, request *mailboxv1.WaitForMailboxEmailRequest, timeoutSeconds int32, issuedAfterUnix int64) (*mailboxv1.WaitForMailboxEmailResponse, error) {

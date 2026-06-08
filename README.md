@@ -43,7 +43,7 @@ Cloudflare 邮件是主动推送链路：Email Routing Worker 收到邮件后把
 
 Redis 是可选运行增强而非启动前置条件。配置 `MAILBOX_RECENT_EMAIL_REDIS_URL` 后，新入库邮件按邮箱写入近期热缓存，并用同一 TTL 维护邮箱验证码 secret；未配置时跳过近期缓存和 TTL secret store，`WaitForMailboxEmail` 直接回查 PostgreSQL 投影。配置 `MAILBOX_COORDINATION_REDIS_URL` 后，`MAILBOX_INBOX_LOCK_KEY_PREFIX` 用于跨副本抓取锁和 Outlook webhook refresh 锁；未配置时按单副本 standalone 模式无分布式锁执行。需要 Outlook provider 拉取时仍先发布 `mailbox.email.poll_requested` 到 `platform-nats`，由 mailbox poll worker 消费执行。UI 实时刷新通过 HotStream/NATS Core 的非持久化通知触发前端重新查询。Redis 仅作为热点读取、短期 secret 与协调层，不作为邮件领域状态真源。
 
-邮件入库会在同一 DB transaction 写入 `mailbox_platform_event_outbox`，再由 outbox worker 发布公共 `mailbox.email.received` / `mailbox.email.signal.received` 事件，避免邮件已落库但 NATS 临时失败导致下游投影丢失。`FetchMailboxInboxes` 只创建 operation 并发布 `mailbox.inbox.fetch_requested`，由 fetch worker 异步更新 operation 投影。mailbox 注册/OAuth operation、入站 poll/fetch 和公共事件 outbox 都依赖 `PLATFORM_NATS_URL`。业务服务需要消费邮箱事件时应订阅 platform events 并在自身服务内维护幂等投影，不再通过 mailbox outbound HTTP webhook 旁路投递。
+配置 `PLATFORM_NATS_URL` 时，邮件入库会在同一 DB transaction 写入 `mailbox_platform_event_outbox`，再由 outbox worker 发布公共 `mailbox.email.received` / `mailbox.email.signal.received` 事件，避免邮件已落库但 NATS 临时失败导致下游投影丢失；`FetchMailboxInboxes`、注册/OAuth 和入站 poll 通过 mailbox command event worker 异步执行。未配置 `PLATFORM_NATS_URL` 时不启动平台事件 worker，dashboard HotStream 使用进程内订阅，注册/OAuth/fetch operation 由 mailbox 本进程 local worker goroutine 执行，`WaitForMailboxEmail` 直接触发本地 Outlook poll。业务服务需要消费邮箱事件时应订阅 platform events 并在自身服务内维护幂等投影，不再通过 mailbox outbound HTTP webhook 旁路投递。
 
 ## 检查
 
