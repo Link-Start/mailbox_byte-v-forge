@@ -30,28 +30,6 @@ var (
 	errOperationNotFound       = errors.New("mailbox operation not found")
 )
 
-type mailboxOperationRow struct {
-	OperationID  string
-	Action       string
-	Status       string
-	EmailAddress string
-	LastStep     string
-	ErrorMessage string
-	ImportOnly   bool
-	OnlyMissing  bool
-	Limit        int32
-	ClaimOwner   string
-	ClaimUntil   int64
-	AttemptCount int32
-	ExitCode     int32
-	MailboxCount int32
-	FetchedCount int32
-	FailedCount  int32
-	MessageCount int32
-	CreatedAt    int64
-	UpdatedAt    int64
-}
-
 type operationStore interface {
 	create(ctx context.Context, operationID, action, emailAddress string) (*mailboxv1.MailboxOperation, error)
 	createRegistration(ctx context.Context, operationID string, importOnly bool) (*mailboxv1.MailboxOperation, error)
@@ -65,33 +43,6 @@ type operationStore interface {
 
 type pgOperationStore struct {
 	pool *pgxpool.Pool
-}
-
-type operationUpdate struct {
-	Status       string
-	LastStep     string
-	ErrorMessage string
-	ExitCode     int32
-	MailboxCount int32
-	FetchedCount int32
-	FailedCount  int32
-	MessageCount int32
-}
-
-type operationListFilter struct {
-	Limit        int
-	Status       mailboxv1.MailboxOperationStatus
-	Action       mailboxv1.MailboxOperationAction
-	EmailAddress string
-}
-
-type operationRunStart struct {
-	Operation    *mailboxv1.MailboxOperation
-	EmailAddress string
-	ImportOnly   bool
-	OnlyMissing  bool
-	Limit        int32
-	Final        bool
 }
 
 func newPgOperationStore(ctx context.Context, dsn string) (*pgOperationStore, error) {
