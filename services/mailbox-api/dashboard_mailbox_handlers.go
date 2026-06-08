@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"net/http"
-	"net/url"
 	"strings"
 
 	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
@@ -61,34 +60,23 @@ func (s *dashboardServer) handleMailboxes(w http.ResponseWriter, r *http.Request
 }
 
 func (s *dashboardServer) handleMailbox(w http.ResponseWriter, r *http.Request) {
-	emailPath := strings.Trim(strings.TrimPrefix(r.URL.Path, "/mailboxes/"), "/")
-	parts := strings.Split(emailPath, "/")
-	emailPath = parts[0]
-	email, err := url.PathUnescape(emailPath)
-	if err != nil || strings.TrimSpace(email) == "" {
-		writeError(w, http.StatusBadRequest, errors.New("email_address is required"))
+	route, statusCode, err := parseDashboardMailboxRoute(r.URL.Path)
+	if err != nil {
+		writeError(w, statusCode, err)
 		return
 	}
-	if len(parts) == 2 && parts[1] == "inbox" {
-		s.handleMailboxStoredInbox(w, r, email)
+	switch route.kind {
+	case dashboardMailboxRouteInbox:
+		s.handleMailboxStoredInbox(w, r, route.email)
 		return
-	}
-	if len(parts) == 3 && parts[1] == "inbox" {
-		messageID, err := url.PathUnescape(parts[2])
-		if err != nil || strings.TrimSpace(messageID) == "" {
-			writeError(w, http.StatusBadRequest, errors.New("message_id is required"))
-			return
-		}
-		s.handleMailboxStoredInboxMessage(w, r, email, messageID)
+	case dashboardMailboxRouteInboxMessage:
+		s.handleMailboxStoredInboxMessage(w, r, route.email, route.messageID)
 		return
-	}
-	if len(parts) > 1 {
-		writeError(w, http.StatusNotFound, errors.New("mailbox endpoint not found"))
-		return
+	case dashboardMailboxRouteMailbox:
 	}
 	switch r.Method {
 	case http.MethodDelete:
-		resp, err := s.mailboxClient.DeleteMailbox(r.Context(), &mailboxv1.DeleteMailboxRequest{EmailAddress: strings.TrimSpace(email)})
+		resp, err := s.mailboxClient.DeleteMailbox(r.Context(), &mailboxv1.DeleteMailboxRequest{EmailAddress: strings.TrimSpace(route.email)})
 		if err != nil {
 			writeError(w, http.StatusBadGateway, err)
 			return
