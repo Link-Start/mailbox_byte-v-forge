@@ -2,22 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"mailboxapi/internal/grpcclient"
-	"mailboxapi/internal/grpchealth"
-	"mailboxapi/internal/redisx"
 
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxapp"
-	"mailboxapi/pb"
 )
 
 func main() {
@@ -57,10 +50,7 @@ func main() {
 		EventSource: mailboxEventSource,
 		Logf:        logWarning,
 	})
-	var inboxLock *redisx.BestEffortLocker
-	if coordinationClient != nil {
-		inboxLock = redisx.NewBestEffortLocker(coordinationClient, cfg.inboxLockPrefix, cfg.inboxLockTTL, cfg.inboxLockRetry)
-	}
+	inboxLock := newMailboxInboxLock(coordinationClient, cfg)
 	mailboxEventBus, closeMailboxEventBus, err := newMailboxEventBus(ctx, cfg)
 	if err != nil {
 		log.Fatalf("failed to initialize mailbox event bus: %s", safeMailboxError(err))
@@ -94,57 +84,24 @@ func main() {
 
 	activities := newMailboxActivitiesForProviders(cfg.providers, mailboxProviderActionDependencies{browserClient: browserClient}, emailBackend, mailboxRepo, operations, hotEvents)
 
-	errCh := make(chan error, 3)
 	group, groupCtx := errgroup.WithContext(ctx)
 	if err := startMailboxEventWorkers(groupCtx, group, cfg, mailboxEventBus, mailboxRepo, emailBackend, operations, activities); err != nil {
 		log.Fatalf("failed to initialize mailbox event workers: %s", safeMailboxError(err))
 	}
-	startWebhookServer(groupCtx, cfg.webhookHTTPAddr, cfg.webhook, cfg.providers, inboxService, mailWatcher, inboxLock, errCh)
-
-	listener, err := net.Listen("tcp", cfg.listenAddr)
-	if err != nil {
-		log.Fatalf("failed to listen on %s: %s", cfg.listenAddr, safeMailboxError(err))
+	if err := startMailboxServers(groupCtx, group, cfg, mailboxServerRuntime{
+		emailBackend:    emailBackend,
+		operations:      operations,
+		activities:      activities,
+		providers:       cfg.providers,
+		hot:             hotEvents,
+		work:            workDispatcher,
+		inbox:           inboxService,
+		watcher:         mailWatcher,
+		inboxLock:       inboxLock,
+		dashboardEvents: hotBus,
+	}); err != nil {
+		log.Fatalf("failed to initialize mailbox servers: %s", safeMailboxError(err))
 	}
-
-	mailboxServer := &server{
-		emailBackend: emailBackend,
-		operations:   operations,
-		providers:    cfg.providers,
-		hot:          hotEvents,
-		work:         workDispatcher,
-		activities:   activities,
-	}
-	grpcServer := grpc.NewServer()
-	pb.RegisterMailboxServiceServer(grpcServer, mailboxServer)
-	grpchealth.RegisterServing(grpcServer)
-
-	dashboardConn, err := grpcclient.NewInsecure(grpcclient.SelfTarget(cfg.listenAddr))
-	if err != nil {
-		log.Fatalf("connect mailbox dashboard API: %s", safeMailboxError(err))
-	}
-	defer dashboardConn.Close()
-	startDashboardHTTP(groupCtx, cfg.dashboardHTTPAddr, cfg.dashboardStaticDir, cfg.dashboard, pb.NewMailboxServiceClient(dashboardConn), hotBus, errCh)
-
-	go func() {
-		<-groupCtx.Done()
-		grpcServer.GracefulStop()
-	}()
-
-	log.Printf("mailbox API listening on %s", cfg.listenAddr)
-	group.Go(func() error {
-		if err := grpcServer.Serve(listener); err != nil {
-			return fmt.Errorf("mailbox API failed: %w", err)
-		}
-		return nil
-	})
-	group.Go(func() error {
-		select {
-		case <-groupCtx.Done():
-			return nil
-		case err := <-errCh:
-			return err
-		}
-	})
 	if err := group.Wait(); err != nil {
 		stop()
 		log.Fatal(safeMailboxError(err))

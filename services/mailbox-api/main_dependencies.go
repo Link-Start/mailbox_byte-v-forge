@@ -10,6 +10,7 @@ import (
 	"mailboxapi/internal/grpcclient"
 	"mailboxapi/internal/mailboxmem"
 	"mailboxapi/internal/mailboxpg"
+	"mailboxapi/internal/redisx"
 )
 
 func newBrowserAutomationClient(addr string) (browserautomationv1.BrowserAutomationServiceClient, func(), error) {
@@ -67,4 +68,11 @@ func newMailboxOperationStore(ctx context.Context, cfg config) (operationStore, 
 		return nil, nil, err
 	}
 	return store, store, nil
+}
+
+func newMailboxInboxLock(client *redis.Client, cfg config) *redisx.BestEffortLocker {
+	if client == nil {
+		return nil
+	}
+	return redisx.NewBestEffortLocker(client, cfg.inboxLockPrefix, cfg.inboxLockTTL, cfg.inboxLockRetry)
 }
