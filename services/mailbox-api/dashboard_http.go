@@ -15,8 +15,8 @@ import (
 
 	"github.com/byte-v-forge/common-lib/hotstream"
 	"github.com/byte-v-forge/common-lib/httpsse"
-	"github.com/byte-v-forge/common-lib/protojsonhttp"
 	"google.golang.org/protobuf/proto"
+	"mailboxapi/internal/protojsonhttp"
 
 	"mailboxapi/pb"
 )

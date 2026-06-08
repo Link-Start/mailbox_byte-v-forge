@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/redisx"
 	"github.com/redis/go-redis/v9"
+	"mailboxapi/internal/redisx"
 )
 
 func newOptionalRedisClient(ctx context.Context, rawURL string, role string) (*redis.Client, error) {

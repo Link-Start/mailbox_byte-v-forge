@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/byte-v-forge/common-lib/redisx"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/redisx"
 
 	"mailboxapi/internal/inboxapp"
 )

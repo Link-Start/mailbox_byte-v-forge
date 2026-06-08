@@ -9,7 +9,7 @@ import (
 
 	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/byte-v-forge/common-lib/secretref"
+	"mailboxapi/internal/secretref"
 )
 
 var (

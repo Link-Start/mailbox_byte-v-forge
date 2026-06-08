@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/stringx"
 	cloudflare "github.com/cloudflare/cloudflare-go/v7"
 	"github.com/cloudflare/cloudflare-go/v7/dns"
 	"github.com/cloudflare/cloudflare-go/v7/email_routing"
 	"github.com/cloudflare/cloudflare-go/v7/option"
 	"github.com/cloudflare/cloudflare-go/v7/zones"
+	"mailboxapi/internal/stringx"
 
 	"mailboxapi/pb"
 )

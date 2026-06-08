@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/redactx"
+	"mailboxapi/internal/redactx"
 )
 
 const mailboxErrorSnippetLimit = 600

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/envx"
 	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
+	"mailboxapi/internal/envx"
 )
 
 const (

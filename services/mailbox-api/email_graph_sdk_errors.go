@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/httpx"
 	abs "github.com/microsoft/kiota-abstractions-go"
+	"mailboxapi/internal/httpx"
 )
 
 func graphFetchErrorFromSDK(err error) error {

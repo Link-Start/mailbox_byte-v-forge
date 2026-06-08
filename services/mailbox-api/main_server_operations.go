@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/byte-v-forge/common-lib/pagex"
-	"github.com/byte-v-forge/common-lib/randx"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/pagex"
+	"mailboxapi/internal/randx"
 )
 
 func (s *server) RegisterMailbox(ctx context.Context, req *mailboxv1.RegisterMailboxRequest) (*mailboxv1.RegisterMailboxResponse, error) {

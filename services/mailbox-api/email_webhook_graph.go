@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/emailx"
-	"github.com/byte-v-forge/common-lib/redisx"
+	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/redisx"
 )
 
 func (h *emailWebhookHandler) handleGraphNotification(w http.ResponseWriter, r *http.Request) {

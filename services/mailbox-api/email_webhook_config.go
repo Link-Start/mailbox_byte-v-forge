@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/byte-v-forge/common-lib/envx"
+	"mailboxapi/internal/envx"
 )
 
 type emailWebhookConfig struct {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/byte-v-forge/common-lib/redisx"
+	"mailboxapi/internal/redisx"
 
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxapp"

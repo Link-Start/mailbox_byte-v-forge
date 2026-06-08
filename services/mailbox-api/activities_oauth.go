@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/emailx"
+	"mailboxapi/internal/emailx"
 
 	"mailboxapi/pb"
 )

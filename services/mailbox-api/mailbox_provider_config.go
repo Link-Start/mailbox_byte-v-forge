@@ -1,6 +1,6 @@
 package main
 
-import "github.com/byte-v-forge/common-lib/envx"
+import "mailboxapi/internal/envx"
 
 type mailboxProviderConfig struct {
 	outlookMaxMessages int

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
-	"github.com/byte-v-forge/common-lib/redisx"
-	"github.com/byte-v-forge/common-lib/secretref"
 	"github.com/redis/go-redis/v9"
+	"mailboxapi/internal/redisx"
+	"mailboxapi/internal/secretref"
 )
 
 type mailboxSecretStore struct {

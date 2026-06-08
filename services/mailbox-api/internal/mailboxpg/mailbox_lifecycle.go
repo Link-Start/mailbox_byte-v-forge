@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/emailx"
-	"github.com/byte-v-forge/common-lib/randx"
 	"github.com/jackc/pgx/v5"
+	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/randx"
 
 	"mailboxapi/internal/mailboxmodel"
 )

@@ -3,8 +3,8 @@ package mailboxpg
 import (
 	"errors"
 
-	"github.com/byte-v-forge/common-lib/redactx"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"mailboxapi/internal/redactx"
 
 	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"

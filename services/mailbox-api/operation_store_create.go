@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
+	"mailboxapi/internal/emailx"
 )
 
 func (s *operationStore) create(ctx context.Context, operationID, action, emailAddress string) (*mailboxv1.MailboxOperation, error) {

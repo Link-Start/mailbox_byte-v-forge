@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/envx"
-	"github.com/byte-v-forge/common-lib/protojsonx"
+	"mailboxapi/internal/envx"
+	"mailboxapi/internal/protojsonx"
 
 	"mailboxapi/pb"
 )

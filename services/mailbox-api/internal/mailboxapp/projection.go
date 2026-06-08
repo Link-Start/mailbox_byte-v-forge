@@ -3,9 +3,9 @@ package mailboxapp
 import (
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/byte-v-forge/common-lib/redactx"
+	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/redactx"
 
 	"mailboxapi/internal/mailboxmodel"
 )

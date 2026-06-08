@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/byte-v-forge/common-lib/hashx"
+	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/hashx"
 )
 
 var htmlTagPattern = regexp.MustCompile(`<[^>]+>`)

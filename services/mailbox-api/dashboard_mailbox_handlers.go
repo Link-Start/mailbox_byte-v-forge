@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/byte-v-forge/common-lib/httpx"
+	"mailboxapi/internal/httpx"
 
 	"mailboxapi/internal/mailboxmodel"
 )

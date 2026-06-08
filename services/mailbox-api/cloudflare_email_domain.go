@@ -3,8 +3,8 @@ package main
 import (
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/stringx"
 	"github.com/cloudflare/cloudflare-go/v7/email_routing"
+	"mailboxapi/internal/stringx"
 
 	"mailboxapi/pb"
 )

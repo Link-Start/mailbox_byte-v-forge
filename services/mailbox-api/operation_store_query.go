@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/dbclaim"
-	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
+	"mailboxapi/internal/dbclaim"
+	"mailboxapi/internal/emailx"
 )
 
 func (s *operationStore) update(ctx context.Context, operationID string, update operationUpdate) (*mailboxv1.MailboxOperation, error) {

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/envx"
+	"mailboxapi/internal/envx"
 )
 
 type outlookRuntimeConfig struct {

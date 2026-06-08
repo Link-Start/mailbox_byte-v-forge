@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"mailboxapi/internal/emailx"
 
 	"mailboxapi/internal/mailboxapp"
 	"mailboxapi/internal/mailboxmodel"

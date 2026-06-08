@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/redisx"
+	"mailboxapi/internal/redisx"
 
 	"mailboxapi/internal/inboxapp"
 )

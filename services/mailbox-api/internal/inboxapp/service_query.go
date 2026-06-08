@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
+	"mailboxapi/internal/emailx"
 )
 
 func (s *Service) ListMessages(ctx context.Context, email string, limit int32) ([]*mailboxv1.EmailInboxMessage, error) {

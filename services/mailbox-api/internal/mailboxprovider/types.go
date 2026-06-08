@@ -1,6 +1,6 @@
 package mailboxprovider
 
-import "github.com/byte-v-forge/common-lib/pagex"
+import "mailboxapi/internal/pagex"
 
 type RuntimeContext interface {
 	DomainsForProvider(provider string) []string

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/emailx"
+	"mailboxapi/internal/emailx"
 )
 
 func readMailboxRecords(dir string, includePasswordOnly bool) ([]mailboxRecord, error) {

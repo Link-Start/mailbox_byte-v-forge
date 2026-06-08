@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/byte-v-forge/common-lib/hashx"
-	"github.com/byte-v-forge/common-lib/timex"
+	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/hashx"
+	"mailboxapi/internal/timex"
 
 	"mailboxapi/internal/inboxapp"
 )

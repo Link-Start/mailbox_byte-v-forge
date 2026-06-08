@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/envx"
 	"github.com/byte-v-forge/common-lib/natseventbus"
+	"mailboxapi/internal/envx"
 )
 
 type config struct {

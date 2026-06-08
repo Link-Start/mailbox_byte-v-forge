@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
-	"github.com/byte-v-forge/common-lib/stringx"
 	"github.com/jackc/pgx/v5"
+	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/stringx"
 
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxprovider"

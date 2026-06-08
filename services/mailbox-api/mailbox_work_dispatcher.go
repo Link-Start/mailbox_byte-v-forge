@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/byte-v-forge/common-lib/eventbus"
 	"github.com/byte-v-forge/common-lib/eventcatalog"
 	"github.com/byte-v-forge/common-lib/eventoutbox"
@@ -14,6 +13,7 @@ import (
 	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
+	"mailboxapi/internal/emailx"
 
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/pb"

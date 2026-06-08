@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/dbclaim"
 	"gorm.io/gorm"
+	"mailboxapi/internal/dbclaim"
 )
 
 func (s *operationStore) startRegistrationWorkerRun(ctx context.Context, operationID string) (*operationRunStart, error) {

@@ -12,11 +12,11 @@ import (
 
 	"github.com/byte-v-forge/common-lib/eventcatalog"
 	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
-	"github.com/byte-v-forge/common-lib/grpcclient"
-	"github.com/byte-v-forge/common-lib/grpchealth"
-	"github.com/byte-v-forge/common-lib/redisx"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"mailboxapi/internal/grpcclient"
+	"mailboxapi/internal/grpchealth"
+	"mailboxapi/internal/redisx"
 
 	"mailboxapi/internal/inboxapp"
 	"mailboxapi/internal/mailboxapp"

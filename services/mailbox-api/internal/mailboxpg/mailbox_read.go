@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/byte-v-forge/common-lib/accountmodel"
-	"github.com/byte-v-forge/common-lib/emailx"
-	"github.com/byte-v-forge/common-lib/pagex"
 	"github.com/jackc/pgx/v5"
+	"mailboxapi/internal/emailx"
+	"mailboxapi/internal/pagex"
 
 	"mailboxapi/internal/mailboxmodel"
 	"mailboxapi/internal/mailboxprovider"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/byte-v-forge/common-lib/emailx"
 	"github.com/jackc/pgx/v5"
+	"mailboxapi/internal/emailx"
 )
 
 func trackInboxWatermark(watermarks map[string]int64, mailboxEmail string, receivedAtUnix int64) {

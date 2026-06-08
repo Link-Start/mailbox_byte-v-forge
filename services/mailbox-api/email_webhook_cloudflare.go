@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/byte-v-forge/common-lib/protojsonx"
+	"mailboxapi/internal/protojsonx"
 
 	"mailboxapi/pb"
 )
