@@ -1,4 +1,4 @@
-import { Inbox } from 'lucide-react';
+import { InboxOutlined } from '@ant-design/icons';
 import {
   Alert,
   AlertDescription,
@@ -32,7 +32,7 @@ export function MailboxInboxSection({ mailbox, result, showSecrets, loading, can
         <h3 className="text-sm font-semibold">收件箱</h3>
         {canFetch && (
           <Button variant="outline" size="sm" disabled={loading} onClick={() => onFetch(mailbox.email_address)}>
-            <Inbox />{loading ? '刷新中' : '刷新'}
+            <InboxOutlined />{loading ? '刷新中' : '刷新'}
           </Button>
         )}
       </div>

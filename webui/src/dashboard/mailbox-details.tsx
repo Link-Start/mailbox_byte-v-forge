@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { DeleteOutlined } from '@ant-design/icons';
 import {
   ActionButtonGroup,
   Card,
@@ -111,7 +111,7 @@ function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, 
   const actions: ActionButtonDescriptor[] = [{
     id: 'delete-mailbox',
     label: '删除邮箱',
-    icon: <Trash2 />,
+    icon: <DeleteOutlined />,
     variant: 'destructive',
     onClick: () => void onDelete(mailbox),
   }];

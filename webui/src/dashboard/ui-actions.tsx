@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { Space, Tooltip } from 'antd';
 import { Button } from './ui-basic';
 import { cx } from './text';
 
@@ -17,21 +18,22 @@ export type ToolbarActionDescriptor = ActionButtonDescriptor;
 export type RowActionDescriptor = ActionButtonDescriptor & { kind?: 'danger' };
 
 export function ActionButtonGroup({ actions, className }: { actions: ActionButtonDescriptor[]; className?: string }) {
-  return <div className={cx('actionButtonGroup', className)}>{actions.map((action) => <ActionButton key={action.id} action={action} />)}</div>;
+  return <Space className={cx('actionButtonGroup', className)} wrap>{actions.map((action) => <ActionButton key={action.id} action={action} />)}</Space>;
 }
 
 export function ToolbarActionButtons({ actions }: { actions: ToolbarActionDescriptor[] }) {
-  return <div className="toolbarActions">{actions.map((action) => <ActionButton key={action.id} action={action} iconOnly />)}</div>;
+  return <Space className="toolbarActions" size={6}>{actions.map((action) => <ActionButton key={action.id} action={action} iconOnly />)}</Space>;
 }
 
 export function RecordActionButtons({ actions }: { actions: RowActionDescriptor[] }) {
-  return <div className="rowActionButtons">{actions.map((action) => <ActionButton key={action.id} action={{ ...action, variant: action.kind === 'danger' ? 'destructive' : action.variant }} iconOnly />)}</div>;
+  return <Space className="rowActionButtons" size={6}>{actions.map((action) => <ActionButton key={action.id} action={{ ...action, variant: action.kind === 'danger' ? 'destructive' : action.variant }} iconOnly />)}</Space>;
 }
 
 function ActionButton({ action, iconOnly }: { action: ActionButtonDescriptor; iconOnly?: boolean }) {
-  return (
+  const button = (
     <Button type={action.type || 'button'} form={action.form} variant={action.variant} disabled={action.disabled} title={action.label} aria-label={iconOnly ? action.label : undefined} onClick={(event) => { event.stopPropagation(); action.onClick?.(); }}>
       {action.icon}{!iconOnly && action.label}
     </Button>
   );
+  return iconOnly ? <Tooltip title={action.label}>{button}</Tooltip> : button;
 }

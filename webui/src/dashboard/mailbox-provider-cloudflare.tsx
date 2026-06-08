@@ -1,4 +1,4 @@
-import { Mail } from 'lucide-react';
+import { MailOutlined } from '@ant-design/icons';
 import { AccountManagementFrame } from './dashboard-kit';
 import { MailboxDomainGroups } from './mailbox-list';
 import { mailboxProviderMatches, providerDisplayName, providerShowsCredentialState } from './mailbox-utils';
@@ -11,7 +11,7 @@ export function CloudflareMailboxProviderPanel(props: MailboxProviderPanelProps)
     .filter((domain) => mailboxProviderMatches(domain.provider_key, providerKey))
     .map((domain) => domain.domain);
   return (
-    <AccountManagementFrame title={`${label}邮箱账号`} icon={<Mail size={16} />} actions={props.actions}>
+    <AccountManagementFrame title={`${label}邮箱账号`} icon={<MailOutlined />} actions={props.actions}>
       <MailboxDomainGroups
         {...props}
         providerCapability={props.capability}

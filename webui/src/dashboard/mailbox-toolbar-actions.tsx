@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Inbox, KeyRound, Plus, RefreshCcw } from 'lucide-react';
+import { EyeInvisibleOutlined, EyeOutlined, InboxOutlined, KeyOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { MailboxProviderAction, type ToolbarActionDescriptor } from './dashboard-kit';
 import { bulkMailboxActionCount, type MailboxProviderTab } from './mailbox-utils';
 import type { Mailbox, MailboxProviderActionCapability, MailboxProviderCapability } from './types';
@@ -32,7 +32,7 @@ const toolbarActionFactories: Partial<Record<MailboxProviderAction, ToolbarActio
   [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_IMPORT_MAILBOX]: ({ view, openImport }) => ({
     id: 'import-mailbox',
     label: '添加邮箱账号',
-    icon: <Plus className="size-4" />,
+    icon: <PlusOutlined />,
     onClick: () => openImport(view.value),
   }),
   [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_RUN_OAUTH]: ({ action, view, props }) => {
@@ -40,7 +40,7 @@ const toolbarActionFactories: Partial<Record<MailboxProviderAction, ToolbarActio
     return {
       id: 'run-oauth',
       label: '补 OAuth',
-      icon: <KeyRound className="size-4" />,
+      icon: <KeyOutlined />,
       disabled: props.busy || !!props.oauthing || count === 0,
       onClick: () => void props.onOAuth(),
     };
@@ -50,7 +50,7 @@ const toolbarActionFactories: Partial<Record<MailboxProviderAction, ToolbarActio
     return {
       id: 'fetch-inbox',
       label: props.inboxLoading ? '收信中' : '拉取邮箱',
-      icon: <Inbox className="size-4" />,
+      icon: <InboxOutlined />,
       disabled: props.busy || props.inboxLoading || count === 0,
       onClick: () => void props.onFetchInbox(),
     };
@@ -58,7 +58,7 @@ const toolbarActionFactories: Partial<Record<MailboxProviderAction, ToolbarActio
   [MailboxProviderAction.MAILBOX_PROVIDER_ACTION_SYNC_DOMAINS]: ({ view, props }) => ({
     id: 'sync-domains',
     label: props.domainSyncing ? '同步中' : '同步域名',
-    icon: <RefreshCcw className="size-4" />,
+    icon: <ReloadOutlined />,
     disabled: props.busy || props.domainSyncing || !view.capability?.key,
     onClick: () => void props.onSyncDomains(view.capability?.key || ''),
   }),
@@ -75,7 +75,7 @@ function secretsAction(props: ProviderToolbarProps): ToolbarActionDescriptor {
   return {
     id: 'toggle-secrets',
     label: props.showSecrets ? '隐藏敏感信息' : '显示敏感信息',
-    icon: props.showSecrets ? <EyeOff className="size-4" /> : <Eye className="size-4" />,
+    icon: props.showSecrets ? <EyeInvisibleOutlined /> : <EyeOutlined />,
     onClick: props.onToggleSecrets,
   };
 }

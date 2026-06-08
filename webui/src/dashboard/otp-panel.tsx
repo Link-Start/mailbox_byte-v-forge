@@ -1,4 +1,4 @@
-import { Copy } from 'lucide-react';
+import { CopyOutlined } from '@ant-design/icons';
 import { Button, Card, buttonHint, formatUnix, maskPreview } from './dashboard-kit';
 import type { LatestOtp } from './types';
 
@@ -26,7 +26,7 @@ export function MailboxOtpPanel({ latestOtp, showSecrets, loading, compact, onCo
         </small>
       </div>
       <Button className="copyButton" {...buttonHint('OTP 通过 SecretRef 保存')} disabled onClick={() => onCopy('OTP', '')}>
-        <Copy size={14} />
+        <CopyOutlined />
       </Button>
     </Card>
   );

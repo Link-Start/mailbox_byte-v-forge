@@ -1,45 +1,54 @@
-import type { FormEventHandler } from 'react';
 import {
-  ControlledInputFieldList,
-  ControlledTextareaField,
+  Form,
+  Input,
   MailboxCredentialKind,
-  type Control,
-  type ControlledInputFieldDescriptor
+  type FormInstance
 } from './dashboard-kit';
 import type { MailboxBatchImportFormState, MailboxImportFormState } from './mailbox-import-types';
 
-export function SingleMailboxImportForm({ formId, control, credentialKinds, onSubmit }: {
+export function SingleMailboxImportForm({ formId, form, credentialKinds, onFinish }: {
   formId: string;
-  control: Control<MailboxImportFormState>;
+  form: FormInstance<MailboxImportFormState>;
   credentialKinds: MailboxCredentialKind[];
-  onSubmit: FormEventHandler<HTMLFormElement>;
+  onFinish: (values: MailboxImportFormState) => void | Promise<void>;
 }) {
   return (
-    <form id={formId} className="grid gap-2" onSubmit={onSubmit}>
-      <ControlledInputFieldList control={control} fields={singleMailboxImportFields(credentialKinds)} />
-    </form>
+    <Form id={formId} form={form} layout="vertical" className="importForm" initialValues={{ email: '', password: '', refresh_token: '', access_token: '' }} onFinish={onFinish}>
+      {singleMailboxImportFields(credentialKinds).map((field) => (
+        <Form.Item key={field.id} name={field.name} label={field.label} hidden={field.visible === false}>
+          <Input id={field.inputId || field.id} type={field.type || 'text'} placeholder={field.placeholder} />
+        </Form.Item>
+      ))}
+    </Form>
   );
 }
 
-export function BatchMailboxImportForm({ formId, control, placeholder, onSubmit }: {
+export function BatchMailboxImportForm({ formId, form, placeholder, onFinish }: {
   formId: string;
-  control: Control<MailboxBatchImportFormState>;
+  form: FormInstance<MailboxBatchImportFormState>;
   placeholder: string;
-  onSubmit: FormEventHandler<HTMLFormElement>;
+  onFinish: (values: MailboxBatchImportFormState) => void | Promise<void>;
 }) {
   return (
-    <form id={formId} onSubmit={onSubmit}>
-      <ControlledTextareaField
-        control={control}
-        name="batchText"
-        className="min-h-32 resize-y"
-        placeholder={placeholder}
-      />
-    </form>
+    <Form id={formId} form={form} layout="vertical" className="importForm" initialValues={{ batchText: '' }} onFinish={onFinish}>
+      <Form.Item name="batchText">
+        <Input.TextArea className="min-h-32 resize-y" placeholder={placeholder} autoSize={{ minRows: 6 }} />
+      </Form.Item>
+    </Form>
   );
 }
 
-function singleMailboxImportFields(credentialKinds: MailboxCredentialKind[]): ControlledInputFieldDescriptor<MailboxImportFormState>[] {
+type ImportField = {
+  id: string;
+  name: keyof MailboxImportFormState;
+  label: string;
+  placeholder?: string;
+  type?: string;
+  inputId?: string;
+  visible?: boolean;
+};
+
+function singleMailboxImportFields(credentialKinds: MailboxCredentialKind[]): ImportField[] {
   return [{
     id: 'email',
     name: 'email',

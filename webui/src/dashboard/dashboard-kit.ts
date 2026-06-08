@@ -1,7 +1,4 @@
-import { Tooltip } from 'radix-ui';
-
 export { useQuery, useQueryClient } from '@tanstack/react-query';
-export const TooltipProvider = Tooltip.Provider;
 export * from './action-runner';
 export * from './contracts';
 export * from './cursor-pages';
