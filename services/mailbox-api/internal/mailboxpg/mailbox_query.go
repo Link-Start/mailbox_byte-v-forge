@@ -18,6 +18,7 @@ type mailboxSelectQuery struct {
 	args       []any
 	orderBy    string
 	limit      int
+	err        error
 }
 
 type mailboxQuerier interface {
@@ -48,7 +49,11 @@ func (q *mailboxSelectQuery) WhereProvider(provider string) *mailboxSelectQuery 
 }
 
 func (q *mailboxSelectQuery) WhereAuthStatus(provider string, authStatus string) *mailboxSelectQuery {
-	condition, ok := q.providerAuthFilter(provider, authStatus)
+	condition, ok, err := q.providerAuthFilter(provider, authStatus)
+	if err != nil {
+		q.err = err
+		return q
+	}
 	if !ok {
 		condition = "FALSE"
 	}
@@ -74,17 +79,29 @@ func (q *mailboxSelectQuery) Limit(limit int) *mailboxSelectQuery {
 }
 
 func (q *mailboxSelectQuery) Query(ctx context.Context, querier mailboxQuerier) (pgx.Rows, error) {
-	query, args := q.SQL()
+	query, args, err := q.SQL()
+	if err != nil {
+		return nil, err
+	}
 	return querier.Query(ctx, query, args...)
 }
 
 func (q *mailboxSelectQuery) ScanOne(ctx context.Context, querier mailboxQuerier) (*MailboxRow, error) {
-	query, args := q.SQL()
+	query, args, err := q.SQL()
+	if err != nil {
+		return nil, err
+	}
 	return ScanMailbox(querier.QueryRow(ctx, query, args...))
 }
 
-func (q *mailboxSelectQuery) SQL() (string, []any) {
-	query := q.selectSQL()
+func (q *mailboxSelectQuery) SQL() (string, []any, error) {
+	if q.err != nil {
+		return "", nil, q.err
+	}
+	query, err := q.selectSQL()
+	if err != nil {
+		return "", nil, err
+	}
 	if len(q.conditions) > 0 {
 		query += " WHERE " + strings.Join(q.conditions, " AND ")
 	}
@@ -96,7 +113,7 @@ func (q *mailboxSelectQuery) SQL() (string, []any) {
 		args = append(args, q.limit)
 		query += fmt.Sprintf(" LIMIT $%d", len(args))
 	}
-	return query, args
+	return query, args, nil
 }
 
 func (q *mailboxSelectQuery) addArg(value any) string {
@@ -104,7 +121,7 @@ func (q *mailboxSelectQuery) addArg(value any) string {
 	return fmt.Sprintf("$%d", len(q.args))
 }
 
-func (q *mailboxSelectQuery) selectSQL() string {
+func (q *mailboxSelectQuery) selectSQL() (string, error) {
 	fields := mailboxSelectFields{
 		Password:     "''",
 		RefreshToken: "''",
@@ -119,12 +136,14 @@ func (q *mailboxSelectQuery) selectSQL() string {
 			continue
 		}
 		alias := providerStorageAlias(provider.Key())
-		joins = append(joins, storageJoinSQL(provider, tokenFields, alias))
-		fields.Password = coalesceField(fields.Password, storageColumnSQL(alias, tokenFields.PasswordColumn))
-		fields.RefreshToken = coalesceField(fields.RefreshToken, storageColumnSQL(alias, tokenFields.RefreshTokenColumn))
-		fields.AccessToken = coalesceField(fields.AccessToken, storageColumnSQL(alias, tokenFields.AccessTokenColumn))
-		fields.AuthStatus = coalesceField(fields.AuthStatus, storageColumnSQL(alias, tokenFields.AuthStatusColumn))
-		fields.LastError = coalesceField(fields.LastError, storageColumnSQL(alias, tokenFields.LastErrorColumn))
+		join, err := storageJoinSQL(provider, tokenFields, alias)
+		if err != nil {
+			return "", err
+		}
+		joins = append(joins, join)
+		if err := q.mergeStorageFields(&fields, tokenFields, alias); err != nil {
+			return "", err
+		}
 	}
 	return fmt.Sprintf(`
 	SELECT m.id, m.email, m.provider,
@@ -135,32 +154,60 @@ func (q *mailboxSelectQuery) selectSQL() string {
 		%s AS last_error,
 		m.created_at, m.updated_at
 	FROM mailboxes m%s
-`, fields.Password, fields.RefreshToken, fields.AccessToken, fields.AuthStatus, fields.LastError, strings.Join(joins, ""))
+`, fields.Password, fields.RefreshToken, fields.AccessToken, fields.AuthStatus, fields.LastError, strings.Join(joins, "")), nil
 }
 
-func (q *mailboxSelectQuery) providerAuthFilter(provider string, authStatus string) (string, bool) {
+func (q *mailboxSelectQuery) mergeStorageFields(fields *mailboxSelectFields, tokenFields mailboxprovider.TokenFields, alias string) error {
+	var err error
+	if fields.Password, err = coalesceStorageField(fields.Password, alias, tokenFields.PasswordColumn); err != nil {
+		return err
+	}
+	if fields.RefreshToken, err = coalesceStorageField(fields.RefreshToken, alias, tokenFields.RefreshTokenColumn); err != nil {
+		return err
+	}
+	if fields.AccessToken, err = coalesceStorageField(fields.AccessToken, alias, tokenFields.AccessTokenColumn); err != nil {
+		return err
+	}
+	if fields.AuthStatus, err = coalesceStorageField(fields.AuthStatus, alias, tokenFields.AuthStatusColumn); err != nil {
+		return err
+	}
+	if fields.LastError, err = coalesceStorageField(fields.LastError, alias, tokenFields.LastErrorColumn); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (q *mailboxSelectQuery) providerAuthFilter(provider string, authStatus string) (string, bool, error) {
 	definition := q.providers.StorageByKey(provider)
 	if definition != nil {
 		return q.providerAuthFilterSQL(definition, authStatus)
 	}
 	parts := []string{}
 	for _, definition := range q.providers.StorageExtensions() {
-		if filter, ok := q.providerAuthFilterSQL(definition, authStatus); ok {
+		filter, ok, err := q.providerAuthFilterSQL(definition, authStatus)
+		if err != nil {
+			return "", false, err
+		}
+		if ok {
 			parts = append(parts, filter)
 		}
 	}
 	if len(parts) == 0 {
-		return "", false
+		return "", false, nil
 	}
-	return "(" + strings.Join(parts, " OR ") + ")", true
+	return "(" + strings.Join(parts, " OR ") + ")", true, nil
 }
 
-func (q *mailboxSelectQuery) providerAuthFilterSQL(provider mailboxprovider.StorageExtension, authStatus string) (string, bool) {
+func (q *mailboxSelectQuery) providerAuthFilterSQL(provider mailboxprovider.StorageExtension, authStatus string) (string, bool, error) {
 	fields, ok := provider.TokenFields()
 	if !ok || strings.TrimSpace(fields.AuthStatusColumn) == "" {
-		return "", false
+		return "", false, nil
 	}
-	return fmt.Sprintf("%s.%s = %s", providerStorageAlias(provider.Key()), mustSQLIdentifier(fields.AuthStatusColumn), q.addArg(strings.TrimSpace(authStatus))), true
+	column, err := sqlIdentifier(fields.AuthStatusColumn)
+	if err != nil {
+		return "", false, fmt.Errorf("provider %s auth status column: %w", provider.Key(), err)
+	}
+	return fmt.Sprintf("%s.%s = %s", providerStorageAlias(provider.Key()), column, q.addArg(strings.TrimSpace(authStatus))), true, nil
 }
 
 func lockStoredMailbox(ctx context.Context, tx pgx.Tx, email string) (string, error) {
@@ -183,22 +230,42 @@ func coalesceField(current string, next string) string {
 	return fmt.Sprintf("COALESCE(NULLIF(%s, ''), %s)", next, current)
 }
 
-func storageJoinSQL(provider mailboxprovider.StorageExtension, fields mailboxprovider.TokenFields, alias string) string {
+func storageJoinSQL(provider mailboxprovider.StorageExtension, fields mailboxprovider.TokenFields, alias string) (string, error) {
+	table, err := sqlIdentifier(fields.Table)
+	if err != nil {
+		return "", fmt.Errorf("provider %s storage table: %w", provider.Key(), err)
+	}
+	emailColumn, err := sqlIdentifier(fields.EmailColumn)
+	if err != nil {
+		return "", fmt.Errorf("provider %s email column: %w", provider.Key(), err)
+	}
 	return fmt.Sprintf(
 		"\nLEFT JOIN %s %s ON %s.%s = m.email AND m.provider = %s",
-		mustSQLIdentifier(fields.Table),
+		table,
 		alias,
 		alias,
-		mustSQLIdentifier(fields.EmailColumn),
+		emailColumn,
 		sqlStringLiteral(provider.Key()),
-	)
+	), nil
 }
 
-func storageColumnSQL(alias string, column string) string {
-	if strings.TrimSpace(column) == "" {
-		return ""
+func coalesceStorageField(current string, alias string, column string) (string, error) {
+	next, err := storageColumnSQL(alias, column)
+	if err != nil {
+		return current, err
 	}
-	return fmt.Sprintf("%s.%s", alias, mustSQLIdentifier(column))
+	return coalesceField(current, next), nil
+}
+
+func storageColumnSQL(alias string, column string) (string, error) {
+	if strings.TrimSpace(column) == "" {
+		return "", nil
+	}
+	identifier, err := sqlIdentifier(column)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s.%s", alias, identifier), nil
 }
 
 func providerStorageAlias(provider string) string {
@@ -226,12 +293,8 @@ func providerStorageAlias(provider string) string {
 	return strings.TrimRight(out.String(), "_")
 }
 
-func mustSQLIdentifier(value string) string {
-	identifier, err := mailboxprovider.SQLIdentifier(value)
-	if err != nil {
-		panic(err)
-	}
-	return identifier
+func sqlIdentifier(value string) (string, error) {
+	return mailboxprovider.SQLIdentifier(value)
 }
 
 func sqlStringLiteral(value string) string {
