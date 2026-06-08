@@ -99,46 +99,6 @@ func (api *cloudflareEmailAPI) resolveZone(ctx context.Context, zone *pb.Cloudfl
 	return "", "", fmt.Errorf("Cloudflare zone not found: %s", zoneName)
 }
 
-func (api *cloudflareEmailAPI) cloudflareEmailZones(ctx context.Context, configured []*pb.CloudflareEmailZone) ([]*pb.CloudflareEmailZone, error) {
-	out := []*pb.CloudflareEmailZone{}
-	seen := map[string]struct{}{}
-	add := func(zone *pb.CloudflareEmailZone) {
-		if zone == nil {
-			return
-		}
-		key := stringx.FirstNonEmpty(strings.TrimSpace(zone.GetZoneId()), normalizeCloudflareDomain(zone.GetZoneName()))
-		if key == "" {
-			return
-		}
-		if _, ok := seen[key]; ok {
-			return
-		}
-		seen[key] = struct{}{}
-		out = append(out, zone)
-	}
-	for _, zone := range configured {
-		add(zone)
-	}
-
-	iter := api.client.Zones.ListAutoPaging(ctx, zones.ZoneListParams{PerPage: cloudflare.F(float64(50))})
-	for iter.Next() {
-		zone := iter.Current()
-		name := normalizeCloudflareDomain(zone.Name)
-		if zone.ID == "" || name == "" {
-			continue
-		}
-		add(&pb.CloudflareEmailZone{ZoneId: zone.ID, ZoneName: name})
-	}
-	if err := iter.Err(); err != nil {
-		if len(out) > 0 {
-			logWarning("skip dynamic Cloudflare zone discovery: %v", err)
-			return out, nil
-		}
-		return nil, err
-	}
-	return out, nil
-}
-
 func (api *cloudflareEmailAPI) emailRoutingCatchAll(ctx context.Context, zoneID string) (*email_routing.RuleCatchAllGetResponse, error) {
 	return api.client.EmailRouting.Rules.CatchAlls.Get(ctx, email_routing.RuleCatchAllGetParams{ZoneID: cloudflare.F(zoneID)})
 }
