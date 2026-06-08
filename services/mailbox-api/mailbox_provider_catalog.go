@@ -16,7 +16,7 @@ type mailboxProviderDomainStore struct {
 	byProvider map[string][]string
 }
 
-func loadMailboxProviderRuntimeConfig(config mailboxProviderConfig, outlook outlookRuntimeConfig) mailboxProviderRuntimeConfig {
+func loadMailboxProviderRuntimeConfig(config mailboxProviderConfig, outlook outlookRuntimeConfig) (mailboxProviderRuntimeConfig, error) {
 	registry, err := mailboxprovider.NewRegistry(
 		outlookMailboxProvider(outlookProviderConfig{
 			maxMessages:  config.outlookMaxMessages,
@@ -26,7 +26,7 @@ func loadMailboxProviderRuntimeConfig(config mailboxProviderConfig, outlook outl
 		cloudflareMailboxProvider(config.cloudflare),
 	)
 	if err != nil {
-		panic(err)
+		return mailboxProviderRuntimeConfig{}, err
 	}
 	cfg := mailboxProviderRuntimeConfig{
 		registry:    registry,
@@ -35,7 +35,7 @@ func loadMailboxProviderRuntimeConfig(config mailboxProviderConfig, outlook outl
 	for _, provider := range cfg.capabilityPlugins() {
 		cfg.domainStore.set(provider.Key(), provider.LoadDomains())
 	}
-	return cfg
+	return cfg, nil
 }
 
 func (c mailboxProviderRuntimeConfig) defaultProvider() string {

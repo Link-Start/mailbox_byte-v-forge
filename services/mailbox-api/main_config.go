@@ -29,8 +29,12 @@ type config struct {
 	webhook                emailWebhookConfig
 }
 
-func loadConfig() config {
+func loadConfig() (config, error) {
 	outlook := loadOutlookRuntimeConfig()
+	providers, err := loadMailboxProviderRuntimeConfig(loadMailboxProviderConfig(), outlook)
+	if err != nil {
+		return config{}, err
+	}
 	return config{
 		listenAddr:             envx.StringDefault("LISTEN_ADDR", ":50051"),
 		pgDSN:                  envx.StringDefault("MAILBOX_PG_DSN", ""),
@@ -49,7 +53,7 @@ func loadConfig() config {
 		inboxLockPrefix:        envx.StringDefault("MAILBOX_INBOX_LOCK_KEY_PREFIX", "mailbox:locks"),
 		inboxLockTTL:           envx.PositiveDurationSeconds("MAILBOX_INBOX_LOCK_TTL_SECONDS", 10*time.Minute),
 		inboxLockRetry:         envx.PositiveDurationSeconds("MAILBOX_INBOX_LOCK_RETRY_SECONDS", time.Second),
-		providers:              loadMailboxProviderRuntimeConfig(loadMailboxProviderConfig(), outlook),
+		providers:              providers,
 		webhook:                loadEmailWebhookConfig(),
-	}
+	}, nil
 }
