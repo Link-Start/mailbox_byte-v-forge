@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import {
   ActionButtonGroup,
@@ -11,33 +10,31 @@ import { maskEmail } from './email-utils';
 import { mailboxStatusText } from './labels';
 import { MailboxInboxSection } from './mailbox-inbox';
 import { MailboxOtpPanel } from './otp-panel';
+import type { MailboxDetailTab } from './mailbox-route-paths';
 import { latestOtpForInboxResult } from './mailbox-signal-utils';
 import { authStatus, mailboxCredentialPresent, providerShowsCredentialState } from './mailbox-utils';
 import type { InboxResult, LatestOtp, Mailbox, MailboxProviderCapability } from './types';
 
-export function MailboxDetails({ mailbox, providerCapability, showSecrets, inboxResult, inboxLoading, canFetchInbox, onCopy, onFetchInbox, onDelete }: {
+export function MailboxDetails({ mailbox, providerCapability, activeTab, showSecrets, inboxResult, inboxLoading, canFetchInbox, onTabChange, onCopy, onFetchInbox, onDelete }: {
   mailbox: Mailbox;
   providerCapability?: MailboxProviderCapability;
+  activeTab: MailboxDetailTab;
   showSecrets: boolean;
   inboxResult?: InboxResult | null;
   inboxLoading: boolean;
   canFetchInbox: boolean;
+  onTabChange: (tab: MailboxDetailTab) => void;
   onCopy: (label: string, value: string) => void;
   onFetchInbox: (emailAddress?: string) => Promise<void>;
   onDelete: (mailbox: Mailbox) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'inbox'>('overview');
   const inboxMessageCount = inboxResult?.messages?.length || 0;
   const latestOtp = latestOtpForInboxResult(inboxResult || null, mailbox.email_address);
-
-  useEffect(() => {
-    setActiveTab('overview');
-  }, [mailbox.email_address]);
 
   return (
     <ContentTabs
       value={activeTab}
-      onValueChange={(value) => setActiveTab(value as 'overview' | 'inbox')}
+      onValueChange={(value) => onTabChange(value as MailboxDetailTab)}
       tabsClassName="min-h-0 flex-1 overflow-hidden"
       tabsListVariant="line"
       tabsListClassName="w-full"

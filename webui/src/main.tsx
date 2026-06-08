@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRoot } from 'react-dom/client';
 import { Toaster, TooltipProvider } from './dashboard/dashboard-kit';
-import { MailboxPage } from './dashboard/mailbox-page';
+import { MailboxRouterProvider } from './dashboard/mailbox-router';
 import './styles.css';
 
 const queryClient = new QueryClient({
@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <MailboxPage />
+      <MailboxRouterProvider />
       <Toaster richColors />
     </TooltipProvider>
   </QueryClientProvider>
