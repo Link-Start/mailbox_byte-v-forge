@@ -4,9 +4,6 @@ FROM docker.m.daocloud.io/library/node:22-bookworm-slim AS dashboard_builder
 
 WORKDIR /mailbox/webui
 RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources     && apt-get update     && apt-get install -y --no-install-recommends libprotobuf-dev protobuf-compiler     && rm -rf /var/lib/apt/lists/*
-COPY common-lib/ui /common-lib/ui
-COPY common-lib/proto /common-lib/proto
-COPY common-lib/scripts /common-lib/scripts
 COPY mailbox/proto /mailbox/proto
 COPY mailbox/webui ./
 RUN npm ci && SOURCE_ROOT=/ npm run build

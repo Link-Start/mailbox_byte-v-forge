@@ -5,7 +5,7 @@ import {
   MailboxCredentialKind,
   type Control,
   type ControlledInputFieldDescriptor
-} from '@byte-v-forge/common-ui';
+} from './dashboard-kit';
 import type { MailboxBatchImportFormState, MailboxImportFormState } from './mailbox-import-types';
 
 export function SingleMailboxImportForm({ formId, control, credentialKinds, onSubmit }: {

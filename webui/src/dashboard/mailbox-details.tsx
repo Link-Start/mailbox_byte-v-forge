@@ -7,8 +7,8 @@ import {
   KVList,
   MailboxCredentialKind,
   StatusBadge
-} from '@byte-v-forge/common-ui';
-import type { ActionButtonDescriptor, KVDescriptor } from '@byte-v-forge/common-ui';
+} from './dashboard-kit';
+import type { ActionButtonDescriptor, KVDescriptor } from './dashboard-kit';
 import { maskEmail } from './email-utils';
 import { mailboxStatusText } from './labels';
 import { MailboxInboxSection } from './mailbox-inbox';

@@ -1,5 +1,5 @@
 import { Inbox } from 'lucide-react';
-import { DashboardNavSection, type DashboardModuleRegistration } from '@byte-v-forge/common-ui';
+import { DashboardNavSection, type DashboardModuleRegistration } from './dashboard-kit';
 import { MailboxPage } from './mailbox-page';
 
 const registration: DashboardModuleRegistration = {

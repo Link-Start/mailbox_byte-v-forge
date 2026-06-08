@@ -1,4 +1,4 @@
-import { MailboxAuthStatus, MailboxCredentialKind, MailboxProviderAction } from '@byte-v-forge/common-ui';
+import { MailboxAuthStatus, MailboxCredentialKind, MailboxProviderAction } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
 import { mailboxProviderMatches, mailboxProviderValue, normalizeMailboxProviderKey, type MailboxProviderTab } from './mailbox-provider-config';
 import type { Mailbox, MailboxProviderActionCapability, MailboxProviderCapability } from './types';

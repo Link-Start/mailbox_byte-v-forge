@@ -12,7 +12,7 @@ import type {
   MailboxProviderCapabilities,
   UpsertEmailMailboxRequest,
   UpsertEmailMailboxResponse
-} from '@byte-v-forge/common-ui';
+} from './contracts';
 
 export type {
   EmailInboxMessage as InboxMessage,

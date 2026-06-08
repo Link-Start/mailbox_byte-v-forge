@@ -12,7 +12,7 @@ Mailbox 领域仓，承载邮箱账号、Outlook provider、邮箱注册/OAuth M
 - `proto/mailbox_service.proto`：Mailbox 领域 API 契约。
 - `proto/byte/v/forge/contracts/...`：mailbox 独立部署所需的 mailbox/common/observability/browserautomation 契约副本，Go 生成物进入 `services/mailbox-api/internal/contracts`。
 
-Mailbox 后端不再依赖 `common-lib` Go module；服务 API、事件、provider capability、domain 和 browser-automation 客户端类型均由本仓 proto 生成。`mailbox` 仓内部模型可以保存 password、refresh/access token 等拥有方细节；对外收件结果只暴露 credential state、secret ref 和 artifact ref。
+Mailbox 后端不再依赖 `common-lib` Go module，webui 也不再依赖 `@byte-v-forge/common-ui`；服务 API、事件、provider capability、domain、browser-automation 客户端和 dashboard 类型均由本仓 proto 生成。`mailbox` 仓内部模型可以保存 password、refresh/access token 等拥有方细节；对外收件结果只暴露 credential state、secret ref 和 artifact ref。
 
 ## 生成
 

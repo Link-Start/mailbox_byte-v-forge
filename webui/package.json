@@ -24,8 +24,7 @@
     "clsx": "^2.1.1",
     "radix-ui": "^1.4.3",
     "react-hook-form": "^7.76.0",
-    "tailwind-merge": "^3.6.0",
-    "@byte-v-forge/common-ui": "0.1.0"
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
@@ -45,7 +44,6 @@
     "typescript-eslint": "^8.60.0"
   },
   "dependencies": {
-    "@byte-v-forge/common-ui": "file:../../common-lib/ui",
     "@tanstack/react-query": "^5.100.11",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",

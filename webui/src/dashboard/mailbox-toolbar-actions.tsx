@@ -1,5 +1,5 @@
 import { Eye, EyeOff, Inbox, KeyRound, Plus, RefreshCcw } from 'lucide-react';
-import { MailboxProviderAction, type ToolbarActionDescriptor } from '@byte-v-forge/common-ui';
+import { MailboxProviderAction, type ToolbarActionDescriptor } from './dashboard-kit';
 import { bulkMailboxActionCount, type MailboxProviderTab } from './mailbox-utils';
 import type { Mailbox, MailboxProviderActionCapability, MailboxProviderCapability } from './types';
 

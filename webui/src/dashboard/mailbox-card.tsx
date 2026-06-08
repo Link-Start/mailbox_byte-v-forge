@@ -10,7 +10,7 @@ import {
   StatusBadge,
   MailboxProviderAction,
   type RowActionDescriptor
-} from '@byte-v-forge/common-ui';
+} from './dashboard-kit';
 import { maskEmail } from './email-utils';
 import { authStatus, canRunMailboxAction, domainForEmail, providerAction } from './mailbox-utils';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';

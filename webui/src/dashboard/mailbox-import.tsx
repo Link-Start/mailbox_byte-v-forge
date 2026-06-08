@@ -13,8 +13,8 @@ import {
   SegmentedControl,
   useAsyncActionRunner,
   useForm
-} from '@byte-v-forge/common-ui';
-import type { ActionButtonDescriptor, MailboxCredentialKind } from '@byte-v-forge/common-ui';
+} from './dashboard-kit';
+import type { ActionButtonDescriptor, MailboxCredentialKind } from './dashboard-kit';
 import { providerAction, providerDisplayName, type MailboxProviderTab } from './mailbox-utils';
 import { BatchMailboxImportForm, SingleMailboxImportForm } from './mailbox-import-form';
 import { importMailboxBatch, importSingleMailbox } from './mailbox-import-submit';

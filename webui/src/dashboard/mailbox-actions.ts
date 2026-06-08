@@ -15,7 +15,7 @@ import {
   useQueryClient,
   useAsyncActionRunner,
   useToastMessage
-} from '@byte-v-forge/common-ui';
+} from './dashboard-kit';
 import { maskEmail, normalizeUiEmail } from './email-utils';
 import type { MailboxData } from './mailbox-data';
 import type { DeleteMailboxResponse, InboxResponse, InboxResult, Mailbox } from './types';

@@ -1,4 +1,4 @@
-import type { MailboxCredentialKind } from '@byte-v-forge/common-ui';
+import type { MailboxCredentialKind } from './dashboard-kit';
 
 export type MailboxImportFormState = {
   email: string;

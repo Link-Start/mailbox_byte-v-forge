@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Mail } from 'lucide-react';
-import { AppDrawer, MailboxProviderAction, ToastMessage, WorkspacePanel } from '@byte-v-forge/common-ui';
+import { AppDrawer, MailboxProviderAction, ToastMessage, WorkspacePanel } from './dashboard-kit';
 import { useMailboxActions } from './mailbox-actions';
 import { useMailboxData } from './mailbox-data';
 import { useMailboxEmailEventCache } from './mailbox-events';

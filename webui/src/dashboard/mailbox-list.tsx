@@ -1,6 +1,6 @@
-import { DEFAULT_CURSOR_PAGE_SIZE, CursorPager, RecordList } from '@byte-v-forge/common-ui';
+import { DEFAULT_CURSOR_PAGE_SIZE, CursorPager, RecordList } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
-import { uniqueStrings } from '@byte-v-forge/common-ui';
+import { uniqueStrings } from './dashboard-kit';
 import { domainForEmail } from './mailbox-utils';
 import { MailboxCard } from './mailbox-card';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';

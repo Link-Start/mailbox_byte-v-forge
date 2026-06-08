@@ -1,5 +1,5 @@
 import { Copy } from 'lucide-react';
-import { Button, Card, buttonHint, formatUnix, maskPreview } from '@byte-v-forge/common-ui';
+import { Button, Card, buttonHint, formatUnix, maskPreview } from './dashboard-kit';
 import type { LatestOtp } from './types';
 
 export function MailboxOtpPanel({ latestOtp, showSecrets, loading, compact, onCopy }: {

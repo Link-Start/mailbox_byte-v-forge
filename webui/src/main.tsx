@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRoot } from 'react-dom/client';
-import { ThemeProvider, TooltipProvider } from '@byte-v-forge/common-ui';
+import { ThemeProvider, TooltipProvider } from './dashboard/dashboard-kit';
 import { MailboxPage } from './dashboard/mailbox-page';
 import './styles.css';
 

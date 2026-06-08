@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 import {
   PanelTabs,
   ToolbarActionButtons
-} from '@byte-v-forge/common-ui';
+} from './dashboard-kit';
 import { CloudflareMailboxProviderPanel } from './mailbox-provider-cloudflare';
 import { MailboxImportSheet } from './mailbox-import';
 import { OutlookMailboxProviderPanel } from './mailbox-provider-outlook';

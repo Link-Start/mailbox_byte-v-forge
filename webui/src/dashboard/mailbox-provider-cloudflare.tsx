@@ -1,5 +1,5 @@
 import { Mail } from 'lucide-react';
-import { AccountManagementFrame } from '@byte-v-forge/common-ui';
+import { AccountManagementFrame } from './dashboard-kit';
 import { MailboxDomainGroups } from './mailbox-list';
 import { mailboxProviderMatches, providerDisplayName, providerShowsCredentialState } from './mailbox-utils';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';

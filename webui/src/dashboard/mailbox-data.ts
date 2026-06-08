@@ -11,7 +11,7 @@ import {
   useCursorPageItems,
   useQuery,
   useQueryClient
-} from '@byte-v-forge/common-ui';
+} from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
 import type { ListEmailMailboxesResponse, Mailbox, MailboxOperation } from './types';
 

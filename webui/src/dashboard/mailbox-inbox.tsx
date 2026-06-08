@@ -12,7 +12,7 @@ import {
   compactToast,
   formatUnix,
   maskPreview
-} from '@byte-v-forge/common-ui';
+} from './dashboard-kit';
 import { formatEmailList, maskEmail } from './email-utils';
 import { messageHasVerificationSignal, messageSignals, signalHasSecretRef, signalKindName, signalLabel } from './mailbox-signal-utils';
 import type { InboxMessage, InboxResult, Mailbox } from './types';

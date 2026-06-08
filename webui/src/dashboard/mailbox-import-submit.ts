@@ -1,4 +1,4 @@
-import { api, errorText, MailboxAuthStatus, MailboxCredentialKind } from '@byte-v-forge/common-ui';
+import { api, errorText, MailboxAuthStatus, MailboxCredentialKind } from './dashboard-kit';
 import { parseMailboxBatch, type MailboxProviderTab } from './mailbox-utils';
 import type { MailboxBatchImportFormState, MailboxImportFormState, MailboxImportPayloadInput } from './mailbox-import-types';
 import type { UpsertEmailMailboxRequest, UpsertEmailMailboxResponse } from './types';
