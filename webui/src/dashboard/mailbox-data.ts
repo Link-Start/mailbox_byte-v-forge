@@ -3,7 +3,6 @@ import {
   DEFAULT_CURSOR_PAGE_SIZE,
   api,
   createHotStreamURL,
-  cursorPageURL,
   type ListMailboxDomainsResponse,
   type ListMailboxOperationsResponse,
   type ListMailboxProviderCapabilitiesResponse,
@@ -13,6 +12,7 @@ import {
   useQueryClient
 } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
+import { mailboxApiPaths, mailboxListURL, mailboxLookupURL } from './mailbox-api-paths';
 import type { ListEmailMailboxesResponse, Mailbox, MailboxOperation } from './types';
 
 const mailboxQueryKeys = {
@@ -31,14 +31,14 @@ export function useMailboxData(selectedEmail: string) {
     queryFn: (cursor) => api<ListEmailMailboxesResponse>(mailboxListURL(cursor)),
     pageSize: DEFAULT_CURSOR_PAGE_SIZE
   });
-  const domainsQuery = useQuery({ queryKey: mailboxQueryKeys.domains, queryFn: () => api<ListMailboxDomainsResponse>('/api/mailbox/domains') });
-  const providerCapabilitiesQuery = useQuery({ queryKey: mailboxQueryKeys.providerCapabilities, queryFn: () => api<ListMailboxProviderCapabilitiesResponse>('/api/mailbox/provider-capabilities') });
+  const domainsQuery = useQuery({ queryKey: mailboxQueryKeys.domains, queryFn: () => api<ListMailboxDomainsResponse>(mailboxApiPaths.domains) });
+  const providerCapabilitiesQuery = useQuery({ queryKey: mailboxQueryKeys.providerCapabilities, queryFn: () => api<ListMailboxProviderCapabilitiesResponse>(mailboxApiPaths.providerCapabilities) });
   const runningOperationsQuery = useQuery({
     queryKey: mailboxQueryKeys.runningOperations,
-    queryFn: () => api<ListMailboxOperationsResponse>('/api/mailbox/operations?limit=200&status=RUNNING')
+    queryFn: () => api<ListMailboxOperationsResponse>(`${mailboxApiPaths.operations}?limit=200&status=RUNNING`)
   });
   useHotStreamInvalidation({
-    url: createHotStreamURL('/api/mailbox', { eventTypes: ['mailbox.email.received', 'mailbox.email.signal_received', 'mailbox.operation.updated'] }),
+    url: createHotStreamURL(mailboxApiPaths.base, { eventTypes: ['mailbox.email.received', 'mailbox.email.signal_received', 'mailbox.operation.updated'] }),
     rules: [
       { queryKey: mailboxQueryKeys.mailboxes, eventTypes: ['mailbox.email.received', 'mailbox.email.signal_received'], resourceTypes: ['mailbox.email'] },
       { queryKey: mailboxQueryKeys.runningOperations, eventTypes: ['mailbox.operation.updated'], resourceTypes: ['mailbox.operation'] }
@@ -74,14 +74,6 @@ export type MailboxData = ReturnType<typeof useMailboxData>;
 
 function invalidateMailboxQueries(queryClient: ReturnType<typeof useQueryClient>) {
   return queryClient.invalidateQueries({ queryKey: ['mailbox'] });
-}
-
-function mailboxListURL(cursor: string) {
-  return cursorPageURL('/api/mailbox/mailboxes', { cursor, limit: DEFAULT_CURSOR_PAGE_SIZE });
-}
-
-function mailboxLookupURL(email: string) {
-  return cursorPageURL('/api/mailbox/mailboxes', { cursor: '', limit: 1, params: { email_address: email } });
 }
 
 function latestOperationByEmail(operations: MailboxOperation[]) {

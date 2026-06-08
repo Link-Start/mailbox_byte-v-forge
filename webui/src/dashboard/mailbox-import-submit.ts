@@ -1,4 +1,5 @@
 import { api, errorText, MailboxAuthStatus, MailboxCredentialKind } from './dashboard-kit';
+import { mailboxApiPaths } from './mailbox-api-paths';
 import { parseMailboxBatch, type MailboxProviderTab } from './mailbox-utils';
 import type { MailboxBatchImportFormState, MailboxImportFormState, MailboxImportPayloadInput } from './mailbox-import-types';
 import type { UpsertEmailMailboxRequest, UpsertEmailMailboxResponse } from './types';
@@ -58,5 +59,5 @@ function importCredentials(kinds: MailboxCredentialKind[], values: { password?: 
 }
 
 function upsertMailbox(body: UpsertEmailMailboxRequest) {
-  return api<UpsertEmailMailboxResponse>('/api/mailbox/mailboxes', { method: 'POST', body: JSON.stringify(body) });
+  return api<UpsertEmailMailboxResponse>(mailboxApiPaths.mailboxes, { method: 'POST', body: JSON.stringify(body) });
 }

@@ -1,9 +1,8 @@
 import type { QueryKey } from '@tanstack/react-query';
 import { createHotStreamURL, useHotStreamInvalidation } from './hotstream';
 import { normalizeUiEmail } from './email-utils';
+import { mailboxApiPaths } from './mailbox-api-paths';
 import type { InboxMessage, InboxResult, Mailbox } from './types';
-
-const mailboxApiBase = '/api/mailbox';
 
 export type MailboxEmailEventCacheOptions = {
   enabled?: boolean;
@@ -32,7 +31,7 @@ export function mergeInboxMessage(result: InboxResult | null | undefined, email:
 }
 
 export function mailboxEventURL(email: string, signalKind = 'otp', _issuedAfterUnix = 0) {
-  return createHotStreamURL(mailboxApiBase, { eventTypes: eventTypes(signalKind), resourceTypes: ['mailbox.email'], resourceIds: [email] });
+  return createHotStreamURL(mailboxApiPaths.base, { eventTypes: eventTypes(signalKind), resourceTypes: ['mailbox.email'], resourceIds: [email] });
 }
 
 function eventTypes(signalKind = 'otp') {

@@ -1,5 +1,6 @@
 import { api } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
+import { mailboxInboxMessageURL } from './mailbox-api-paths';
 import type { GetMailboxInboxMessageRequest, GetMailboxInboxMessageResponse } from './contracts';
 import type { InboxMessage } from './types';
 
@@ -18,9 +19,7 @@ export async function fetchInboxMessageDetail(message: InboxMessage): Promise<Ge
   if (input.provider_key) query.set('provider_key', input.provider_key);
   if (input.parser_profile) query.set('parser_profile', input.parser_profile);
   const queryString = query.toString();
-  return api<GetMailboxInboxMessageResponse>(
-    `/api/mailbox/mailboxes/${encodeURIComponent(input.email_address)}/inbox/${encodeURIComponent(input.message_id)}${queryString ? `?${queryString}` : ''}`
-  );
+  return api<GetMailboxInboxMessageResponse>(mailboxInboxMessageURL(input.email_address, input.message_id, queryString));
 }
 
 function inboxMessageDetailInput(message: InboxMessage): GetMailboxInboxMessageRequest {
