@@ -16,7 +16,15 @@ COPY services/mailbox-api/go.mod services/mailbox-api/go.sum* ./
 RUN go mod download
 
 COPY proto ./proto
-RUN mkdir -p /generated/pb \
+RUN mkdir -p /generated/pb /generated/internal/contracts \
+    && protoc -I proto --go_out=/generated --go_opt=module=mailboxapi \
+      proto/byte/v/forge/contracts/common/v1/common.proto \
+      proto/byte/v/forge/contracts/common/v1/eventbus.proto \
+      proto/byte/v/forge/contracts/mailbox/v1/mailbox.proto \
+      proto/byte/v/forge/contracts/observability/v1/hotstream.proto \
+      proto/byte/v/forge/contracts/browserautomation/v1/browser_automation.proto \
+    && protoc -I proto --go-grpc_out=/generated --go-grpc_opt=module=mailboxapi \
+      proto/byte/v/forge/contracts/browserautomation/v1/browser_automation.proto \
     && protoc -I proto --go_out=/generated/pb --go-grpc_out=/generated/pb \
       proto/email.proto \
       proto/mailbox_register.proto \
@@ -25,8 +33,10 @@ RUN mkdir -p /generated/pb \
 
 COPY services/mailbox-api ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
-    rm -rf pb \
+    rm -rf pb internal/contracts \
     && cp -R /generated/pb ./pb \
+    && mkdir -p internal \
+    && cp -R /generated/internal/contracts ./internal/contracts \
     && go build -o mailbox-api .
 
 FROM docker.m.daocloud.io/library/alpine:latest

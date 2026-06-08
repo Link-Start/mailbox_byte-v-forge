@@ -7,9 +7,9 @@ import (
 	"net/url"
 	"strings"
 
-	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
+	browserautomationv1 "mailboxapi/internal/contracts/browserautomationv1"
 )
 
 func (r *outlookRegistrationRunner) runBrowserOAuth(ctx context.Context, email string, password string) (oauthResult, error) {

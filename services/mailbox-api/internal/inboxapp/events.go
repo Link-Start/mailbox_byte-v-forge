@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
-	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"google.golang.org/protobuf/proto"
+	commonv1 "mailboxapi/internal/contracts/commonv1"
+	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 	"mailboxapi/internal/eventbus"
 	"mailboxapi/internal/eventcatalog"
 	"mailboxapi/internal/eventoutbox"

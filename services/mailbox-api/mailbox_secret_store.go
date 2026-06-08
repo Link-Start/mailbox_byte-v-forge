@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	"github.com/redis/go-redis/v9"
+	commonv1 "mailboxapi/internal/contracts/commonv1"
 	"mailboxapi/internal/redisx"
 	"mailboxapi/internal/secretref"
 )

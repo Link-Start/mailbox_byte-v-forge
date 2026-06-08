@@ -4,9 +4,9 @@ import (
 	"strings"
 	"time"
 
-	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
-	observabilityv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/observability/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	commonv1 "mailboxapi/internal/contracts/commonv1"
+	observabilityv1 "mailboxapi/internal/contracts/observabilityv1"
 )
 
 const SubjectPrefix = "byte.v.forge.hot"

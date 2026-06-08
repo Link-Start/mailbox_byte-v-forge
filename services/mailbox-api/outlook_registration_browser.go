@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/structpb"
+	browserautomationv1 "mailboxapi/internal/contracts/browserautomationv1"
 )
 
 func (r *outlookRegistrationRunner) startSession(ctx context.Context, email string) (string, error) {

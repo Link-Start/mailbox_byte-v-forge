@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
+	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 	"mailboxapi/internal/emailx"
 	"mailboxapi/internal/eventbus"
 	"mailboxapi/internal/eventcatalog"

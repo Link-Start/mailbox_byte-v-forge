@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
+	commonv1 "mailboxapi/internal/contracts/commonv1"
 	"mailboxapi/internal/eventbus"
 	"mailboxapi/internal/eventcatalog"
 )

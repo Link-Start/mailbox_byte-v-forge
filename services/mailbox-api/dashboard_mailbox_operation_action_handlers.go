@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 )
 
 func (s *dashboardServer) handleMailboxRegister(w http.ResponseWriter, r *http.Request) {

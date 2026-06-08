@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"mailboxapi/internal/hotstream"
 
-	observabilityv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/observability/v1"
+	observabilityv1 "mailboxapi/internal/contracts/observabilityv1"
 )
 
 type Config struct {

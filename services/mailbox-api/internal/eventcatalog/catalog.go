@@ -1,6 +1,6 @@
 package eventcatalog
 
-import commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
+import commonv1 "mailboxapi/internal/contracts/commonv1"
 
 const (
 	StreamName      = "BYTE_V_FORGE_EVENTS"

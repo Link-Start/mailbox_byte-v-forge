@@ -3,9 +3,9 @@ package main
 import (
 	"errors"
 
-	mailboxv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/mailbox/v1"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 )
 
 const (

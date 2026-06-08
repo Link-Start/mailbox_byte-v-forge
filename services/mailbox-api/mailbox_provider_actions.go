@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
+	browserautomationv1 "mailboxapi/internal/contracts/browserautomationv1"
 
 	"mailboxapi/internal/mailboxprovider"
 	"mailboxapi/pb"

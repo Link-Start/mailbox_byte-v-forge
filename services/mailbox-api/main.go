@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	browserautomationv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/browserautomation/v1"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	browserautomationv1 "mailboxapi/internal/contracts/browserautomationv1"
 	"mailboxapi/internal/eventcatalog"
 	"mailboxapi/internal/grpcclient"
 	"mailboxapi/internal/grpchealth"

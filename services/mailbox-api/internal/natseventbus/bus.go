@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	"github.com/nats-io/nats.go"
 	"google.golang.org/protobuf/proto"
+	commonv1 "mailboxapi/internal/contracts/commonv1"
 	"mailboxapi/internal/eventbus"
 	"mailboxapi/internal/eventcatalog"
 )

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	commonv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/common/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	commonv1 "mailboxapi/internal/contracts/commonv1"
 	"mailboxapi/internal/hashx"
 )
 

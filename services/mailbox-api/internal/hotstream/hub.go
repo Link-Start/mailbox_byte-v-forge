@@ -5,8 +5,8 @@ import (
 	"errors"
 	"sync"
 
-	observabilityv1 "github.com/byte-v-forge/common-lib/gen/go/byte/v/forge/contracts/observability/v1"
 	"google.golang.org/protobuf/proto"
+	observabilityv1 "mailboxapi/internal/contracts/observabilityv1"
 )
 
 const DefaultBufferSize = 256

@@ -1,0 +1,371 @@
+syntax = "proto3";
+
+package byte.v.forge.contracts.mailbox.v1;
+
+import "byte/v/forge/contracts/common/v1/common.proto";
+
+option csharp_namespace = "ByteVForge.Contracts.Mailbox.V1";
+option go_package = "mailboxapi/internal/contracts/mailboxv1;mailboxv1";
+option java_multiple_files = true;
+option java_outer_classname = "MailboxProto";
+option java_package = "com.bytevforge.contracts.mailbox.v1";
+option php_namespace = "ByteVForge\\Contracts\\Mailbox\\V1";
+
+enum EmailSignalKind {
+  EMAIL_SIGNAL_KIND_UNSPECIFIED = 0;
+  EMAIL_SIGNAL_KIND_OTP = 1;
+}
+
+message EmailSignal {
+  EmailSignalKind kind = 1;
+  byte.v.forge.contracts.common.v1.SecretRef secret_ref = 2;
+  string label = 3;
+  string profile = 4;
+  string parser = 5;
+  int32 confidence = 6;
+  string evidence_preview = 7;
+}
+
+enum MailboxCredentialKind {
+  MAILBOX_CREDENTIAL_KIND_UNSPECIFIED = 0;
+  MAILBOX_CREDENTIAL_KIND_PASSWORD = 1;
+  MAILBOX_CREDENTIAL_KIND_OAUTH_REFRESH_TOKEN = 2;
+  MAILBOX_CREDENTIAL_KIND_OAUTH_ACCESS_TOKEN = 3;
+}
+
+enum MailboxAuthStatus {
+  MAILBOX_AUTH_STATUS_UNSPECIFIED = 0;
+  MAILBOX_AUTH_STATUS_UNKNOWN = 1;
+  MAILBOX_AUTH_STATUS_OAUTH_PENDING = 2;
+  MAILBOX_AUTH_STATUS_AUTHORIZED = 3;
+  MAILBOX_AUTH_STATUS_AUTH_FAILED = 4;
+  MAILBOX_AUTH_STATUS_PASSWORD_ONLY = 5;
+  MAILBOX_AUTH_STATUS_WEBHOOK_ONLY = 6;
+  MAILBOX_AUTH_STATUS_DISABLED = 7;
+  MAILBOX_AUTH_STATUS_NEEDS_MANUAL_VERIFICATION = 8;
+}
+
+enum MailboxOperationAction {
+  MAILBOX_OPERATION_ACTION_UNSPECIFIED = 0;
+  MAILBOX_OPERATION_ACTION_REGISTER_MAILBOX = 1;
+  MAILBOX_OPERATION_ACTION_MAILBOX_OAUTH = 2;
+  MAILBOX_OPERATION_ACTION_FETCH_INBOXES = 3;
+}
+
+enum MailboxOperationStatus {
+  MAILBOX_OPERATION_STATUS_UNSPECIFIED = 0;
+  MAILBOX_OPERATION_STATUS_CREATED = 1;
+  MAILBOX_OPERATION_STATUS_RUNNING = 2;
+  MAILBOX_OPERATION_STATUS_SUCCEEDED = 3;
+  MAILBOX_OPERATION_STATUS_FAILED = 4;
+}
+
+message MailboxCredentialState {
+  bool password_present = 1;
+  bool oauth_refresh_token_present = 2;
+  bool oauth_access_token_present = 3;
+  repeated MailboxCredentialKind present_credentials = 4;
+}
+
+message EmailMailbox {
+  string email_address = 1;
+  reserved 2 to 4;
+  reserved "password", "refresh_token", "access_token";
+  string last_error = 7;
+  int64 created_at = 10;
+  int64 updated_at = 11;
+  MailboxAuthStatus auth_status = 15;
+  reserved 18;
+  reserved "provider";
+  EmailSignal latest_signal = 19;
+  string domain = 20;
+  MailboxCredentialState credential_state = 21;
+  string provider_key = 22;
+  repeated MailboxCredentialValue credentials = 23;
+}
+
+message MailboxCredentialInput {
+  string email_address = 1;
+  string provider_key = 2;
+  repeated MailboxCredentialValue credentials = 3;
+  MailboxAuthStatus auth_status = 6;
+  string last_error = 7;
+}
+
+message MailboxCredentialValue {
+  MailboxCredentialKind kind = 1;
+  string value = 2;
+}
+
+message MarkEmailAuthStatusRequest {
+  string email_address = 1;
+  MailboxAuthStatus auth_status = 2;
+  string last_error = 3;
+}
+
+message MarkEmailAuthStatusResponse {
+  EmailMailbox mailbox = 1;
+  string error_message = 2;
+}
+
+message UpsertEmailMailboxRequest {
+  MailboxCredentialInput mailbox = 1;
+}
+
+message UpsertEmailMailboxResponse {
+  EmailMailbox mailbox = 1;
+  string error_message = 2;
+}
+
+message ListEmailMailboxesRequest {
+  int32 limit = 1;
+  MailboxAuthStatus auth_status = 2;
+  string provider_key = 3;
+  string cursor = 4;
+  string email_address = 5;
+}
+
+message ListEmailMailboxesResponse {
+  repeated EmailMailbox mailboxes = 1;
+  string next_cursor = 2;
+  string error_message = 3;
+}
+
+message DeleteMailboxRequest {
+  string email_address = 1;
+}
+
+message DeleteMailboxResponse {
+  bool deleted = 1;
+  string error_message = 2;
+}
+
+message EmailInboxMessage {
+  string id = 1;
+  string mailbox_email = 2;
+  string subject = 3;
+  string from_address = 4;
+  string body_preview = 5;
+  int64 received_at_unix = 6;
+  repeated string recipients = 7;
+  reserved 9;
+  reserved "provider";
+  string source_mailbox_email = 10;
+  byte.v.forge.contracts.common.v1.ArtifactRef body_artifact_ref = 12;
+  byte.v.forge.contracts.common.v1.ArtifactRef html_artifact_ref = 13;
+  int64 raw_size = 14;
+  repeated EmailSignal signals = 15;
+  EmailSignal primary_signal = 16;
+  string provider_key = 17;
+}
+
+message MailboxEmailReceivedEvent {
+  byte.v.forge.contracts.common.v1.EventMetadata metadata = 1;
+  EmailInboxMessage message = 2;
+}
+
+message MailboxEmailSignalReceivedEvent {
+  byte.v.forge.contracts.common.v1.EventMetadata metadata = 1;
+  EmailInboxMessage message = 2;
+  EmailSignal signal = 3;
+}
+
+message FetchMailboxInboxResult {
+  EmailMailbox mailbox = 1;
+  repeated EmailInboxMessage messages = 2;
+  string error_message = 3;
+}
+
+message FetchMailboxInboxesRequest {
+  int32 limit_per_mailbox = 1;
+  int32 max_mailboxes = 2;
+  string email_address = 3;
+  string parser_profile = 4;
+  int64 received_after_unix = 5;
+}
+
+message WaitForMailboxEmailRequest {
+  string email_address = 1;
+  string subject_keyword = 2;
+  int32 timeout_seconds = 3;
+  int64 issued_after_unix = 4;
+  string parser_profile = 5;
+  EmailSignalKind signal_kind = 6;
+}
+
+message WaitForMailboxEmailResponse {
+  bool found = 1;
+  EmailInboxMessage message = 2;
+}
+
+message MailboxEmailPollRequest {
+  string email_address = 1;
+  string subject_keyword = 2;
+  string parser_profile = 3;
+  EmailSignalKind signal_kind = 4;
+  int64 issued_after_unix = 5;
+  int64 deadline_unix = 6;
+  string reason = 7;
+}
+
+message ListMailboxInboxRequest {
+  string email_address = 1;
+  int32 limit = 2;
+  string parser_profile = 3;
+}
+
+message ListMailboxInboxResponse {
+  FetchMailboxInboxResult result = 1;
+  string error_message = 2;
+}
+
+message FetchMailboxInboxesResponse {
+  repeated FetchMailboxInboxResult results = 1;
+  int32 mailbox_count = 2;
+  int32 fetched_count = 3;
+  int32 failed_count = 4;
+  int32 message_count = 5;
+  string operation_id = 6;
+}
+
+message RegisterMailboxRequest {
+  bool import_only = 1;
+}
+
+message RegisterMailboxResponse {
+  string operation_id = 1;
+  bool started = 2;
+  string error_message = 3;
+  reserved 4, 5;
+  reserved "exit_code", "mailboxes";
+}
+
+message StartMailboxOAuthRequest {
+  string email_address = 1;
+  bool only_missing = 2;
+  int32 limit = 3;
+}
+
+message StartMailboxOAuthResponse {
+  string operation_id = 1;
+  bool started = 2;
+  string error_message = 3;
+}
+
+message MailboxOperation {
+  string operation_id = 1;
+  MailboxOperationAction action = 2;
+  MailboxOperationStatus status = 3;
+  string email_address = 4;
+  string last_step = 5;
+  string error_message = 6;
+  int32 exit_code = 7;
+  int32 mailbox_count = 8;
+  int32 fetched_count = 9;
+  int32 failed_count = 10;
+  int32 message_count = 11;
+  int64 created_at = 12;
+  int64 updated_at = 13;
+  reserved 14, 15, 16;
+  reserved "claim_owner", "claim_until", "attempt_count";
+}
+
+message GetMailboxOperationRequest {
+  string operation_id = 1;
+}
+
+message GetMailboxOperationResponse {
+  MailboxOperation operation = 1;
+  string error_message = 2;
+}
+
+message ListMailboxOperationsRequest {
+  int32 limit = 1;
+  MailboxOperationStatus status = 2;
+  MailboxOperationAction action = 3;
+  string email_address = 4;
+}
+
+message ListMailboxOperationsResponse {
+  repeated MailboxOperation operations = 1;
+  string error_message = 2;
+}
+
+message MailboxDomain {
+  reserved 1;
+  reserved "provider";
+  string domain = 2;
+  bool enabled = 3;
+  string provider_key = 4;
+}
+
+message ListMailboxDomainsRequest {
+  reserved 1;
+  reserved "provider";
+  string provider_key = 2;
+}
+
+message ListMailboxDomainsResponse {
+  repeated MailboxDomain domains = 1;
+  string error_message = 2;
+}
+
+message SyncMailboxDomainsRequest {
+  reserved 1;
+  reserved "provider";
+  string provider_key = 2;
+}
+
+message SyncMailboxDomainsResponse {
+  repeated MailboxDomain domains = 1;
+  int32 synced_count = 2;
+  string error_message = 3;
+}
+
+enum MailboxMessageRetentionScope {
+  MAILBOX_MESSAGE_RETENTION_SCOPE_UNSPECIFIED = 0;
+  MAILBOX_MESSAGE_RETENTION_SCOPE_MAILBOX = 1;
+  MAILBOX_MESSAGE_RETENTION_SCOPE_DOMAIN = 2;
+}
+
+enum MailboxProviderAction {
+  MAILBOX_PROVIDER_ACTION_UNSPECIFIED = 0;
+  MAILBOX_PROVIDER_ACTION_IMPORT_MAILBOX = 1;
+  MAILBOX_PROVIDER_ACTION_RUN_OAUTH = 2;
+  MAILBOX_PROVIDER_ACTION_FETCH_INBOX = 3;
+  MAILBOX_PROVIDER_ACTION_RECEIVE_WEBHOOK = 4;
+  MAILBOX_PROVIDER_ACTION_AUTO_CREATE_MAILBOX = 5;
+  MAILBOX_PROVIDER_ACTION_SYNC_DOMAINS = 6;
+}
+
+message MailboxMessageRetentionPolicy {
+  MailboxMessageRetentionScope scope = 1;
+  int32 max_messages = 2;
+}
+
+message MailboxProviderActionCapability {
+  MailboxProviderAction action = 1;
+  repeated MailboxCredentialKind required_credentials = 2;
+  repeated MailboxAuthStatus required_auth_statuses = 3;
+  bool bulk_supported = 4;
+}
+
+message MailboxProviderCapabilities {
+  reserved 1;
+  reserved "provider";
+  string key = 2;
+  string display_name = 3;
+  repeated MailboxProviderActionCapability actions = 4;
+  MailboxMessageRetentionPolicy retention_policy = 5;
+}
+
+message ListMailboxProviderCapabilitiesRequest {
+  reserved 1;
+  reserved "provider";
+  string provider_key = 2;
+}
+
+message ListMailboxProviderCapabilitiesResponse {
+  repeated MailboxProviderCapabilities providers = 1;
+  string error_message = 2;
+}
