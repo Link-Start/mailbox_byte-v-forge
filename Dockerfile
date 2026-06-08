@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM docker.m.daocloud.io/library/node:22-bookworm-slim AS dashboard_remote_builder
+FROM docker.m.daocloud.io/library/node:22-bookworm-slim AS dashboard_builder
 
 WORKDIR /mailbox/webui
 RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources     && apt-get update     && apt-get install -y --no-install-recommends libprotobuf-dev protobuf-compiler     && rm -rf /var/lib/apt/lists/*
@@ -48,7 +48,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 WORKDIR /app
 COPY --from=builder /out/mailbox /app/bin/mailbox
-COPY --from=dashboard_remote_builder /mailbox/webui/dist /app/dashboard/mailbox
+COPY --from=dashboard_builder /mailbox/webui/dist /app/dashboard/mailbox
 
 EXPOSE 50051 8080 8082
 CMD ["/app/bin/mailbox"]

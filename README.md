@@ -5,7 +5,7 @@ Mailbox 领域仓，承载邮箱账号、Outlook provider、邮箱注册/OAuth M
 ## 目录
 
 - `services/mailbox-api`：Mailbox 领域 gRPC API 和唯一服务进程，内置 Outlook/Cloudflare provider adapter、邮箱注册/OAuth MQ worker、收件、webhook 和邮件信号解析能力。
-- `Dockerfile`：部署入口，只构建并启动 mailbox API 一个进程。
+- `Dockerfile`：独立部署入口，构建 mailbox API 与内置 dashboard 静态资源，只启动 mailbox 一个服务进程。
 - `workers/cloudflare-email-relay`：Cloudflare Email Routing Worker，将 CF 入站邮件转发到 mailbox webhook。
 - `proto/email.proto`：邮件读取服务契约。
 - `proto/mailbox_register.proto`：邮箱注册与 OAuth 编排模型。
@@ -26,6 +26,8 @@ sh scripts/generate-proto.sh
 ## 配置
 
 `services/mailbox-api` 直接内置 Outlook 和 Cloudflare provider adapter，并通过 `MAILBOX_PG_DSN` 维护邮箱、邮件和操作状态投影。
+
+Dashboard 由 mailbox 服务自身托管，不再发布 Module Federation remote。静态资源默认从 `MAILBOX_DASHBOARD_STATIC_DIR=/app/dashboard/mailbox` 读取，服务在 `/dashboard/mailbox/` 和根路径提供独立 SPA，在 `/api/mailbox/*` 提供 dashboard BFF API。
 
 Outlook 注册和 OAuth 通过 mailbox 内置 MQ worker 编排：`RegisterMailbox` / `RunMailboxOAuth` 只创建 operation 并发布 `mailbox.registration.operation_requested` / `mailbox.oauth.operation_requested` 到 `platform-nats`，由 mailbox worker 消费后调用 `browser-automation` 执行并更新 operation 投影。claim owner、lease、attempt count、OAuth limit/only_missing 只保存在 mailbox 内部表中，不进入 dashboard/API 对外 `MailboxOperation` 模型。
 

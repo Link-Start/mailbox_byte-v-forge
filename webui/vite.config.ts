@@ -2,7 +2,6 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { federation } from '@module-federation/vite';
 
 const linkedPeerAliases = [
   { find: /^@tanstack\/react-query$/, replacement: path.resolve(__dirname, 'node_modules/@tanstack/react-query') },
@@ -20,34 +19,14 @@ const linkedPeerAliases = [
 ];
 
 export default defineConfig({
-  base: '/mf/mailbox/',
-  plugins: [
-    react(),
-    tailwindcss(),
-    federation({
-      name: 'mailbox',
-      filename: 'remoteEntry.js',
-      exposes: {
-        './dashboardModule': './src/dashboard/manifest.tsx'
-      },
-      shared: {
-        react: { singleton: true },
-        'react-dom': { singleton: true },
-        '@tanstack/react-query': { singleton: true },
-        '@byte-v-forge/common-ui': { singleton: true }
-      }
-    })
-  ],
+  base: '/dashboard/mailbox/',
+  plugins: [react(), tailwindcss()],
   resolve: {
     preserveSymlinks: true,
     alias: [...linkedPeerAliases, { find: '@', replacement: path.resolve(__dirname, './src') }]
   },
   build: {
     target: 'esnext',
-    modulePreload: false,
-    cssCodeSplit: true,
-    rollupOptions: {
-      input: path.resolve(__dirname, './src/remote-entry.ts')
-    }
+    cssCodeSplit: true
   }
 });

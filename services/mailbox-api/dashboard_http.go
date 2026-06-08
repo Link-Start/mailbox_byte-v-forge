@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -37,8 +38,9 @@ func startDashboardHTTP(ctx context.Context, listenAddr, staticDir string, confi
 	dashboard := &dashboardServer{mailboxClient: mailboxClient, hotstream: stream, staticDir: staticDir, config: config}
 	mux := http.NewServeMux()
 	mux.Handle("/api/mailbox/", http.StripPrefix("/api/mailbox", dashboard.routes()))
-	mux.Handle("/mf/mailbox/", http.StripPrefix("/mf/mailbox/", noCacheFileServer(staticDir)))
+	mux.Handle("/dashboard/mailbox/", http.StripPrefix("/dashboard/mailbox/", spaFileServer(staticDir)))
 	mux.HandleFunc("/healthz", dashboard.handleHealth)
+	mux.Handle("/", spaFileServer(staticDir))
 	server := &http.Server{Addr: listenAddr, Handler: withCORS(mux), ReadHeaderTimeout: 5 * time.Second}
 	go func() {
 		<-ctx.Done()
@@ -110,14 +112,31 @@ func withCORS(next http.Handler) http.Handler {
 	})
 }
 
-func noCacheFileServer(dir string) http.Handler {
+func spaFileServer(dir string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
-		path := filepath.Join(dir, filepath.Clean(r.URL.Path))
-		if info, err := os.Stat(path); err == nil && !info.IsDir() {
-			http.ServeFile(w, r, path)
+		if file, ok := staticFilePath(dir, r.URL.Path); ok {
+			http.ServeFile(w, r, file)
+			return
+		}
+		indexPath := filepath.Join(dir, "index.html")
+		if info, err := os.Stat(indexPath); err == nil && !info.IsDir() {
+			http.ServeFile(w, r, indexPath)
 			return
 		}
 		http.NotFound(w, r)
 	})
+}
+
+func staticFilePath(dir string, requestPath string) (string, bool) {
+	cleanPath := strings.TrimPrefix(path.Clean("/"+requestPath), "/")
+	if cleanPath == "" || cleanPath == "." {
+		return "", false
+	}
+	file := filepath.Join(dir, filepath.FromSlash(cleanPath))
+	info, err := os.Stat(file)
+	if err != nil || info.IsDir() {
+		return "", false
+	}
+	return file, true
 }
