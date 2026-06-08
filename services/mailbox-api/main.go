@@ -33,7 +33,7 @@ func main() {
 
 	var browserClient browserautomationv1.BrowserAutomationServiceClient
 	if strings.TrimSpace(cfg.browserAutomationAddr) == "" {
-		logInfo("BROWSER_AUTOMATION_ADDR is not configured; Outlook registration/OAuth browser actions are disabled")
+		logInfo("MAILBOX_BROWSER_AUTOMATION_ADDR is not configured; Outlook registration/OAuth browser actions are disabled")
 	} else {
 		browserConn, err := grpcclient.NewRequiredInsecure("browser automation", cfg.browserAutomationAddr)
 		if err != nil {
