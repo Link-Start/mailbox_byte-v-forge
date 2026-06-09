@@ -31,7 +31,7 @@ export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, sh
   const { search } = useLocation();
   const displayEmail = showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address);
   const rowActions = mailboxRowActions({ mailbox, busy, oauthing, providerCapability, currentOperation, onOAuth, onDelete });
-  const detailPath = `${mailboxDetailPath(mailbox.email_address)}${persistentMailboxPanelSearch(search)}`;
+  const detailPath = `${mailboxDetailPath(mailbox.email_address, 'inbox')}${persistentMailboxPanelSearch(search)}`;
 
   return (
     <RecordCard selected={selected}>
