@@ -9,6 +9,7 @@ export type MailboxRecordListProps = {
   mode: MailboxPanelMode;
   emptyText: string;
   providerCapability?: MailboxProviderCapability;
+  providerCapabilities?: MailboxProviderCapability[];
   showStatus?: boolean;
   selected?: string;
   busy: boolean;
@@ -22,7 +23,7 @@ export type MailboxRecordListProps = {
   onDelete: (mailbox: Mailbox) => void;
 };
 
-export function MailboxRecordList({ mailboxes, mode, emptyText, providerCapability, showStatus, selected, busy, showSecrets, oauthing, runningOperationByEmail, hasMoreMailboxes, loadingMoreMailboxes, onLoadMoreMailboxes, onOAuth, onDelete }: MailboxRecordListProps) {
+export function MailboxRecordList({ mailboxes, mode, emptyText, providerCapability, providerCapabilities, showStatus, selected, busy, showSecrets, oauthing, runningOperationByEmail, hasMoreMailboxes, loadingMoreMailboxes, onLoadMoreMailboxes, onOAuth, onDelete }: MailboxRecordListProps) {
   return (
     <>
       <RecordList className="wideRecordList" emptyText={emptyText}>
@@ -37,6 +38,7 @@ export function MailboxRecordList({ mailboxes, mode, emptyText, providerCapabili
             oauthing={oauthing}
             showStatus={showStatus ?? true}
             providerCapability={providerCapability}
+            providerCapabilities={providerCapabilities}
             currentOperation={runningOperationByEmail.get(normalizeUiEmail(mailbox.email_address))}
             onOAuth={onOAuth}
             onDelete={onDelete}

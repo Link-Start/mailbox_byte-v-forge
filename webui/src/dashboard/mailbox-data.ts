@@ -9,13 +9,12 @@ import {
 } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
 import { mailboxApiPaths } from './mailbox-api-paths';
-import { listMailboxDomains, listMailboxProviderCapabilities, listMailboxes, listRunningMailboxOperations, lookupMailbox } from './mailbox-data-api';
+import { listMailboxProviderCapabilities, listMailboxes, listRunningMailboxOperations, lookupMailbox } from './mailbox-data-api';
 import type { ListEmailMailboxesResponse, Mailbox, MailboxOperation } from './types';
 
 const mailboxQueryKeys = {
   mailboxes: ['mailbox', 'mailboxes'] as const,
   mailbox: (email: string) => ['mailbox', 'mailbox', normalizeUiEmail(email)] as const,
-  domains: ['mailbox', 'domains'] as const,
   providerCapabilities: ['mailbox', 'provider-capabilities'] as const,
   runningOperations: ['mailbox', 'running-operations'] as const
 };
@@ -28,7 +27,6 @@ export function useMailboxData(selectedEmail: string) {
     queryFn: listMailboxes,
     pageSize: DEFAULT_CURSOR_PAGE_SIZE
   });
-  const domainsQuery = useQuery({ queryKey: mailboxQueryKeys.domains, queryFn: listMailboxDomains });
   const providerCapabilitiesQuery = useQuery({ queryKey: mailboxQueryKeys.providerCapabilities, queryFn: listMailboxProviderCapabilities });
   const runningOperationsQuery = useQuery({
     queryKey: mailboxQueryKeys.runningOperations,
@@ -56,13 +54,12 @@ export function useMailboxData(selectedEmail: string) {
     mailboxes,
     selected,
     runningOperationByEmail,
-    domains: Array.isArray(domainsQuery.data?.domains) ? domainsQuery.data.domains : [],
     providerCapabilities: Array.isArray(providerCapabilitiesQuery.data?.providers) ? providerCapabilitiesQuery.data.providers : [],
-    busy: mailboxesQuery.isLoading || domainsQuery.isLoading || providerCapabilitiesQuery.isLoading || selectedQuery.isLoading,
+    busy: mailboxesQuery.isLoading || providerCapabilitiesQuery.isLoading || selectedQuery.isLoading,
     hasMoreMailboxes: mailboxesQuery.pagination.hasNext,
     loadingMoreMailboxes: mailboxesQuery.pagination.loading,
     loadMoreMailboxes: mailboxesQuery.loadMore,
-    loadError: mailboxesQuery.error || domainsQuery.error || providerCapabilitiesQuery.error || runningOperationsQuery.error,
+    loadError: mailboxesQuery.error || providerCapabilitiesQuery.error || runningOperationsQuery.error,
     invalidate: () => invalidateMailboxQueries(queryClient)
   };
 }

@@ -25,29 +25,29 @@
 :root {
   color-scheme: light;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --background: #f6f3ed;
-  --foreground: #26231f;
-  --card: #fffefa;
-  --muted: #f0ede5;
-  --muted-foreground: #7d756b;
-  --border: #ded8cd;
+  --background: #f3f6fb;
+  --foreground: #172033;
+  --card: #ffffff;
+  --muted: #eef3fb;
+  --muted-foreground: #667085;
+  --border: #d8e0ea;
   --destructive: #b42318;
-  --primary: #7c5c3f;
+  --primary: #2563eb;
   --primary-foreground: #ffffff;
-  --secondary: #eee6da;
-  --secondary-foreground: #3a3026;
-  --accent: #f7f5ef;
-  --accent-foreground: #26231f;
+  --secondary: #e8f1ff;
+  --secondary-foreground: #183b73;
+  --accent: #f8fbff;
+  --accent-foreground: #172033;
   --success: #15803d;
   --success-soft: #eaf7ef;
   --danger-soft: #fff1ef;
-  --card-foreground: #26231f;
-  --popover: #fffefa;
-  --popover-foreground: #26231f;
-  --input: #ded8cd;
-  --ring: #7c5c3f;
+  --card-foreground: #172033;
+  --popover: #ffffff;
+  --popover-foreground: #172033;
+  --input: #d8e0ea;
+  --ring: #2563eb;
   --radius: 0.75rem;
-  --shadow-sm: 0 8px 24px rgba(24, 34, 48, .06);
+  --shadow-sm: 0 10px 28px rgba(15, 23, 42, .08);
 }
 
 * { box-sizing: border-box; }
@@ -55,44 +55,52 @@ html, body, #root { width: 100%; height: 100%; overflow: hidden; }
 body { margin: 0; background: var(--background); color: var(--foreground); }
 button, input, textarea { font: inherit; }
 
-.workspacePanel { height: 100%; padding: 14px; overflow: hidden; }
-.mailboxWorkspace { display: grid; grid-template-columns: minmax(340px, .95fr) minmax(420px, 1.2fr); gap: 12px; height: 100%; min-height: 0; }
-.mailboxSourcePane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; gap: 10px; }
-.mailboxDetailPane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--shadow-sm); }
-.mailboxDetailHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-.mailboxDetailBody { min-height: 0; overflow: hidden; padding: 12px; }
-.mailboxReadingEmpty { display: grid; min-height: 0; place-items: center; border: 1px dashed var(--border); border-radius: 16px; background: var(--accent); }
-@media (max-width: 1080px) { .mailboxWorkspace { grid-template-columns: minmax(0, 1fr); } .mailboxReadingEmpty, .mailboxDetailPane { min-height: 420px; } }
+.workspacePanel { height: 100%; overflow: hidden; background: var(--background); }
+.mailboxAppShell { display: grid; grid-template-columns: 76px minmax(0, 1fr); height: 100%; min-height: 0; }
+.mailboxAppNav { display: grid; grid-template-rows: auto 1fr; gap: 20px; padding: 16px 10px; background: #0f4c81; color: #fff; }
+.mailboxAppMark { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 14px; background: rgba(255, 255, 255, .18); font-weight: 800; }
+.mailboxAppNavItems { display: grid; align-content: start; gap: 8px; }
+.mailboxAppNavItem { display: grid; justify-items: center; gap: 4px; border-radius: 14px; padding: 10px 6px; color: rgba(255, 255, 255, .76); text-decoration: none; font-size: 12px; }
+.mailboxAppNavItem.active, .mailboxAppNavItem:hover { background: rgba(255, 255, 255, .18); color: #fff; }
+.mailboxWorkspace { display: grid; grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); height: 100%; min-height: 0; }
+.mailboxSourcePane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; gap: 10px; padding: 12px; border-right: 1px solid var(--border); background: #f8fbff; }
+.mailboxListPanel { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; gap: 10px; }
+.mailboxSearchBar { display: flex; align-items: center; gap: 8px; }
+.mailboxDetailPane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; overflow: hidden; background: var(--card); }
+.mailboxDetailHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--card); }
+.mailboxDetailBody { min-height: 0; overflow: hidden; padding: 16px; }
+.mailboxReadingEmpty { display: grid; min-height: 0; place-items: center; background: var(--card); }
+@media (max-width: 1080px) { .mailboxAppShell { grid-template-columns: 64px minmax(0, 1fr); } .mailboxWorkspace { grid-template-columns: minmax(0, 1fr); } .mailboxReadingEmpty, .mailboxDetailPane { min-height: 420px; } }
+
 .accountFrame { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; gap: 10px; }
-.panelHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.panelHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; }
 .panelTitle { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
 .panelBody { min-height: 0; display: grid; }
+.drawerBody { min-height: 0; overflow: auto; padding: 12px; }
+.appDrawer { width: min(720px, 100vw); max-width: none; }
 
 .uiItem { display: flex; gap: 10px; padding: 10px; }
 .uiItemContent { display: grid; gap: 4px; flex: 1; }
 .uiItemTitle { display: flex; align-items: center; font-weight: 700; }
 .uiItemDescription { color: var(--muted-foreground); font-size: 12px; }
 .emptyBlock { border: 1px dashed var(--border); border-radius: 14px; padding: 24px; text-align: center; color: var(--muted-foreground); font-size: 14px; }
-
 .tabsRoot { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; gap: 10px; height: 100%; }
 .tabsContent { min-height: 0; overflow: hidden; }
-.appDrawer { width: min(720px, 100vw); max-width: none; }
 .segmentedControl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted); }
 
-.recordList { min-height: 0; overflow: auto; display: grid; align-content: start; gap: 8px; }
-.recordCard { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; }
+.recordList { min-height: 0; overflow: auto; display: grid; align-content: start; gap: 6px; }
+.recordCard { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; border: 1px solid transparent; border-radius: 12px; background: transparent; }
 .recordCard.clickable { cursor: pointer; }
-.recordCard.selected { border-color: var(--primary); background: var(--secondary); }
+.recordCard:hover { background: var(--accent); }
+.recordCard.selected { border-color: #bfdbfe; background: var(--secondary); box-shadow: inset 3px 0 0 var(--primary); }
 .recordMain { display: grid; gap: 6px; min-width: 0; }
 .recordTop, .recordIdentity { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .recordIdentity small, .recordMeta { color: var(--muted-foreground); }
-.recordIcon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9px; background: var(--muted); }
+.recordIcon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 10px; background: #e0edff; color: var(--primary); }
 .recordTitle { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recordActions, .rowActionsMain, .rowActionButtons, .toolbarActions, .actionButtonGroup { display: flex; align-items: center; gap: 6px; }
 .statusBadge.authorized { background: var(--success-soft); color: var(--success); }
 .statusBadge.auth-failed { background: var(--danger-soft); color: var(--destructive); }
-
-.drawerBody { min-height: 0; overflow: auto; padding: 12px; }
 
 .formField { display: grid; gap: 5px; font-size: 13px; }
 .textarea { min-height: 128px; resize: vertical; }
@@ -101,11 +109,11 @@ button, input, textarea { font: inherit; }
 .kvRow dt { color: var(--muted-foreground); font-size: 12px; }
 .kvRow dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cursorPager { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; color: var(--muted-foreground); font-size: 12px; }
-.mailboxInboxLayout { display: grid; gap: 12px; }
-@media (min-width: 960px) { .mailboxInboxLayout { grid-template-columns: minmax(0, 1fr) minmax(260px, 0.9fr); align-items: start; } }
+.mailboxInboxLayout { display: grid; gap: 12px; height: 100%; min-height: 0; }
+@media (min-width: 960px) { .mailboxInboxLayout { grid-template-columns: minmax(280px, .85fr) minmax(360px, 1.15fr); align-items: stretch; } }
 .inboxMessageRow { cursor: pointer; }
-.inboxMessageRow.selected { border-color: var(--primary); background: var(--secondary); }
-.mailboxInboxDetail { gap: 12px; padding: 12px; }
+.inboxMessageRow.selected { border-color: #bfdbfe; background: var(--secondary); }
+.mailboxInboxDetail { gap: 12px; padding: 14px; overflow: auto; }
 .mailboxInboxDetailHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .mailboxInboxMetadata { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 6px 10px; font-size: 12px; }
 .mailboxInboxMetadata dt { color: var(--muted-foreground); }

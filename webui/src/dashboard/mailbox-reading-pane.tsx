@@ -2,7 +2,7 @@ import { Mail, X } from 'lucide-react';
 import { Button, EmptyBlock } from './dashboard-kit';
 import { maskEmail } from './email-utils';
 import { MailboxDetails } from './mailbox-details';
-import type { MailboxDetailTab } from './mailbox-route-paths';
+import type { MailboxPanelMode } from './mailbox-provider-types';
 import type { InboxResult, Mailbox, MailboxProviderCapability } from './types';
 
 export function MailboxReadingEmpty({ busy, total }: { busy: boolean; total: number }) {
@@ -13,26 +13,24 @@ export function MailboxReadingEmpty({ busy, total }: { busy: boolean; total: num
 export function MailboxReadingPane({
   mailbox,
   providerCapability,
-  activeTab,
+  mode,
   showSecrets,
   inboxResult,
   inboxLoading,
   canFetchInbox,
   onClose,
-  onTabChange,
   onCopy,
   onFetchInbox,
   onDelete
 }: {
   mailbox: Mailbox;
   providerCapability?: MailboxProviderCapability;
-  activeTab: MailboxDetailTab;
+  mode: MailboxPanelMode;
   showSecrets: boolean;
   inboxResult?: InboxResult | null;
   inboxLoading: boolean;
   canFetchInbox: boolean;
   onClose: () => void;
-  onTabChange: (tab: MailboxDetailTab) => void;
   onCopy: (label: string, value: string) => void;
   onFetchInbox: (emailAddress?: string) => Promise<void>;
   onDelete: (mailbox: Mailbox) => void;
@@ -53,12 +51,11 @@ export function MailboxReadingPane({
         <MailboxDetails
           mailbox={mailbox}
           providerCapability={providerCapability}
-          activeTab={activeTab}
+          mode={mode}
           showSecrets={showSecrets}
           inboxResult={inboxResult}
           inboxLoading={inboxLoading}
           canFetchInbox={canFetchInbox}
-          onTabChange={onTabChange}
           onCopy={onCopy}
           onFetchInbox={onFetchInbox}
           onDelete={onDelete}

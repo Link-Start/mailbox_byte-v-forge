@@ -4,12 +4,13 @@ import { MailboxProviderAction, WorkspacePanel } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
 import { useMailboxActions } from './mailbox-actions';
 import { useMailboxData } from './mailbox-data';
+import { MailboxAppNav } from './mailbox-app-nav';
 import { MailboxDeleteDialog } from './mailbox-delete-dialog';
 import { useMailboxEmailEventCache } from './mailbox-events';
 import { MailboxPageStatus } from './mailbox-page-status';
 import { persistentMailboxPanelSearch } from './mailbox-panel-query';
 import { MailboxReadingEmpty, MailboxReadingPane } from './mailbox-reading-pane';
-import { mailboxAccountsIndexPath, mailboxDetailPath, mailboxInboxIndexPath, type MailboxDetailTab } from './mailbox-route-paths';
+import { mailboxAccountsIndexPath, mailboxInboxIndexPath } from './mailbox-route-paths';
 import { MailboxPanel } from './mailboxes';
 import { canRunProviderMailboxAction, capabilityForProvider } from './mailbox-provider-capabilities';
 import type { MailboxPanelMode } from './mailbox-provider-types';
@@ -19,7 +20,7 @@ type MailboxPageContext = {
   actions: ReturnType<typeof useMailboxActions>;
   showSecrets: boolean;
   closeDetails: () => void;
-  openDetailTab: (tab: MailboxDetailTab) => void;
+  panelMode: MailboxPanelMode;
 };
 
 export function MailboxPage() {
@@ -39,46 +40,44 @@ export function MailboxPage() {
   const data = useMailboxData(selectedEmail);
   const actions = useMailboxActions(data, showSecrets, closeDeletedMailbox);
   useMailboxEmailEventCache({ email: data.selected?.email_address, inboxQueryKey: actions.inboxQueryKey, enabled: !!data.selected?.email_address });
-  const openDetailTab = useCallback((tab: MailboxDetailTab) => {
-    if (data.selected) void navigate(`${mailboxDetailPath(data.selected.email_address, tab)}${persistentMailboxPanelSearch(search)}`);
-  }, [data.selected, navigate, search]);
-
   return (
     <>
       <WorkspacePanel>
-        <div className="mailboxWorkspace">
-          <div className="mailboxSourcePane">
-            <MailboxPageStatus
-              total={data.mailboxes.length}
-              runningCount={data.runningOperationByEmail.size}
-              showSecrets={showSecrets}
-              error={data.loadError}
-            />
-            <MailboxPanel
-              mailboxes={data.mailboxes}
-              mode={panelMode}
-              domains={data.domains}
-              providerCapabilities={data.providerCapabilities}
-              selected={selectedEmail}
-              busy={data.busy}
-              showSecrets={showSecrets}
-              oauthing={actions.oauthing}
-              inboxLoading={actions.inboxLoading}
-              domainSyncing={actions.domainSyncing}
-              runningOperationByEmail={data.runningOperationByEmail}
-              hasMoreMailboxes={data.hasMoreMailboxes}
-              loadingMoreMailboxes={data.loadingMoreMailboxes}
-              onLoadMoreMailboxes={data.loadMoreMailboxes}
-              onOAuth={actions.runOAuth}
-              onFetchInbox={() => actions.fetchInbox()}
-              onSyncDomains={actions.syncProviderDomains}
-              onToggleSecrets={() => setShowSecrets((value) => !value)}
-              onDelete={actions.requestDeleteMailbox}
-              onDone={actions.done}
-              onError={actions.toast.showError}
-            />
+        <div className="mailboxAppShell">
+          <MailboxAppNav />
+          <div className="mailboxWorkspace">
+            <div className="mailboxSourcePane">
+              <MailboxPageStatus
+                total={data.mailboxes.length}
+                runningCount={data.runningOperationByEmail.size}
+                showSecrets={showSecrets}
+                error={data.loadError}
+              />
+              <MailboxPanel
+                mailboxes={data.mailboxes}
+                mode={panelMode}
+                providerCapabilities={data.providerCapabilities}
+                selected={selectedEmail}
+                busy={data.busy}
+                showSecrets={showSecrets}
+                oauthing={actions.oauthing}
+                inboxLoading={actions.inboxLoading}
+                domainSyncing={actions.domainSyncing}
+                runningOperationByEmail={data.runningOperationByEmail}
+                hasMoreMailboxes={data.hasMoreMailboxes}
+                loadingMoreMailboxes={data.loadingMoreMailboxes}
+                onLoadMoreMailboxes={data.loadMoreMailboxes}
+                onOAuth={actions.runOAuth}
+                onFetchInbox={() => actions.fetchInbox()}
+                onSyncDomains={actions.syncProviderDomains}
+                onToggleSecrets={() => setShowSecrets((value) => !value)}
+                onDelete={actions.requestDeleteMailbox}
+                onDone={actions.done}
+                onError={actions.toast.showError}
+              />
+            </div>
+            <Outlet context={{ data, actions, showSecrets, panelMode, closeDetails } satisfies MailboxPageContext} />
           </div>
-          <Outlet context={{ data, actions, showSecrets, closeDetails, openDetailTab } satisfies MailboxPageContext} />
         </div>
       </WorkspacePanel>
       <MailboxDeleteDialog
@@ -103,15 +102,15 @@ export function MailboxAccountsRoute() {
 }
 
 export function MailboxOverviewRoute() {
-  return <MailboxDetailRoute detailTab="overview" />;
+  return <MailboxDetailRoute />;
 }
 
 export function MailboxInboxRoute() {
-  return <MailboxDetailRoute detailTab="inbox" />;
+  return <MailboxDetailRoute />;
 }
 
-function MailboxDetailRoute({ detailTab }: { detailTab: MailboxDetailTab }) {
-  const { data, actions, showSecrets, closeDetails, openDetailTab } = useOutletContext<MailboxPageContext>();
+function MailboxDetailRoute() {
+  const { data, actions, showSecrets, panelMode, closeDetails } = useOutletContext<MailboxPageContext>();
   if (!data.selected) {
     return <MailboxReadingEmpty busy={data.busy} total={data.mailboxes.length} />;
   }
@@ -120,7 +119,7 @@ function MailboxDetailRoute({ detailTab }: { detailTab: MailboxDetailTab }) {
     <MailboxReadingPane
       mailbox={data.selected}
       providerCapability={capabilityForProvider(data.providerCapabilities, data.selected.provider_key)}
-      activeTab={detailTab}
+      mode={panelMode}
       showSecrets={showSecrets}
       inboxResult={actions.inboxResult}
       inboxLoading={actions.inboxLoading}
@@ -130,7 +129,6 @@ function MailboxDetailRoute({ detailTab }: { detailTab: MailboxDetailTab }) {
         MailboxProviderAction.MAILBOX_PROVIDER_ACTION_FETCH_INBOX
       )}
       onClose={closeDetails}
-      onTabChange={openDetailTab}
       onCopy={actions.toast.copyValue}
       onFetchInbox={actions.fetchInbox}
       onDelete={actions.requestDeleteMailbox}

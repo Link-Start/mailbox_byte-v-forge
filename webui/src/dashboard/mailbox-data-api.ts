@@ -1,6 +1,5 @@
 import {
   api,
-  type ListMailboxDomainsResponse,
   type ListMailboxOperationsResponse,
   type ListMailboxProviderCapabilitiesResponse
 } from './dashboard-kit';
@@ -13,10 +12,6 @@ export function listMailboxes(cursor: string) {
 
 export function lookupMailbox(email: string) {
   return api<ListEmailMailboxesResponse>(mailboxLookupURL(email));
-}
-
-export function listMailboxDomains() {
-  return api<ListMailboxDomainsResponse>(mailboxApiPaths.domains);
 }
 
 export function listMailboxProviderCapabilities() {
