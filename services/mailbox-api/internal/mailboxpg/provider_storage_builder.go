@@ -1,11 +1,9 @@
 package mailboxpg
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
 	"mailboxapi/internal/mailboxprovider"
 )
 
@@ -59,43 +57,4 @@ func (b *providerStorageBuilder) setUpdate(column string, expression string) {
 	if column != "" && strings.TrimSpace(expression) != "" {
 		b.updates[column] = expression
 	}
-}
-
-func (b *providerStorageBuilder) exec(ctx context.Context, tx pgx.Tx, extraArgs ...any) error {
-	if b.err != nil {
-		return b.err
-	}
-	placeholders := make([]string, 0, len(b.args))
-	for index := range b.args {
-		placeholders = append(placeholders, fmt.Sprintf("$%d", index+1))
-	}
-	updates := make([]string, 0, len(b.updates))
-	for _, column := range b.columns {
-		if update := b.updates[column]; update != "" {
-			updates = append(updates, update)
-		}
-	}
-	args := append([]any{}, b.args...)
-	args = append(args, extraArgs...)
-	if len(updates) == 0 {
-		query := fmt.Sprintf(
-			"INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO NOTHING",
-			b.table,
-			strings.Join(b.columns, ", "),
-			strings.Join(placeholders, ", "),
-			b.emailColumn,
-		)
-		_, err := tx.Exec(ctx, query, args...)
-		return err
-	}
-	query := fmt.Sprintf(
-		"INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s",
-		b.table,
-		strings.Join(b.columns, ", "),
-		strings.Join(placeholders, ", "),
-		b.emailColumn,
-		strings.Join(updates, ", "),
-	)
-	_, err := tx.Exec(ctx, query, args...)
-	return err
 }
