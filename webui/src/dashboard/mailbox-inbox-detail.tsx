@@ -1,6 +1,6 @@
-import { Interweave } from 'interweave';
 import { Card, EmptyBlock, Alert, AlertDescription, compactToast, formatUnix, useQuery } from './dashboard-kit';
 import { formatEmailList } from './email-utils';
+import { MailboxEmailViewer } from './mailbox-email-viewer';
 import { fetchInboxMessageDetail, mailboxInboxMessageQueryKey } from './mailbox-inbox-query';
 import { MessageSignalBadges } from './mailbox-signal-badges';
 import type { InboxMessage } from './types';
@@ -19,7 +19,6 @@ export function MailboxInboxDetail({ message }: {
   const detail = detailQuery.data;
   const detailMessage = detail?.message || message;
   const subject = detailMessage.subject || '-';
-  const body = emailBodyContent(detail?.body_text || detailMessage.body_preview || '', detail?.html_body || '');
   return (
     <Card className="mailboxInboxDetail">
       <div className="mailboxInboxDetailHeader">
@@ -40,7 +39,7 @@ export function MailboxInboxDetail({ message }: {
       </dl>
       <div className="mailboxInboxBody">
         {detailQuery.isFetching && <div className="mb-1 text-xs font-semibold text-muted-foreground">读取中</div>}
-        <Interweave className="mailboxEmailViewer" content={body} />
+        <MailboxEmailViewer htmlBody={detail?.html_body || ''} textBody={detail?.body_text || detailMessage.body_preview || ''} />
       </div>
     </Card>
   );
@@ -48,32 +47,4 @@ export function MailboxInboxDetail({ message }: {
 
 function MetadataRow({ label, value, title }: { label: string; value: string; title?: string }) {
   return <><dt>{label}</dt><dd className="truncate" title={title || value}>{value}</dd></>;
-}
-
-function emailBodyContent(textBody: string, htmlBody: string) {
-  const html = String(htmlBody || '').trim();
-  if (html) return html;
-  return textAsHTML(cleanTextBody(textBody) || '-');
-}
-
-function cleanTextBody(value: string) {
-  return String(value || '')
-    .replace(/\r\n/g, '\n')
-    .replace(/([^\s<][^<\n]{0,120})<https?:\/\/[^>\s]+>/g, '$1')
-    .replace(/<https?:\/\/[^>\s]+>/g, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
-
-function textAsHTML(value: string) {
-  return escapeHTML(value).replace(/\n/g, '<br>');
-}
-
-function escapeHTML(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
