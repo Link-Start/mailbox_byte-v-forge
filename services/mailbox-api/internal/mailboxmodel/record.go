@@ -23,67 +23,11 @@ func (m *Record) GetEmailAddress() string {
 	return m.EmailAddress
 }
 
-func (m *Record) GetPassword() string {
-	if m == nil {
-		return ""
-	}
-	return m.Password
-}
-
-func (m *Record) GetRefreshToken() string {
-	if m == nil {
-		return ""
-	}
-	return m.RefreshToken
-}
-
-func (m *Record) GetAccessToken() string {
-	if m == nil {
-		return ""
-	}
-	return m.AccessToken
-}
-
-func (m *Record) GetLastError() string {
-	if m == nil {
-		return ""
-	}
-	return m.LastError
-}
-
-func (m *Record) GetCreatedAt() int64 {
-	if m == nil {
-		return 0
-	}
-	return m.CreatedAt
-}
-
-func (m *Record) GetUpdatedAt() int64 {
-	if m == nil {
-		return 0
-	}
-	return m.UpdatedAt
-}
-
-func (m *Record) GetAuthStatus() string {
-	if m == nil {
-		return ""
-	}
-	return m.AuthStatus
-}
-
 func (m *Record) GetProviderKey() string {
 	if m == nil {
 		return ""
 	}
 	return m.ProviderKey
-}
-
-func (m *Record) GetLatestSignal() *mailboxv1.EmailSignal {
-	if m == nil {
-		return nil
-	}
-	return m.LatestSignal
 }
 
 func (m *Record) GetDomain() string {
