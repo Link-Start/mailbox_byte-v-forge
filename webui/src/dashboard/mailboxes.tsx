@@ -8,7 +8,7 @@ import {
   ToolbarActionButtons
 } from './dashboard-kit';
 import { MailboxImportSheet } from './mailbox-import';
-import type { MailboxProviderPanelProps } from './mailbox-provider-types';
+import type { MailboxPanelMode, MailboxProviderPanelProps } from './mailbox-provider-types';
 import { providerToolbarActions } from './mailbox-toolbar-actions';
 import { capabilityForProvider } from './mailbox-provider-capabilities';
 import { useMailboxPanelState } from './mailbox-panel-state';
@@ -19,6 +19,7 @@ export { MailboxDetails } from './mailbox-details';
 export function MailboxPanel(props: MailboxPanelProps) {
   const { query, searchQuery, filteredMailboxes, providerViews, activeProvider, importProvider, updateQuery } = useMailboxPanelState(props.mailboxes, props.providerCapabilities);
   const panelProps = providerPanelProps(props, searchQuery);
+  const isAccountMode = props.mode === 'accounts';
   if (providerViews.length === 0) return <EmptyBlock text={props.busy ? '加载中' : '暂无 Provider'} />;
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3">
@@ -51,13 +52,14 @@ export function MailboxPanel(props: MailboxPanelProps) {
           )
         }))}
       />
-      <MailboxImportSheet open={!!importProvider} provider={importProvider || activeProvider} capability={capabilityForProvider(props.providerCapabilities, importProvider || activeProvider)} busy={props.busy} onOpenChange={(open) => !open && updateQuery({ importProvider: '' })} onDone={props.onDone} onError={props.onError} />
+      {isAccountMode && <MailboxImportSheet open={!!importProvider} provider={importProvider || activeProvider} capability={capabilityForProvider(props.providerCapabilities, importProvider || activeProvider)} busy={props.busy} onOpenChange={(open) => !open && updateQuery({ importProvider: '' })} onDone={props.onDone} onError={props.onError} />}
     </div>
   );
 }
 
 type MailboxPanelProps = {
   mailboxes: Mailbox[];
+  mode: MailboxPanelMode;
   domains: MailboxDomain[];
   providerCapabilities: MailboxProviderCapability[];
   selected?: string;
@@ -81,6 +83,7 @@ type MailboxPanelProps = {
 
 function providerPanelProps(props: MailboxPanelProps, searchQuery: string): Omit<MailboxProviderPanelProps, 'mailboxes' | 'capability'> {
   return {
+    mode: props.mode,
     domains: props.domains,
     selected: props.selected,
     busy: props.busy,

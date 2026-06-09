@@ -40,6 +40,7 @@ function MailboxDomainGroup(props: MailboxDomainGroupsProps & { domain: string }
       </div>
       <MailboxRecordList
         mailboxes={props.mailboxes}
+        mode={props.mode}
         emptyText={props.emptyDomainText}
         providerCapability={props.providerCapability}
         showStatus={props.showStatus}

@@ -2,6 +2,7 @@ import { Eye, EyeOff, Inbox, KeyRound, Plus, RefreshCcw } from 'lucide-react';
 import { MailboxProviderAction, type ToolbarActionDescriptor } from './dashboard-kit';
 import { bulkMailboxActionCount } from './mailbox-provider-capabilities';
 import { mailboxAllProviderTab, type MailboxProviderTab } from './mailbox-provider-config';
+import type { MailboxPanelMode } from './mailbox-provider-types';
 import type { Mailbox, MailboxProviderActionCapability, MailboxProviderCapability } from './types';
 
 type ProviderToolbarView = {
@@ -11,6 +12,7 @@ type ProviderToolbarView = {
 };
 
 type ProviderToolbarProps = {
+  mode: MailboxPanelMode;
   busy: boolean;
   showSecrets: boolean;
   oauthing: string;
@@ -66,11 +68,26 @@ const toolbarActionFactories: Partial<Record<MailboxProviderAction, ToolbarActio
 };
 
 export function providerToolbarActions(view: ProviderToolbarView, props: ProviderToolbarProps, openImport: (provider: MailboxProviderTab) => void) {
+  if (props.mode === 'inbox') return inboxToolbarActions(view, props);
   if (view.value === mailboxAllProviderTab) return aggregateToolbarActions(view, props);
   const actions = (view.capability?.actions || [])
     .map((action) => toolbarActionFactories[action.action]?.({ action, view, props, openImport }))
     .filter((action): action is ToolbarActionDescriptor => !!action);
   return [...actions, secretsAction(props)];
+}
+
+function inboxToolbarActions(view: ProviderToolbarView, props: ProviderToolbarProps): ToolbarActionDescriptor[] {
+  if (view.value === mailboxAllProviderTab) return aggregateToolbarActions(view, props);
+  const fetchAction = (view.capability?.actions || []).find((action) => action.action === MailboxProviderAction.MAILBOX_PROVIDER_ACTION_FETCH_INBOX);
+  if (!fetchAction) return [secretsAction(props)];
+  const count = bulkMailboxActionCount(view.mailboxes, fetchAction);
+  return [{
+    id: 'fetch-inbox',
+    label: props.inboxLoading ? '收信中' : '收信',
+    icon: <Inbox className="size-4" />,
+    disabled: props.busy || props.inboxLoading || count === 0,
+    onClick: () => void props.onFetchInbox(),
+  }, secretsAction(props)];
 }
 
 function aggregateToolbarActions(view: ProviderToolbarView, props: ProviderToolbarProps): ToolbarActionDescriptor[] {

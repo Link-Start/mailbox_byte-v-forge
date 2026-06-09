@@ -14,10 +14,12 @@ import { authStatus } from './mailbox-auth-status';
 import { mailboxRowActions } from './mailbox-card-actions';
 import { MailboxErrorMeta, MailboxOperationMeta } from './mailbox-card-meta';
 import { persistentMailboxPanelSearch } from './mailbox-panel-query';
+import type { MailboxPanelMode } from './mailbox-provider-types';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
 
-export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, showStatus, providerCapability, currentOperation, onOAuth, onDelete }: {
+export function MailboxCard({ mailbox, mode, selected, busy, showSecrets, oauthing, showStatus, providerCapability, currentOperation, onOAuth, onDelete }: {
   mailbox: Mailbox;
+  mode: MailboxPanelMode;
   selected: boolean;
   busy: boolean;
   showSecrets: boolean;
@@ -30,8 +32,8 @@ export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, sh
 }) {
   const { search } = useLocation();
   const displayEmail = showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address);
-  const rowActions = mailboxRowActions({ mailbox, busy, oauthing, providerCapability, currentOperation, onOAuth, onDelete });
-  const detailPath = `${mailboxDetailPath(mailbox.email_address, 'inbox')}${persistentMailboxPanelSearch(search)}`;
+  const rowActions = mailboxRowActions({ mailbox, mode, busy, oauthing, providerCapability, currentOperation, onOAuth, onDelete });
+  const detailPath = `${mailboxDetailPath(mailbox.email_address, mode === 'accounts' ? 'overview' : 'inbox')}${persistentMailboxPanelSearch(search)}`;
 
   return (
     <RecordCard selected={selected}>
@@ -46,11 +48,13 @@ export function MailboxCard({ mailbox, selected, busy, showSecrets, oauthing, sh
         <MailboxErrorMeta error={mailbox.last_error} />
         <MailboxOperationMeta operation={currentOperation} />
       </NavLink>
-      <RecordActions className="rowActions">
-        <div className="rowActionsMain">
-          <RecordActionButtons actions={rowActions} />
-        </div>
-      </RecordActions>
+      {rowActions.length > 0 && (
+        <RecordActions className="rowActions">
+          <div className="rowActionsMain">
+            <RecordActionButtons actions={rowActions} />
+          </div>
+        </RecordActions>
+      )}
     </RecordCard>
   );
 }

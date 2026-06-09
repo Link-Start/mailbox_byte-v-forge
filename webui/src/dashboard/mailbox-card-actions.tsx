@@ -1,10 +1,12 @@
 import { KeyRound, Trash2 } from 'lucide-react';
 import { MailboxProviderAction, type RowActionDescriptor } from './dashboard-kit';
 import { canRunMailboxAction, providerAction } from './mailbox-provider-capabilities';
+import type { MailboxPanelMode } from './mailbox-provider-types';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
 
-export function mailboxRowActions({ mailbox, busy, oauthing, providerCapability, currentOperation, onOAuth, onDelete }: {
+export function mailboxRowActions({ mailbox, mode, busy, oauthing, providerCapability, currentOperation, onOAuth, onDelete }: {
   mailbox: Mailbox;
+  mode: MailboxPanelMode;
   busy: boolean;
   oauthing: string;
   providerCapability?: MailboxProviderCapability;
@@ -12,6 +14,7 @@ export function mailboxRowActions({ mailbox, busy, oauthing, providerCapability,
   onOAuth: (emailAddress?: string) => Promise<void>;
   onDelete: (mailbox: Mailbox) => void;
 }) {
+  if (mode !== 'accounts') return [];
   const actions: RowActionDescriptor[] = [{
     id: 'delete-mailbox',
     label: '删除邮箱',

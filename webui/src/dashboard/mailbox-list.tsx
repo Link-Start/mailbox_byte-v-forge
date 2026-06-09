@@ -1,10 +1,12 @@
 import { DEFAULT_CURSOR_PAGE_SIZE, CursorPager, RecordList } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
 import { MailboxCard } from './mailbox-card';
+import type { MailboxPanelMode } from './mailbox-provider-types';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
 
 export type MailboxRecordListProps = {
   mailboxes: Mailbox[];
+  mode: MailboxPanelMode;
   emptyText: string;
   providerCapability?: MailboxProviderCapability;
   showStatus?: boolean;
@@ -20,7 +22,7 @@ export type MailboxRecordListProps = {
   onDelete: (mailbox: Mailbox) => void;
 };
 
-export function MailboxRecordList({ mailboxes, emptyText, providerCapability, showStatus, selected, busy, showSecrets, oauthing, runningOperationByEmail, hasMoreMailboxes, loadingMoreMailboxes, onLoadMoreMailboxes, onOAuth, onDelete }: MailboxRecordListProps) {
+export function MailboxRecordList({ mailboxes, mode, emptyText, providerCapability, showStatus, selected, busy, showSecrets, oauthing, runningOperationByEmail, hasMoreMailboxes, loadingMoreMailboxes, onLoadMoreMailboxes, onOAuth, onDelete }: MailboxRecordListProps) {
   return (
     <>
       <RecordList className="wideRecordList" emptyText={emptyText}>
@@ -28,6 +30,7 @@ export function MailboxRecordList({ mailboxes, emptyText, providerCapability, sh
           <MailboxCard
             key={mailbox.email_address}
             mailbox={mailbox}
+            mode={mode}
             selected={selected === mailbox.email_address}
             busy={busy}
             showSecrets={showSecrets}

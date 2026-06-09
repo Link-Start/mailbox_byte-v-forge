@@ -9,9 +9,10 @@ import { useMailboxEmailEventCache } from './mailbox-events';
 import { MailboxPageStatus } from './mailbox-page-status';
 import { persistentMailboxPanelSearch } from './mailbox-panel-query';
 import { MailboxReadingEmpty, MailboxReadingPane } from './mailbox-reading-pane';
-import { mailboxDetailPath, mailboxInboxIndexPath, type MailboxDetailTab } from './mailbox-route-paths';
+import { mailboxAccountsIndexPath, mailboxDetailPath, mailboxInboxIndexPath, type MailboxDetailTab } from './mailbox-route-paths';
 import { MailboxPanel } from './mailboxes';
 import { canRunProviderMailboxAction, capabilityForProvider } from './mailbox-provider-capabilities';
+import type { MailboxPanelMode } from './mailbox-provider-types';
 
 type MailboxPageContext = {
   data: ReturnType<typeof useMailboxData>;
@@ -23,11 +24,15 @@ type MailboxPageContext = {
 
 export function MailboxPage() {
   const navigate = useNavigate();
-  const { search } = useLocation();
+  const { pathname, search } = useLocation();
   const { mailboxEmail = '' } = useParams();
   const selectedEmail = normalizeUiEmail(mailboxEmail);
+  const panelMode: MailboxPanelMode = pathname.split('/').includes('accounts') ? 'accounts' : 'inbox';
   const [showSecrets, setShowSecrets] = useState(false);
-  const closeDetails = useCallback(() => void navigate(`${mailboxInboxIndexPath()}${persistentMailboxPanelSearch(search)}`), [navigate, search]);
+  const closeDetails = useCallback(() => {
+    const path = panelMode === 'accounts' ? mailboxAccountsIndexPath() : mailboxInboxIndexPath();
+    void navigate(`${path}${persistentMailboxPanelSearch(search)}`);
+  }, [navigate, panelMode, search]);
   const closeDeletedMailbox = useCallback((email: string) => {
     if (normalizeUiEmail(email) === selectedEmail) closeDetails();
   }, [closeDetails, selectedEmail]);
@@ -51,6 +56,7 @@ export function MailboxPage() {
             />
             <MailboxPanel
               mailboxes={data.mailboxes}
+              mode={panelMode}
               domains={data.domains}
               providerCapabilities={data.providerCapabilities}
               selected={selectedEmail}
@@ -87,6 +93,11 @@ export function MailboxPage() {
 }
 
 export function MailboxIndexRoute() {
+  const { data } = useOutletContext<MailboxPageContext>();
+  return <MailboxReadingEmpty busy={data.busy} total={data.mailboxes.length} />;
+}
+
+export function MailboxAccountsRoute() {
   const { data } = useOutletContext<MailboxPageContext>();
   return <MailboxReadingEmpty busy={data.busy} total={data.mailboxes.length} />;
 }
