@@ -51,10 +51,18 @@ function MetadataRow({ label, value, title }: { label: string; value: string; ti
 }
 
 function emailBodyContent(textBody: string, htmlBody: string) {
-  const text = String(textBody || '').trim();
-  if (text) return textAsHTML(text);
   const html = String(htmlBody || '').trim();
-  return html || textAsHTML('-');
+  if (html) return html;
+  return textAsHTML(cleanTextBody(textBody) || '-');
+}
+
+function cleanTextBody(value: string) {
+  return String(value || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/([^\s<][^<\n]{0,120})<https?:\/\/[^>\s]+>/g, '$1')
+    .replace(/<https?:\/\/[^>\s]+>/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function textAsHTML(value: string) {
