@@ -10,6 +10,12 @@
   "observability": {
     "enabled": true
   },
+  "routes": [
+    {
+      "pattern": "mailbox-relay.tibo-nice.space",
+      "custom_domain": true
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "EMAIL_EVENT_CACHE",
