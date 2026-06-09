@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import DOMPurify from 'dompurify';
 
+const emptyBodyText = '无正文';
+
 export function MailboxEmailViewer({ htmlBody, textBody }: {
   htmlBody?: string;
   textBody?: string;
@@ -23,11 +25,31 @@ function emailFrameDocument(htmlBody: string, textBody: string) {
 
 function emailBodyHTML(htmlBody: string, textBody: string) {
   const html = String(htmlBody || '').trim();
-  if (html) return DOMPurify.sanitize(html, {
+  if (html) {
+    const sanitized = sanitizeEmailHTML(html);
+    if (hasRenderableHTML(sanitized)) return sanitized;
+  }
+  const text = cleanTextBody(textBody);
+  return `<pre class="plainText">${escapeHTML(text || emptyBodyText)}</pre>`;
+}
+
+function sanitizeEmailHTML(value: string) {
+  return DOMPurify.sanitize(value, {
     FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'textarea', 'select'],
   });
-  const text = cleanTextBody(textBody);
-  return `<pre class="plainText">${escapeHTML(text || '-')}</pre>`;
+}
+
+function hasRenderableHTML(value: string) {
+  const doc = new DOMParser().parseFromString(`<body>${value}</body>`, 'text/html');
+  if (cleanVisibleText(doc.body.textContent || '')) return true;
+  return !!doc.body.querySelector('img[src], svg, canvas, video, audio');
+}
+
+function cleanVisibleText(value: string) {
+  return String(value || '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\u00A0/g, ' ')
+    .trim();
 }
 
 function frameStyle() {
