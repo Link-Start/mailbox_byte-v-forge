@@ -19,3 +19,17 @@ message InboundEmailWebhook {
   reserved 12, 13;
   reserved "extracted_otp", "event_type";
 }
+
+message PendingInboundEmailEventsResponse {
+  repeated InboundEmailWebhook events = 1;
+  string error_message = 2;
+}
+
+message AckInboundEmailEventsRequest {
+  repeated string event_ids = 1;
+}
+
+message AckInboundEmailEventsResponse {
+  int32 acked_count = 1;
+  string error_message = 2;
+}

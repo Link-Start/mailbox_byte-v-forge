@@ -57,6 +57,7 @@ func (s *EmailService) waitForPersistedEmail(ctx context.Context, request *mailb
 }
 
 func (s *EmailService) latestEmailResponse(ctx context.Context, request *mailboxv1.WaitForMailboxEmailRequest, issuedAfterUnix int64) (*mailboxv1.WaitForMailboxEmailResponse, bool, error) {
+	s.pullCloudflareRelayPendingForInbox(ctx, request.GetEmailAddress())
 	message, ok, err := s.inbox.LatestMessageWithSignal(ctx, request.GetEmailAddress(), request.GetSubjectKeyword(), issuedAfterUnix, request.GetParserProfile(), request.GetSignalKind())
 	if err != nil || !ok {
 		return nil, false, err

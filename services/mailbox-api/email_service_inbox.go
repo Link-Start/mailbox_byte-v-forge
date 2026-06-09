@@ -24,6 +24,7 @@ func (s *EmailService) ListInbox(ctx context.Context, request *mailboxv1.ListMai
 	if limit > 100 {
 		limit = 100
 	}
+	s.pullCloudflareRelayPendingForInbox(ctx, email)
 	messages, err := s.inbox.ListMessages(ctx, email, limit)
 	if err != nil {
 		return nil, status.Error(codes.Internal, safeMailboxError(err))

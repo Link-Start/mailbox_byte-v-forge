@@ -6,7 +6,7 @@ Mailbox 领域仓，承载邮箱账号、Outlook provider、邮箱注册/OAuth M
 
 - `services/mailbox-api`：Mailbox 领域 gRPC API 和唯一服务进程，内置 Outlook/Cloudflare provider adapter、邮箱注册/OAuth MQ worker、收件、webhook 和邮件信号解析能力。
 - `Dockerfile`：独立部署入口，构建 mailbox API 与内置 dashboard 静态资源，只启动 mailbox 一个服务进程。
-- `workers/cloudflare-email-relay`：Cloudflare Email Routing Worker，将 CF 入站邮件转发到 mailbox webhook。
+- `workers/cloudflare-email-relay`：Cloudflare Email Routing Worker，将 CF 入站邮件临时缓存并转发到 mailbox webhook。
 - `proto/email.proto`：邮件读取服务契约。
 - `proto/mailbox_register.proto`：邮箱注册与 OAuth 编排模型。
 - `proto/mailbox_service.proto`：Mailbox 领域 API 契约。
@@ -34,7 +34,7 @@ Outlook 注册和 OAuth 通过 mailbox 内置 worker 编排：`RegisterMailbox` 
 
 Outlook 邮件读取使用 Microsoft Graph Go SDK 读取当前 OAuth 用户的 messages，并用 `Prefer: outlook.body-content-type="text"` 请求文本正文；不再保留手写 Graph REST adapter 或额外 URL 覆盖。
 
-Cloudflare 邮件是主动推送链路：Email Routing Worker 收到邮件后把标准化事件 POST 到 `/webhooks/email/cloudflare`，mailbox 服务使用 `MAILBOX_WEBHOOK_HTTP_ADDR` 开启 HTTP webhook，并只通过 `X-Webhook-Token` 读取 `MAILBOX_WEBHOOK_TOKEN` 校验转发请求。Outlook Graph webhook 使用 `/webhooks/email/microsoft-graph`，验证 URL 必须带同一个 token，POST 通知的 `clientState` 也必须等于同一个 token。Cloudflare 域名池来自 Cloudflare API：`MAILBOX_CLOUDFLARE_API_TOKEN` 读取 `MAILBOX_CLOUDFLARE_EMAIL_CONFIG_FILE` 中声明的 zones，并从 Email Routing catch-all 规则与 Cloudflare MX DNS 记录推导可用邮箱域名；token 限制到目标 zone，并授予 `Zone Read`、`DNS Read` 和 `Email Routing Rules Read` 即可。Cloudflare 地址不需要手动导入，邮件到达后按 recipient 自动形成虚拟邮箱并按 domain 分组展示。需要公网入口时在 deploy 的 `ingress.webhook` 暴露 mailbox webhook，或使用受管 HTTPS 隧道把该入口映射到公网域名；业务代码不管理公网隧道。
+Cloudflare 邮件是主动推送链路：Email Routing Worker 收到邮件后把标准化事件临时写入 Worker KV，再 POST 到 `/webhooks/email/cloudflare`，webhook 成功后删除临时缓存；如果公网 tunnel/webhook 不可用，配置 `MAILBOX_CLOUDFLARE_RELAY_PULL_URL` 与 `MAILBOX_CLOUDFLARE_RELAY_PULL_TOKEN` 后，mailbox 会在等待、查询或刷新 Cloudflare 收件箱时主动调用 Worker `GET /pending` 并在入库成功后 `POST /ack`。mailbox 服务使用 `MAILBOX_WEBHOOK_HTTP_ADDR` 开启 HTTP webhook，并只通过 `X-Webhook-Token` 读取 `MAILBOX_WEBHOOK_TOKEN` 校验转发请求。Outlook Graph webhook 使用 `/webhooks/email/microsoft-graph`，验证 URL 必须带同一个 token，POST 通知的 `clientState` 也必须等于同一个 token。Cloudflare 域名池来自 Cloudflare API：`MAILBOX_CLOUDFLARE_API_TOKEN` 读取 `MAILBOX_CLOUDFLARE_EMAIL_CONFIG_FILE` 中声明的 zones，并从 Email Routing catch-all 规则与 Cloudflare MX DNS 记录推导可用邮箱域名；token 限制到目标 zone，并授予 `Zone Read`、`DNS Read` 和 `Email Routing Rules Read` 即可。Cloudflare 地址不需要手动导入，邮件到达后按 recipient 自动形成虚拟邮箱并按 domain 分组展示。需要公网入口时在 deploy 的 `ingress.webhook` 暴露 mailbox webhook，或使用受管 HTTPS 隧道把该入口映射到公网域名；业务代码不管理公网隧道。
 
 邮件保留策略按 provider 独立执行 FIFO：Outlook 使用 `MAILBOX_OUTLOOK_MAX_MESSAGES_PER_MAILBOX` 限定每个邮箱的最大邮件数，Cloudflare 使用 `MAILBOX_CLOUDFLARE_MAX_MESSAGES_PER_DOMAIN` 限定每个 domain 的最大邮件数。超过上限时删除最早邮件及对应 seen 记录，默认分别为 `100` 和 `500`。
 

@@ -8,11 +8,12 @@ import (
 )
 
 type EmailService struct {
-	mailboxRepo mailboxRepository
-	mailboxes   *mailboxapp.Service
-	inbox       *inboxapp.Service
-	watcher     *MailWatcher
-	providers   mailboxProviderRuntimeConfig
-	inboxLock   *redisx.BestEffortLocker
-	work        *mailboxWorkDispatcher
+	mailboxRepo     mailboxRepository
+	mailboxes       *mailboxapp.Service
+	inbox           *inboxapp.Service
+	watcher         *MailWatcher
+	providers       mailboxProviderRuntimeConfig
+	inboxLock       *redisx.BestEffortLocker
+	work            *mailboxWorkDispatcher
+	cloudflareRelay *cloudflareEmailRelayClient
 }

@@ -27,6 +27,7 @@ type config struct {
 	inboxLockRetry         time.Duration
 	providers              mailboxProviderRuntimeConfig
 	webhook                emailWebhookConfig
+	cloudflareRelayPull    cloudflareRelayPullConfig
 }
 
 func loadConfig() (config, error) {
@@ -55,5 +56,6 @@ func loadConfig() (config, error) {
 		inboxLockRetry:         envx.PositiveDurationSeconds("MAILBOX_INBOX_LOCK_RETRY_SECONDS", time.Second),
 		providers:              providers,
 		webhook:                loadEmailWebhookConfig(),
+		cloudflareRelayPull:    loadCloudflareRelayPullConfig(),
 	}, nil
 }

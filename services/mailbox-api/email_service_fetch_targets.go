@@ -52,6 +52,7 @@ func (s *EmailService) storedOnlyInboxResponse(ctx context.Context, email string
 	if mailbox, err := s.mailboxRepo.FindMailbox(ctx, email); err == nil {
 		resultMailbox = mailbox
 	}
+	s.pullCloudflareRelayPendingForInbox(ctx, email)
 	messages, err := s.inbox.ListMessagesSince(ctx, email, request.GetLimitPerMailbox(), request.GetReceivedAfterUnix())
 	if err != nil {
 		return nil, true, status.Error(codes.Internal, safeMailboxError(err))

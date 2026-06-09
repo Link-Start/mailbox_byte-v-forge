@@ -84,13 +84,14 @@ func newMailboxRuntime(ctx context.Context, cfg config) (*mailboxRuntime, func()
 	)
 	workDispatcher := newMailboxRuntimeWorkDispatcher(eventBus, pgOperations)
 	emailBackend := &EmailService{
-		mailboxRepo: repository,
-		mailboxes:   mailboxapp.NewService(repository),
-		inbox:       inbox,
-		watcher:     watcher,
-		providers:   cfg.providers,
-		inboxLock:   inboxLock,
-		work:        workDispatcher,
+		mailboxRepo:     repository,
+		mailboxes:       mailboxapp.NewService(repository),
+		inbox:           inbox,
+		watcher:         watcher,
+		providers:       cfg.providers,
+		inboxLock:       inboxLock,
+		work:            workDispatcher,
+		cloudflareRelay: newCloudflareEmailRelayClient(cfg.cloudflareRelayPull),
 	}
 	activities := newMailboxActivitiesForProviders(
 		cfg.providers,
