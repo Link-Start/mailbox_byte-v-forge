@@ -39,7 +39,7 @@ export function MailboxPage() {
   }, [closeDetails, selectedEmail]);
   const data = useMailboxData(selectedEmail);
   const actions = useMailboxActions(data, showSecrets, closeDeletedMailbox);
-  useMailboxEmailEventCache({ email: data.selected?.email_address, inboxQueryKey: actions.inboxQueryKey, enabled: !!data.selected?.email_address });
+  useMailboxEmailEventCache({ email: data.selected?.email_address, signalKind: 'any', inboxQueryKey: actions.inboxQueryKey, enabled: !!data.selected?.email_address });
   return (
     <>
       <main className="workspacePanel">

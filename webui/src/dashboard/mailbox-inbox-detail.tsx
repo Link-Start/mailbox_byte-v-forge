@@ -1,3 +1,4 @@
+import { Interweave } from 'interweave';
 import { Card, EmptyBlock, Alert, AlertDescription, compactToast, formatUnix, maskPreview, useQuery } from './dashboard-kit';
 import { formatEmailList, maskEmail } from './email-utils';
 import { fetchInboxMessageDetail, mailboxInboxMessageQueryKey } from './mailbox-inbox-query';
@@ -19,8 +20,7 @@ export function MailboxInboxDetail({ message, showSecrets }: {
   const detail = detailQuery.data;
   const detailMessage = detail?.message || message;
   const subject = showSecrets ? (detailMessage.subject || '-') : maskPreview(detailMessage.subject || '-');
-  const bodyText = detail?.body_text || detailMessage.body_preview || '-';
-  const body = showSecrets ? bodyText : maskPreview(bodyText);
+  const body = emailBodyContent(detail?.html_body || '', detail?.body_text || detailMessage.body_preview || '', showSecrets);
   return (
     <Card className="mailboxInboxDetail">
       <div className="mailboxInboxDetailHeader">
@@ -41,7 +41,7 @@ export function MailboxInboxDetail({ message, showSecrets }: {
       </dl>
       <div className="mailboxInboxBody">
         {detailQuery.isFetching && <div className="mb-1 text-xs font-semibold text-muted-foreground">读取中</div>}
-        <pre>{body}</pre>
+        <Interweave className="mailboxEmailViewer" content={body} />
       </div>
     </Card>
   );
@@ -49,4 +49,22 @@ export function MailboxInboxDetail({ message, showSecrets }: {
 
 function MetadataRow({ label, value, title }: { label: string; value: string; title?: string }) {
   return <><dt>{label}</dt><dd className="truncate" title={title || value}>{value}</dd></>;
+}
+
+function emailBodyContent(htmlBody: string, textBody: string, showSecrets: boolean) {
+  if (!showSecrets) return textAsHTML(maskPreview(textBody || '-'));
+  return htmlBody.trim() || textAsHTML(textBody || '-');
+}
+
+function textAsHTML(value: string) {
+  return escapeHTML(value).replace(/\n/g, '<br>');
+}
+
+function escapeHTML(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
