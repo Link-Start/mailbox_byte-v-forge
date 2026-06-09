@@ -3,34 +3,43 @@ import DOMPurify from 'dompurify';
 
 const emptyBodyText = '无正文';
 
+type EmailViewerContent =
+  | { kind: 'html'; srcDoc: string }
+  | { kind: 'text'; text: string };
+
 export function MailboxEmailViewer({ htmlBody, textBody }: {
   htmlBody?: string;
   textBody?: string;
 }) {
-  const srcDoc = useMemo(() => emailFrameDocument(htmlBody || '', textBody || ''), [htmlBody, textBody]);
+  const content = useMemo(() => emailViewerContent(htmlBody || '', textBody || ''), [htmlBody, textBody]);
+  if (content.kind === 'text') {
+    return <pre className="mailboxPlainTextBody">{content.text}</pre>;
+  }
   return (
     <iframe
       className="mailboxEmailFrame"
       title="邮件正文"
-      srcDoc={srcDoc}
+      srcDoc={content.srcDoc}
       sandbox="allow-popups allow-popups-to-escape-sandbox"
       referrerPolicy="no-referrer"
     />
   );
 }
 
-function emailFrameDocument(htmlBody: string, textBody: string) {
-  return `<!doctype html><html><head><meta charset="utf-8"><base target="_blank">${frameStyle()}</head><body>${emailBodyHTML(htmlBody, textBody)}</body></html>`;
-}
-
-function emailBodyHTML(htmlBody: string, textBody: string) {
+function emailViewerContent(htmlBody: string, textBody: string): EmailViewerContent {
   const html = String(htmlBody || '').trim();
   if (html) {
     const sanitized = sanitizeEmailHTML(html);
-    if (hasRenderableHTML(sanitized)) return sanitized;
+    if (hasRenderableHTML(sanitized)) {
+      return { kind: 'html', srcDoc: emailFrameDocument(sanitized) };
+    }
   }
   const text = cleanTextBody(textBody);
-  return `<pre class="plainText">${escapeHTML(text || emptyBodyText)}</pre>`;
+  return { kind: 'text', text: text || emptyBodyText };
+}
+
+function emailFrameDocument(bodyHTML: string) {
+  return `<!doctype html><html><head><meta charset="utf-8"><base target="_blank">${frameStyle()}</head><body>${bodyHTML}</body></html>`;
 }
 
 function sanitizeEmailHTML(value: string) {
@@ -62,7 +71,6 @@ function frameStyle() {
     img{max-width:100%;height:auto}
     a{color:#2563eb;text-decoration:underline}
     p,ul,ol,blockquote,table{margin-block:0 12px}
-    .plainText{margin:0;white-space:pre-wrap;font:inherit;color:inherit}
   </style>`;
 }
 
@@ -73,13 +81,4 @@ function cleanTextBody(value: string) {
     .replace(/<https?:\/\/[^>\s]+>/g, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
-}
-
-function escapeHTML(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }

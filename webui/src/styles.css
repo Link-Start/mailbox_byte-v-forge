@@ -126,4 +126,5 @@ button, input, textarea { font: inherit; }
 .mailboxInboxMetadata dt { color: var(--muted-foreground); }
 .mailboxInboxMetadata dd { margin: 0; }
 .mailboxInboxBody { flex: 1 1 auto; min-width: 0; min-height: 360px; overflow: auto; border-top: 1px solid var(--border); padding-top: 10px; }
+.mailboxPlainTextBody { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--foreground); font: inherit; line-height: 1.58; }
 .mailboxEmailFrame { display: block; width: 100%; height: 100%; min-height: 520px; border: 0; background: #fff; }
