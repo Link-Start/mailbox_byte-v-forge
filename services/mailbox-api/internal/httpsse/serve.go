@@ -1,13 +1,9 @@
 package httpsse
 
 import (
-	"errors"
 	"net/http"
-	"time"
 
 	"mailboxapi/internal/hotstream"
-
-	observabilityv1 "mailboxapi/internal/contracts/observabilityv1"
 )
 
 func ServeHotStream(w http.ResponseWriter, r *http.Request, subscriber hotstream.Subscriber, filter hotstream.Filter, opts ServeOptions) {
@@ -37,25 +33,5 @@ func ServeHotStream(w http.ResponseWriter, r *http.Request, subscriber hotstream
 	if heartbeat <= 0 {
 		heartbeat = DefaultHeartbeat
 	}
-	sse.Start()
-	sse.Event("", controlName, control(observabilityv1.HotStreamControlKind_HOT_STREAM_CONTROL_KIND_CONNECTED, "connected"))
-	ticker := time.NewTicker(heartbeat)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-r.Context().Done():
-			return
-		case event, ok := <-sub.Events:
-			if !ok {
-				if errors.Is(sub.Err(), hotstream.ErrSlowConsumer) {
-					sse.Event("", controlName, control(observabilityv1.HotStreamControlKind_HOT_STREAM_CONTROL_KIND_RESYNC_REQUIRED, "slow consumer; refetch required"))
-				}
-				return
-			}
-			sse.Event(event.GetMetadata().GetId(), eventName, event)
-		case <-ticker.C:
-			sse.Event("", controlName, control(observabilityv1.HotStreamControlKind_HOT_STREAM_CONTROL_KIND_HEARTBEAT, "heartbeat"))
-		}
-	}
+	serveHotStreamEvents(r.Context(), sse, sub, eventName, controlName, heartbeat)
 }
