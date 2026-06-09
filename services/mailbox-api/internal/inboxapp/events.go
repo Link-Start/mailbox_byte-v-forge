@@ -2,13 +2,9 @@ package inboxapp
 
 import (
 	"fmt"
-	"strings"
-	"time"
 
 	"google.golang.org/protobuf/proto"
-	commonv1 "mailboxapi/internal/contracts/commonv1"
 	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
-	"mailboxapi/internal/eventbus"
 	"mailboxapi/internal/eventcatalog"
 	"mailboxapi/internal/eventoutbox"
 )
@@ -65,59 +61,4 @@ func EmailSignalReceivedEventRecord(source string, message *mailboxv1.EmailInbox
 		metadata,
 		EmailAttributes(message, signal),
 	)
-}
-
-func EventMetadata(source string, eventName string, subject string, eventID string, message *mailboxv1.EmailInboxMessage) *commonv1.EventMetadata {
-	occurredAt := time.Now()
-	if message.GetReceivedAtUnix() > 0 {
-		occurredAt = time.Unix(message.GetReceivedAtUnix(), 0)
-	}
-	source = strings.TrimSpace(source)
-	if source == "" {
-		source = "mailbox-api"
-	}
-	return eventbus.NewEventMetadata(eventbus.EventMetadataConfig{
-		EventID:       eventID,
-		EventName:     eventName,
-		EventVersion:  EventVersion,
-		OccurredAt:    occurredAt,
-		SourceService: source,
-		Subject:       subject,
-		CorrelationID: message.GetMailboxEmail(),
-	})
-}
-
-func EmailReceivedEventID(message *mailboxv1.EmailInboxMessage) string {
-	return eventbus.StableEventID("mailbox-email-",
-		message.GetProviderKey(),
-		message.GetMailboxEmail(),
-		message.GetId(),
-		fmt.Sprintf("%d", message.GetReceivedAtUnix()),
-	)
-}
-
-func EmailSignalEventID(message *mailboxv1.EmailInboxMessage, signal *mailboxv1.EmailSignal) string {
-	return eventbus.StableEventID("mailbox-email-signal-",
-		message.GetProviderKey(),
-		message.GetMailboxEmail(),
-		message.GetId(),
-		signal.GetKind().String(),
-		signal.GetProfile(),
-		signal.GetParser(),
-		signal.GetSecretRef().GetSecretId(),
-		fmt.Sprintf("%d", message.GetReceivedAtUnix()),
-	)
-}
-
-func EmailAttributes(message *mailboxv1.EmailInboxMessage, signal *mailboxv1.EmailSignal) map[string]string {
-	attrs := eventbus.Attributes(
-		"mailbox_email", message.GetMailboxEmail(),
-		"provider_key", message.GetProviderKey(),
-		"message_id", message.GetId(),
-	)
-	if signal != nil {
-		attrs = eventbus.WithAttribute(attrs, "signal_kind", signal.GetKind().String())
-		attrs = eventbus.WithAttribute(attrs, "signal_profile", signal.GetProfile())
-	}
-	return attrs
 }
