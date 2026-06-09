@@ -25,18 +25,18 @@
 :root {
   color-scheme: light;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --background: #f7f8fa;
+  --background: #fbfcfe;
   --foreground: #111827;
   --card: #ffffff;
-  --muted: #f2f4f7;
+  --muted: #f5f7fa;
   --muted-foreground: #6b7280;
-  --border: #edf1f5;
+  --border: #eef2f6;
   --destructive: #b42318;
   --primary: #2563eb;
   --primary-foreground: #ffffff;
-  --secondary: #eff6ff;
+  --secondary: #f2f7ff;
   --secondary-foreground: #1d4ed8;
-  --accent: #f6f8fb;
+  --accent: #f8fafc;
   --accent-foreground: #172033;
   --success: #15803d;
   --success-soft: #eaf7ef;
@@ -56,18 +56,18 @@ body { margin: 0; background: var(--background); color: var(--foreground); }
 button, input, textarea { font: inherit; }
 
 .workspacePanel { height: 100%; overflow: hidden; background: var(--background); }
-.mailboxAppShell { display: grid; grid-template-columns: 60px minmax(0, 1fr); height: 100%; min-height: 0; }
-.mailboxAppNav { display: grid; grid-template-rows: auto 1fr; justify-items: center; gap: 18px; padding: 14px 8px; background: var(--card); color: var(--foreground); }
+.mailboxAppShell { display: grid; grid-template-columns: 56px minmax(0, 1fr); height: 100%; min-height: 0; }
+.mailboxAppNav { display: grid; grid-template-rows: auto 1fr; justify-items: center; gap: 16px; padding: 14px 6px; background: var(--background); color: var(--foreground); box-shadow: inset -1px 0 0 var(--border); }
 .mailboxAppMark { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 14px; background: var(--secondary); color: var(--primary); }
 .mailboxAppNavItems { display: grid; align-content: start; gap: 8px; }
 .mailboxAppNavButton { width: 40px; height: 40px; border-radius: 14px; }
-.mailboxWorkspace { display: grid; grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); height: 100%; min-height: 0; }
-.mailboxSourcePane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; gap: 10px; padding: 12px; background: var(--card); }
-.mailboxListPanel { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; gap: 10px; }
+.mailboxWorkspace { display: grid; grid-template-columns: minmax(320px, 404px) minmax(0, 1fr); height: 100%; min-height: 0; }
+.mailboxSourcePane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; gap: 8px; padding: 10px; background: var(--card); box-shadow: inset -1px 0 0 var(--border); }
+.mailboxListPanel { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; gap: 8px; }
 .mailboxSearchBar { display: flex; align-items: center; gap: 8px; }
 .mailboxDetailPane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; overflow: hidden; background: var(--card); }
-.mailboxDetailHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding: 10px 16px; background: var(--card); }
-.mailboxDetailBody { min-height: 0; overflow: hidden; padding: 16px; }
+.mailboxDetailHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding: 10px 18px; background: var(--card); box-shadow: inset 0 -1px 0 var(--border); }
+.mailboxDetailBody { min-height: 0; overflow: hidden; padding: 14px 18px 18px; }
 .mailboxReadingEmpty { display: grid; min-height: 0; place-items: center; background: var(--card); }
 @media (max-width: 1080px) { .mailboxAppShell { grid-template-columns: 64px minmax(0, 1fr); } .mailboxWorkspace { grid-template-columns: minmax(0, 1fr); } .mailboxReadingEmpty, .mailboxDetailPane { min-height: 420px; } }
 
@@ -86,8 +86,8 @@ button, input, textarea { font: inherit; }
 .tabsContent { min-height: 0; overflow: hidden; }
 .segmentedControl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted); }
 
-.recordList { min-height: 0; display: grid; align-content: start; gap: 6px; padding: 2px; }
-.recordCard { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; border: 1px solid transparent; border-radius: 12px; background: transparent; box-shadow: none; }
+.recordList { min-height: 0; display: grid; align-content: start; gap: 4px; padding: 2px; }
+.recordCard { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; border: 1px solid transparent; border-radius: 10px; background: transparent; box-shadow: none; }
 .recordCard:hover { background: var(--accent); }
 .recordCard.selected { border-color: transparent; background: var(--secondary); box-shadow: inset 3px 0 0 var(--primary); }
 .recordMain { display: grid; gap: 6px; min-width: 0; }
@@ -108,7 +108,7 @@ button, input, textarea { font: inherit; }
 .cursorPager { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; color: var(--muted-foreground); font-size: 12px; }
 .mailboxInboxListPane { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; min-width: 0; min-height: 0; }
 .mailboxInboxToolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; padding-right: 8px; }
-.mailboxInboxLayout { display: grid; gap: 12px; height: 100%; min-height: 0; }
+.mailboxInboxLayout { display: grid; gap: 14px; height: 100%; min-height: 0; }
 .mailboxInboxLayout > * { min-width: 0; min-height: 0; }
 @media (min-width: 960px) { .mailboxInboxLayout { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); align-items: stretch; } }
 .inboxMessageRow { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: start; gap: 10px; min-width: 0; cursor: pointer; border: 0; border-radius: 10px; background: transparent; box-shadow: none; }
@@ -120,11 +120,11 @@ button, input, textarea { font: inherit; }
 .inboxMessageSubject { color: var(--foreground); font-size: 13px; font-weight: 650; }
 .inboxMessageMeta { color: var(--muted-foreground); }
 .inboxNewBadge { background: var(--primary); color: var(--primary-foreground); }
-.mailboxInboxDetail { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; height: 100%; border: 0; padding: 14px 0 0 14px; overflow: hidden; box-shadow: none; }
+.mailboxInboxDetail { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; height: 100%; border: 0; padding: 14px 8px 0 18px; overflow: hidden; box-shadow: none; }
 .mailboxInboxDetailHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .mailboxInboxMetadata { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 6px 10px; font-size: 12px; }
 .mailboxInboxMetadata dt { color: var(--muted-foreground); }
 .mailboxInboxMetadata dd { margin: 0; }
-.mailboxInboxBody { flex: 1 1 auto; min-width: 0; min-height: 360px; overflow: auto; border-top: 1px solid var(--border); padding-top: 10px; }
+.mailboxInboxBody { flex: 1 1 auto; min-width: 0; min-height: 360px; overflow: auto; border-top: 1px solid var(--border); padding-top: 12px; }
 .mailboxPlainTextBody { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--foreground); font: inherit; line-height: 1.58; }
 .mailboxEmailFrame { display: block; width: 100%; height: 100%; min-height: 520px; border: 0; background: #fff; }
