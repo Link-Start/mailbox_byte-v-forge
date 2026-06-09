@@ -21,12 +21,7 @@ func NewTTLFlagStore(client redis.Cmdable, prefix string, ttl time.Duration, val
 	if value == "" {
 		value = "1"
 	}
-	return &TTLFlagStore{
-		client:   client,
-		keyspace: NewKeyspace(prefix),
-		ttl:      ttl,
-		value:    value,
-	}
+	return &TTLFlagStore{client: client, keyspace: NewKeyspace(prefix), ttl: ttl, value: value}
 }
 
 func (s *TTLFlagStore) Claim(ctx context.Context, key string, ttl time.Duration) (bool, error) {
@@ -51,18 +46,4 @@ func (s *TTLFlagStore) Delete(ctx context.Context, key string) error {
 		return nil
 	}
 	return s.client.Del(ctx, redisKey).Err()
-}
-
-func (s *TTLFlagStore) redisKey(key string) (string, bool) {
-	if s == nil || s.client == nil {
-		return "", false
-	}
-	return s.keyspace.Key(key)
-}
-
-func (s *TTLFlagStore) effectiveTTL(ttl time.Duration) time.Duration {
-	if ttl <= 0 {
-		return s.ttl
-	}
-	return ttl
 }
