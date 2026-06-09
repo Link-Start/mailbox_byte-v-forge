@@ -56,5 +56,5 @@ func (s *EmailService) GetInboxMessage(ctx context.Context, request *mailboxv1.G
 	if err != nil {
 		return nil, status.Error(codes.Internal, safeMailboxError(err))
 	}
-	return resp, nil
+	return s.hydrateOutlookRichInboxMessage(ctx, email, request.GetParserProfile(), resp), nil
 }

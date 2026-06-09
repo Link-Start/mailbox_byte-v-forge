@@ -5,23 +5,31 @@ import graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
 func graphMessagesFromSDK(messages []graphmodels.Messageable) []graphMessage {
 	out := make([]graphMessage, 0, len(messages))
 	for _, message := range messages {
-		if message == nil {
+		msg, ok := graphMessageFromSDK(message)
+		if !ok {
 			continue
 		}
-		out = append(out, graphMessage{
-			ID:                     stringValueFromPtr(message.GetId()),
-			Subject:                stringValueFromPtr(message.GetSubject()),
-			From:                   graphRecipientFromSDK(message.GetFrom()),
-			BodyPreview:            stringValueFromPtr(message.GetBodyPreview()),
-			Body:                   graphBodyFromSDK(message.GetBody()),
-			ToRecipients:           graphRecipientsFromSDK(message.GetToRecipients()),
-			CcRecipients:           graphRecipientsFromSDK(message.GetCcRecipients()),
-			BccRecipients:          graphRecipientsFromSDK(message.GetBccRecipients()),
-			InternetMessageHeaders: graphHeadersFromSDK(message.GetInternetMessageHeaders()),
-			ReceivedDateTime:       graphTimeFromSDK(message.GetReceivedDateTime()),
-		})
+		out = append(out, msg)
 	}
 	return out
+}
+
+func graphMessageFromSDK(message graphmodels.Messageable) (graphMessage, bool) {
+	if message == nil {
+		return graphMessage{}, false
+	}
+	return graphMessage{
+		ID:                     stringValueFromPtr(message.GetId()),
+		Subject:                stringValueFromPtr(message.GetSubject()),
+		From:                   graphRecipientFromSDK(message.GetFrom()),
+		BodyPreview:            stringValueFromPtr(message.GetBodyPreview()),
+		Body:                   graphBodyFromSDK(message.GetBody()),
+		ToRecipients:           graphRecipientsFromSDK(message.GetToRecipients()),
+		CcRecipients:           graphRecipientsFromSDK(message.GetCcRecipients()),
+		BccRecipients:          graphRecipientsFromSDK(message.GetBccRecipients()),
+		InternetMessageHeaders: graphHeadersFromSDK(message.GetInternetMessageHeaders()),
+		ReceivedDateTime:       graphTimeFromSDK(message.GetReceivedDateTime()),
+	}, true
 }
 
 func graphBodyFromSDK(body graphmodels.ItemBodyable) graphBody {
