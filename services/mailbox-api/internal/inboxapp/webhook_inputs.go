@@ -35,7 +35,7 @@ func inboundEmailInputs(event *pb.InboundEmailWebhook, provider string, recipien
 func inboundTextBody(event *pb.InboundEmailWebhook) string {
 	body := strings.TrimSpace(event.GetTextBody())
 	if body == "" {
-		body = CompactMessageText(event.GetHtmlBody(), 5000)
+		body = CompactMessageText(event.GetHtmlBody(), 0)
 	}
 	return body
 }

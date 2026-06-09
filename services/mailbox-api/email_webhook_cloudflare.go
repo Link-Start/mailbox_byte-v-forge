@@ -21,7 +21,7 @@ func (h *emailWebhookHandler) handleInboundEmailWebhook(providerKey string) http
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 2<<20))
+		raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 8<<20))
 		if err != nil {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
