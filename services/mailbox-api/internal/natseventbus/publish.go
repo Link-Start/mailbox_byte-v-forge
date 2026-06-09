@@ -8,7 +8,6 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"google.golang.org/protobuf/proto"
-	commonv1 "mailboxapi/internal/contracts/commonv1"
 	"mailboxapi/internal/eventbus"
 )
 
@@ -42,23 +41,4 @@ func (b *Bus) Publish(ctx context.Context, message eventbus.Message) (eventbus.P
 		Sequence:  ack.Sequence,
 		Duplicate: ack.Duplicate,
 	}, nil
-}
-
-func envelopeHeaders(envelope *commonv1.EventEnvelope) nats.Header {
-	headers := nats.Header{}
-	if envelope == nil {
-		return headers
-	}
-	headers.Set("Bvf-Event-Subject", envelope.GetSubject())
-	headers.Set("Bvf-Event-Type", envelope.GetPayloadType())
-	headers.Set("Content-Type", envelope.GetDataContentType())
-	if metadata := envelope.GetMetadata(); metadata != nil {
-		headers.Set("Bvf-Event-Id", metadata.GetId())
-		headers.Set("Bvf-Event-Name", metadata.GetType())
-		headers.Set("Bvf-Event-Version", metadata.GetVersion())
-		headers.Set("Bvf-Correlation-Id", metadata.GetCorrelationId())
-		headers.Set("Bvf-Trace-Id", metadata.GetTraceId())
-		headers.Set("Bvf-Idempotency-Key", metadata.GetIdempotencyKey())
-	}
-	return headers
 }
