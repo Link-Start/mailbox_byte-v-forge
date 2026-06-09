@@ -52,9 +52,3 @@ func (b *providerStorageBuilder) add(rawColumn string, value any, updateMode str
 	}
 	return column
 }
-
-func (b *providerStorageBuilder) setUpdate(column string, expression string) {
-	if column != "" && strings.TrimSpace(expression) != "" {
-		b.updates[column] = expression
-	}
-}
