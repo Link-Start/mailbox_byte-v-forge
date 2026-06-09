@@ -2,7 +2,6 @@ package eventoutbox
 
 import (
 	"context"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"mailboxapi/internal/eventbus"
@@ -41,6 +40,18 @@ func (p *PgxProcessor) PublishPending(ctx context.Context, batch int) (int, erro
 		}
 	}()
 
+	published, err := p.publishPendingInTx(ctx, tx, batch)
+	if err != nil {
+		return published, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return published, err
+	}
+	committed = true
+	return published, nil
+}
+
+func (p *PgxProcessor) publishPendingInTx(ctx context.Context, tx pgx.Tx, batch int) (int, error) {
 	rows, err := ClaimPendingPgx(ctx, tx, p.Table, batch, optionUnix(p.PublishOptions))
 	if err != nil {
 		return 0, err
@@ -52,41 +63,7 @@ func (p *PgxProcessor) PublishPending(ctx context.Context, batch int) (int, erro
 	if err != nil {
 		return 0, err
 	}
-	published, err := PublishRows(ctx, p.Publisher, rows, updates, p.PublishOptions)
-	if err != nil {
-		return published, err
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return published, err
-	}
-	committed = true
-	return published, nil
-}
-
-type PgxWorkerConfig struct {
-	Name           string
-	Beginner       PgxBeginner
-	Table          string
-	Publisher      eventbus.Publisher
-	Batch          int
-	Interval       time.Duration
-	ActiveInterval time.Duration
-	Logf           func(string, ...any)
-	PublishOptions PublishOptions
-}
-
-func RunPgxWorker(ctx context.Context, cfg PgxWorkerConfig) error {
-	if cfg.Beginner == nil || cfg.Publisher == nil {
-		return nil
-	}
-	return RunWorker(ctx, WorkerConfig{
-		Name:           cfg.Name,
-		Processor:      &PgxProcessor{Beginner: cfg.Beginner, Table: cfg.Table, Publisher: cfg.Publisher, PublishOptions: cfg.PublishOptions},
-		Batch:          cfg.Batch,
-		Interval:       cfg.Interval,
-		ActiveInterval: cfg.ActiveInterval,
-		Logf:           cfg.Logf,
-	})
+	return PublishRows(ctx, p.Publisher, rows, updates, p.PublishOptions)
 }
 
 func optionUnix(options PublishOptions) int64 {
