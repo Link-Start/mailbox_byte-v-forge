@@ -4,8 +4,6 @@ import (
 	"strings"
 	"time"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-	commonv1 "mailboxapi/internal/contracts/commonv1"
 	observabilityv1 "mailboxapi/internal/contracts/observabilityv1"
 )
 
@@ -26,22 +24,8 @@ type EventConfig struct {
 }
 
 func NewEvent(cfg EventConfig) *observabilityv1.HotStreamEvent {
-	occurredAt := cfg.OccurredAt
-	if occurredAt.IsZero() {
-		occurredAt = time.Now()
-	}
 	return &observabilityv1.HotStreamEvent{
-		Metadata: &commonv1.EventMetadata{
-			Id:              strings.TrimSpace(cfg.EventID),
-			Type:            strings.TrimSpace(cfg.EventType),
-			Version:         "v1",
-			Time:            timestamppb.New(occurredAt),
-			Source:          strings.TrimSpace(cfg.SourceService),
-			CorrelationId:   strings.TrimSpace(cfg.CorrelationID),
-			TraceId:         strings.TrimSpace(cfg.TraceID),
-			SpecVersion:     "1.0",
-			DataContentType: DataContentType,
-		},
+		Metadata:     eventMetadata(cfg),
 		ResourceType: strings.TrimSpace(cfg.ResourceType),
 		ResourceId:   strings.TrimSpace(cfg.ResourceID),
 		Scope:        strings.TrimSpace(cfg.Scope),
@@ -55,23 +39,4 @@ func ServiceStateSubject(service string) string {
 		service = "mailbox"
 	}
 	return SubjectPrefix + "." + service + ".state"
-}
-
-func CleanAttributes(input map[string]string) map[string]string {
-	if len(input) == 0 {
-		return nil
-	}
-	out := map[string]string{}
-	for key, value := range input {
-		key = strings.TrimSpace(key)
-		value = strings.TrimSpace(value)
-		if key == "" || value == "" {
-			continue
-		}
-		out[key] = value
-	}
-	if len(out) == 0 {
-		return nil
-	}
-	return out
 }
