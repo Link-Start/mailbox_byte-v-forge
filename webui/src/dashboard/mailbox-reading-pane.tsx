@@ -1,6 +1,5 @@
 import { Mail, X } from 'lucide-react';
 import { Button, EmptyBlock } from './dashboard-kit';
-import { maskEmail } from './email-utils';
 import { MailboxDetails } from './mailbox-details';
 import type { MailboxPanelMode } from './mailbox-provider-types';
 import type { InboxResult, Mailbox, MailboxProviderCapability } from './types';
@@ -14,7 +13,6 @@ export function MailboxReadingPane({
   mailbox,
   providerCapability,
   mode,
-  showSecrets,
   inboxResult,
   inboxLoading,
   canFetchInbox,
@@ -26,7 +24,6 @@ export function MailboxReadingPane({
   mailbox: Mailbox;
   providerCapability?: MailboxProviderCapability;
   mode: MailboxPanelMode;
-  showSecrets: boolean;
   inboxResult?: InboxResult | null;
   inboxLoading: boolean;
   canFetchInbox: boolean;
@@ -35,7 +32,7 @@ export function MailboxReadingPane({
   onFetchInbox: (emailAddress?: string) => Promise<void>;
   onDelete: (mailbox: Mailbox) => void;
 }) {
-  const title = showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address);
+  const title = mailbox.email_address;
   return (
     <section className="mailboxDetailPane">
       <header className="mailboxDetailHeader">
@@ -52,7 +49,6 @@ export function MailboxReadingPane({
           mailbox={mailbox}
           providerCapability={providerCapability}
           mode={mode}
-          showSecrets={showSecrets}
           inboxResult={inboxResult}
           inboxLoading={inboxLoading}
           canFetchInbox={canFetchInbox}

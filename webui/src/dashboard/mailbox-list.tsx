@@ -13,7 +13,6 @@ export type MailboxRecordListProps = {
   showStatus?: boolean;
   selected?: string;
   busy: boolean;
-  showSecrets: boolean;
   oauthing: string;
   runningOperationByEmail: Map<string, MailboxOperation>;
   hasMoreMailboxes?: boolean;
@@ -23,7 +22,7 @@ export type MailboxRecordListProps = {
   onDelete: (mailbox: Mailbox) => void;
 };
 
-export function MailboxRecordList({ mailboxes, mode, emptyText, providerCapability, providerCapabilities, showStatus, selected, busy, showSecrets, oauthing, runningOperationByEmail, hasMoreMailboxes, loadingMoreMailboxes, onLoadMoreMailboxes, onOAuth, onDelete }: MailboxRecordListProps) {
+export function MailboxRecordList({ mailboxes, mode, emptyText, providerCapability, providerCapabilities, showStatus, selected, busy, oauthing, runningOperationByEmail, hasMoreMailboxes, loadingMoreMailboxes, onLoadMoreMailboxes, onOAuth, onDelete }: MailboxRecordListProps) {
   return (
     <>
       <ScrollArea className="h-full min-h-0">
@@ -35,7 +34,6 @@ export function MailboxRecordList({ mailboxes, mode, emptyText, providerCapabili
               mode={mode}
               selected={selected === mailbox.email_address}
               busy={busy}
-              showSecrets={showSecrets}
               oauthing={oauthing}
               showStatus={showStatus ?? true}
               providerCapability={providerCapability}

@@ -11,7 +11,6 @@ export type MailboxProviderPanelProps = {
   actions?: ReactNode;
   selected?: string;
   busy: boolean;
-  showSecrets: boolean;
   oauthing: string;
   inboxLoading: boolean;
   domainSyncing: boolean;
@@ -23,7 +22,6 @@ export type MailboxProviderPanelProps = {
   onOAuth: (emailAddress?: string) => Promise<void>;
   onFetchInbox: () => Promise<void>;
   onSyncDomains: (providerKey: string) => Promise<void>;
-  onToggleSecrets: () => void;
   onDelete: (mailbox: Mailbox) => void;
   onDone: (message: string) => void;
   onError: (message: string) => void;

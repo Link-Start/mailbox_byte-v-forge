@@ -6,10 +6,9 @@ import {
   errorText
 } from './dashboard-kit';
 
-export function MailboxPageStatus({ total, runningCount, showSecrets, error }: {
+export function MailboxPageStatus({ total, runningCount, error }: {
   total: number;
   runningCount: number;
-  showSecrets: boolean;
   error?: unknown;
 }) {
   return (
@@ -22,7 +21,6 @@ export function MailboxPageStatus({ total, runningCount, showSecrets, error }: {
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="secondary">{total} 邮箱</Badge>
         {runningCount > 0 && <Badge variant="outline">运行中 {runningCount}</Badge>}
-        {!showSecrets && <Badge variant="secondary">隐私</Badge>}
       </div>
     </div>
   );

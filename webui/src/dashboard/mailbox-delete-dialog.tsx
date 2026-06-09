@@ -8,25 +8,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from './dashboard-kit';
-import { maskEmail } from './email-utils';
 import type { Mailbox } from './types';
 
-export function MailboxDeleteDialog({ mailbox, showSecrets, busy, onCancel, onConfirm }: {
+export function MailboxDeleteDialog({ mailbox, busy, onCancel, onConfirm }: {
   mailbox?: Mailbox | null;
-  showSecrets: boolean;
   busy: boolean;
   onCancel: () => void;
   onConfirm: () => void | Promise<void>;
 }) {
   const email = mailbox?.email_address || '';
-  const displayEmail = showSecrets ? email : maskEmail(email);
   return (
     <AlertDialog open={!!mailbox} onOpenChange={(open) => { if (!open) onCancel(); }}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>删除邮箱？</AlertDialogTitle>
           <AlertDialogDescription>
-            将删除 {displayEmail || '当前邮箱'} 及已缓存收件箱记录，此操作不可撤销。
+            将删除 {email || '当前邮箱'} 及已缓存收件箱记录，此操作不可撤销。
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

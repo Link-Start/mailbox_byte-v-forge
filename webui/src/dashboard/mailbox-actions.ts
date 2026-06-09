@@ -9,7 +9,7 @@ import {
   useAsyncActionRunner,
   useToastMessage
 } from './dashboard-kit';
-import { maskEmail, normalizeUiEmail } from './email-utils';
+import { normalizeUiEmail } from './email-utils';
 import { deleteMailbox, fetchMailboxInboxes, fetchStoredInbox, startMailboxOAuth, syncMailboxDomains } from './mailbox-action-api';
 import type { MailboxData } from './mailbox-data';
 import { capabilityForProvider, providerDisplayName } from './mailbox-provider-capabilities';
@@ -17,7 +17,7 @@ import type { InboxResult, Mailbox } from './types';
 
 export const mailboxInboxQueryKey = (email: string) => ['mailbox', 'inbox', normalizeUiEmail(email)] as const;
 
-export function useMailboxActions(data: MailboxData, showSecrets: boolean, onMailboxDeleted: (email: string) => void) {
+export function useMailboxActions(data: MailboxData, onMailboxDeleted: (email: string) => void) {
   const toast = useToastMessage();
   const queryClient = useQueryClient();
   const selectedEmail = normalizeUiEmail(data.selected?.email_address || '');
@@ -50,7 +50,7 @@ export function useMailboxActions(data: MailboxData, showSecrets: boolean, onMai
         const email = result.mailbox?.email_address || result.messages?.[0]?.mailbox_email || target;
         if (email) queryClient.setQueryData(mailboxInboxQueryKey(email), result);
       }
-      toast.showToast(resp.failed_count > 0 ? 'error' : 'ok', `${target ? `${showSecrets ? target : maskEmail(target)} ` : ''}收信完成：${resp.message_count} 封邮件`);
+      toast.showToast(resp.failed_count > 0 ? 'error' : 'ok', `${target ? `${target} ` : ''}收信完成：${resp.message_count} 封邮件`);
       await data.invalidate();
     }, { onError: toast.showError });
   }

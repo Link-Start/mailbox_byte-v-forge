@@ -5,7 +5,6 @@ import {
   MailboxCredentialKind,
 } from './dashboard-kit';
 import type { ActionButtonDescriptor, KVDescriptor } from './dashboard-kit';
-import { maskEmail } from './email-utils';
 import { mailboxStatusText } from './labels';
 import { authStatus } from './mailbox-auth-status';
 import { mailboxCredentialPresent } from './mailbox-credentials';
@@ -13,16 +12,15 @@ import { providerShowsCredentialState } from './mailbox-provider-capabilities';
 import { MailboxOtpPanel } from './otp-panel';
 import type { LatestOtp, Mailbox, MailboxProviderCapability } from './types';
 
-export function MailboxOverview({ mailbox, providerCapability, showSecrets, latestOtp, onCopy, onDelete }: {
+export function MailboxOverview({ mailbox, providerCapability, latestOtp, onCopy, onDelete }: {
   mailbox: Mailbox;
   providerCapability?: MailboxProviderCapability;
-  showSecrets: boolean;
   latestOtp: LatestOtp | null;
   onCopy: (label: string, value: string) => void;
   onDelete: (mailbox: Mailbox) => void;
 }) {
   const showCredentialState = providerShowsCredentialState(providerCapability);
-  const fields = overviewFields(mailbox, showSecrets, showCredentialState);
+  const fields = overviewFields(mailbox, showCredentialState);
   const actions: ActionButtonDescriptor[] = [{
     id: 'delete-mailbox',
     label: '删除邮箱',
@@ -33,7 +31,7 @@ export function MailboxOverview({ mailbox, providerCapability, showSecrets, late
 
   return (
     <section className="grid gap-3">
-      <MailboxOtpPanel latestOtp={latestOtp} showSecrets={showSecrets} loading={false} />
+      <MailboxOtpPanel latestOtp={latestOtp} loading={false} />
       <div>
         <KVList items={fields} onCopy={onCopy} />
       </div>
@@ -42,14 +40,13 @@ export function MailboxOverview({ mailbox, providerCapability, showSecrets, late
   );
 }
 
-function overviewFields(mailbox: Mailbox, showSecrets: boolean, showCredentialState: boolean) {
+function overviewFields(mailbox: Mailbox, showCredentialState: boolean) {
   const fields: KVDescriptor[] = [{
     id: 'email',
     label: '邮箱',
-    value: showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address),
+    value: mailbox.email_address,
     copyValue: mailbox.email_address,
     copyDisabled: !mailbox.email_address,
-    masked: !showSecrets,
   }];
   if (showCredentialState) fields.push({
     id: 'oauth',
@@ -63,7 +60,6 @@ function overviewFields(mailbox: Mailbox, showSecrets: boolean, showCredentialSt
     value: credentials,
     copyValue: '',
     copyDisabled: true,
-    masked: false,
     mono: false,
   });
   return fields;

@@ -13,18 +13,16 @@ import {
   compactToast,
   formatInboxTime,
   formatUnix,
-  maskPreview,
   ScrollArea
 } from './dashboard-kit';
-import { emailDisplayName, emailInitial, maskEmail } from './email-utils';
+import { emailDisplayName, emailInitial } from './email-utils';
 import { MailboxInboxDetail } from './mailbox-inbox-detail';
 import { MessageSignalBadges } from './mailbox-signal-badges';
 import type { InboxMessage, InboxResult, Mailbox } from './types';
 
-export function MailboxInboxSection({ mailbox, result, showSecrets, loading, canFetch, onFetch }: {
+export function MailboxInboxSection({ mailbox, result, loading, canFetch, onFetch }: {
   mailbox: Mailbox;
   result?: InboxResult | null;
-  showSecrets: boolean;
   loading: boolean;
   canFetch: boolean;
   onFetch: (emailAddress?: string) => Promise<void>;
@@ -64,27 +62,26 @@ export function MailboxInboxSection({ mailbox, result, showSecrets, loading, can
             <div className="grid gap-2 pr-2">
               {messages.map((message, index) => {
                 const key = inboxMessageKey(message, index);
-                return <InboxMessageRow message={message} selected={key === selectedKey} showSecrets={showSecrets} key={key} onSelect={() => setSelectedKey(key)} />;
+                return <InboxMessageRow message={message} selected={key === selectedKey} key={key} onSelect={() => setSelectedKey(key)} />;
               })}
               {!result && <EmptyBlock text={loading ? '读取中' : '暂无邮件'} />}
               {result && !result.error_message && messages.length === 0 && <EmptyBlock text="暂无邮件" />}
             </div>
           </ScrollArea>
         </div>
-        {messages.length > 0 && <MailboxInboxDetail message={selectedMessage} showSecrets={showSecrets} />}
+        {messages.length > 0 && <MailboxInboxDetail message={selectedMessage} />}
       </div>
     </section>
   );
 }
 
-function InboxMessageRow({ message, selected, showSecrets, onSelect }: {
+function InboxMessageRow({ message, selected, onSelect }: {
   message: InboxMessage;
   selected: boolean;
-  showSecrets: boolean;
   onSelect: () => void;
 }) {
-  const from = showSecrets ? (message.from_address || '-') : maskEmail(message.from_address);
-  const preview = showSecrets ? (message.body_preview || '-') : maskPreview(message.body_preview || '-');
+  const from = message.from_address || '-';
+  const preview = message.body_preview || '-';
   const isRecent = Date.now() / 1000 - (message.received_at_unix || 0) < 300;
   return (
     <Item
@@ -98,13 +95,13 @@ function InboxMessageRow({ message, selected, showSecrets, onSelect }: {
       <span className="inboxSenderAvatar" aria-hidden="true">{emailInitial(message.from_address)}</span>
       <ItemContent className="min-w-0">
         <ItemTitle className="inboxMessageTop">
-          <span className="truncate" title={from}>{showSecrets ? emailDisplayName(message.from_address) : from}</span>
+          <span className="truncate" title={from}>{emailDisplayName(message.from_address)}</span>
           <span className="shrink-0 text-xs font-normal text-muted-foreground" title={formatUnix(message.received_at_unix)}>
             {formatInboxTime(message.received_at_unix)}
           </span>
         </ItemTitle>
         <ItemDescription className="inboxMessageSubject">
-          <span className="truncate" title={message.subject}>{showSecrets ? (message.subject || '-') : maskPreview(message.subject || '-')}</span>
+          <span className="truncate" title={message.subject}>{message.subject || '-'}</span>
           {isRecent && <Badge className="inboxNewBadge" variant="secondary">新</Badge>}
         </ItemDescription>
         <ItemDescription className="inboxMessageMeta">

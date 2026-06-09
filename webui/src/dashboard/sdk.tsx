@@ -1,6 +1,6 @@
 export { MailboxInboxSection } from './mailbox-inbox';
 export { MailboxOtpPanel } from './otp-panel';
-export { canonicalUiEmail, formatEmailList, maskEmail, normalizeUiEmail } from './email-utils';
+export { canonicalUiEmail, formatEmailList, normalizeUiEmail } from './email-utils';
 export { mergeInboxMessage, useMailboxEmailEventCache } from './mailbox-events';
 export { mailboxProviderValue } from './mailbox-provider-config';
 export {

@@ -1,7 +1,6 @@
 import { Mail } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router';
 import { Card, RecordActionButtons, StatusBadge } from './dashboard-kit';
-import { maskEmail } from './email-utils';
 import { mailboxDetailPath } from './mailbox-route-paths';
 import { authStatus } from './mailbox-auth-status';
 import { mailboxRowActions } from './mailbox-card-actions';
@@ -11,12 +10,11 @@ import { capabilityForProvider, providerDisplayName } from './mailbox-provider-c
 import type { MailboxPanelMode } from './mailbox-provider-types';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
 
-export function MailboxCard({ mailbox, mode, selected, busy, showSecrets, oauthing, showStatus, providerCapability, providerCapabilities, currentOperation, onOAuth, onDelete }: {
+export function MailboxCard({ mailbox, mode, selected, busy, oauthing, showStatus, providerCapability, providerCapabilities, currentOperation, onOAuth, onDelete }: {
   mailbox: Mailbox;
   mode: MailboxPanelMode;
   selected: boolean;
   busy: boolean;
-  showSecrets: boolean;
   oauthing: string;
   showStatus: boolean;
   providerCapability?: MailboxProviderCapability;
@@ -26,7 +24,7 @@ export function MailboxCard({ mailbox, mode, selected, busy, showSecrets, oauthi
   onDelete: (mailbox: Mailbox) => void;
 }) {
   const { search } = useLocation();
-  const displayEmail = showSecrets ? mailbox.email_address : maskEmail(mailbox.email_address);
+  const displayEmail = mailbox.email_address;
   const rowActions = mailboxRowActions({ mailbox, mode, busy, oauthing, providerCapability, currentOperation, onOAuth, onDelete });
   const detailPath = `${mailboxDetailPath(mailbox.email_address, mode === 'accounts' ? 'overview' : 'inbox')}${persistentMailboxPanelSearch(search)}`;
   const sourceLabel = mailboxSourceLabel(mailbox, providerCapability, providerCapabilities);

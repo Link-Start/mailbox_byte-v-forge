@@ -1,16 +1,7 @@
-import { mask } from './dashboard-kit';
-
-export function maskEmail(value: string) {
-  if (!value) return '-';
-  const [local, domain] = value.split('@');
-  if (!local || !domain) return mask(value);
-  return `${local.slice(0, 2)}***@${domain}`;
-}
-
-export function formatEmailList(values: string[] | undefined, showSecrets: boolean) {
+export function formatEmailList(values: string[] | undefined) {
   const list = values || [];
   if (list.length === 0) return '-';
-  return list.map((value) => showSecrets ? value : maskEmail(value)).join(', ');
+  return list.join(', ');
 }
 
 export function normalizeUiEmail(value: string) {

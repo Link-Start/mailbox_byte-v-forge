@@ -11,10 +11,6 @@ export function mask(value: string) {
   return value ? '••••••••' : '-';
 }
 
-export function maskPreview(value: string) {
-  return String(value || '-').replace(/\b\d{6}\b/g, '••••••');
-}
-
 export function compactToast(value: string) {
   const text = String(value || '');
   return text.length > 150 ? `${text.slice(0, 150)}...` : text;

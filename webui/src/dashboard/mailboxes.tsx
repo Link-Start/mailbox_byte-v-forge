@@ -37,7 +37,6 @@ type MailboxPanelProps = {
   providerCapabilities: MailboxProviderCapability[];
   selected?: string;
   busy: boolean;
-  showSecrets: boolean;
   oauthing: string;
   inboxLoading: boolean;
   domainSyncing: boolean;
@@ -48,7 +47,6 @@ type MailboxPanelProps = {
   onOAuth: (emailAddress?: string) => Promise<void>;
   onFetchInbox: () => Promise<void>;
   onSyncDomains: (providerKey: string) => Promise<void>;
-  onToggleSecrets: () => void;
   onDelete: (mailbox: Mailbox) => void;
   onDone: (message: string) => void;
   onError: (message: string) => void;
@@ -164,7 +162,6 @@ function providerPanelProps(props: MailboxPanelProps, searchQuery: string): Omit
     providerCapabilities: props.providerCapabilities,
     selected: props.selected,
     busy: props.busy,
-    showSecrets: props.showSecrets,
     oauthing: props.oauthing,
     inboxLoading: props.inboxLoading,
     domainSyncing: props.domainSyncing,
@@ -176,7 +173,6 @@ function providerPanelProps(props: MailboxPanelProps, searchQuery: string): Omit
     onOAuth: props.onOAuth,
     onFetchInbox: props.onFetchInbox,
     onSyncDomains: props.onSyncDomains,
-    onToggleSecrets: props.onToggleSecrets,
     onDelete: props.onDelete,
     onDone: props.onDone,
     onError: props.onError

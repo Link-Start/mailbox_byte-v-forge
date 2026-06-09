@@ -1,13 +1,12 @@
 import { Interweave } from 'interweave';
-import { Card, EmptyBlock, Alert, AlertDescription, compactToast, formatUnix, maskPreview, useQuery } from './dashboard-kit';
-import { formatEmailList, maskEmail } from './email-utils';
+import { Card, EmptyBlock, Alert, AlertDescription, compactToast, formatUnix, useQuery } from './dashboard-kit';
+import { formatEmailList } from './email-utils';
 import { fetchInboxMessageDetail, mailboxInboxMessageQueryKey } from './mailbox-inbox-query';
 import { MessageSignalBadges } from './mailbox-signal-badges';
 import type { InboxMessage } from './types';
 
-export function MailboxInboxDetail({ message, showSecrets }: {
+export function MailboxInboxDetail({ message }: {
   message?: InboxMessage | null;
-  showSecrets: boolean;
 }) {
   const detailQuery = useQuery({
     queryKey: mailboxInboxMessageQueryKey(message?.mailbox_email || '', message?.id || '', message?.provider_key || ''),
@@ -19,8 +18,8 @@ export function MailboxInboxDetail({ message, showSecrets }: {
   }
   const detail = detailQuery.data;
   const detailMessage = detail?.message || message;
-  const subject = showSecrets ? (detailMessage.subject || '-') : maskPreview(detailMessage.subject || '-');
-  const body = emailBodyContent(detail?.html_body || '', detail?.body_text || detailMessage.body_preview || '', showSecrets);
+  const subject = detailMessage.subject || '-';
+  const body = emailBodyContent(detail?.html_body || '', detail?.body_text || detailMessage.body_preview || '');
   return (
     <Card className="mailboxInboxDetail">
       <div className="mailboxInboxDetailHeader">
@@ -36,8 +35,8 @@ export function MailboxInboxDetail({ message, showSecrets }: {
         </Alert>
       )}
       <dl className="mailboxInboxMetadata">
-        <MetadataRow label="发件人" value={showSecrets ? (detailMessage.from_address || '-') : maskEmail(detailMessage.from_address)} />
-        <MetadataRow label="收件人" value={formatEmailList(detailMessage.recipients, showSecrets)} title={formatEmailList(detailMessage.recipients, true)} />
+        <MetadataRow label="发件人" value={detailMessage.from_address || '-'} />
+        <MetadataRow label="收件人" value={formatEmailList(detailMessage.recipients)} />
       </dl>
       <div className="mailboxInboxBody">
         {detailQuery.isFetching && <div className="mb-1 text-xs font-semibold text-muted-foreground">读取中</div>}
@@ -51,8 +50,7 @@ function MetadataRow({ label, value, title }: { label: string; value: string; ti
   return <><dt>{label}</dt><dd className="truncate" title={title || value}>{value}</dd></>;
 }
 
-function emailBodyContent(htmlBody: string, textBody: string, showSecrets: boolean) {
-  if (!showSecrets) return textAsHTML(maskPreview(textBody || '-'));
+function emailBodyContent(htmlBody: string, textBody: string) {
   return htmlBody.trim() || textAsHTML(textBody || '-');
 }
 

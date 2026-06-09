@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Outlet, useLocation, useNavigate, useOutletContext, useParams } from 'react-router';
 import { MailboxProviderAction } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
@@ -18,7 +18,6 @@ import type { MailboxPanelMode } from './mailbox-provider-types';
 type MailboxPageContext = {
   data: ReturnType<typeof useMailboxData>;
   actions: ReturnType<typeof useMailboxActions>;
-  showSecrets: boolean;
   closeDetails: () => void;
   panelMode: MailboxPanelMode;
 };
@@ -29,7 +28,6 @@ export function MailboxPage() {
   const { mailboxEmail = '' } = useParams();
   const selectedEmail = normalizeUiEmail(mailboxEmail);
   const panelMode: MailboxPanelMode = pathname.split('/').includes('accounts') ? 'accounts' : 'inbox';
-  const [showSecrets, setShowSecrets] = useState(false);
   const closeDetails = useCallback(() => {
     const path = panelMode === 'accounts' ? mailboxAccountsIndexPath() : mailboxInboxIndexPath();
     void navigate(`${path}${persistentMailboxPanelSearch(search)}`);
@@ -38,7 +36,7 @@ export function MailboxPage() {
     if (normalizeUiEmail(email) === selectedEmail) closeDetails();
   }, [closeDetails, selectedEmail]);
   const data = useMailboxData(selectedEmail);
-  const actions = useMailboxActions(data, showSecrets, closeDeletedMailbox);
+  const actions = useMailboxActions(data, closeDeletedMailbox);
   useMailboxEmailEventCache({ email: data.selected?.email_address, signalKind: 'any', inboxQueryKey: actions.inboxQueryKey, enabled: !!data.selected?.email_address });
   return (
     <>
@@ -50,7 +48,6 @@ export function MailboxPage() {
               <MailboxPageStatus
                 total={data.mailboxes.length}
                 runningCount={data.runningOperationByEmail.size}
-                showSecrets={showSecrets}
                 error={data.loadError}
               />
               <MailboxPanel
@@ -59,7 +56,6 @@ export function MailboxPage() {
                 providerCapabilities={data.providerCapabilities}
                 selected={selectedEmail}
                 busy={data.busy}
-                showSecrets={showSecrets}
                 oauthing={actions.oauthing}
                 inboxLoading={actions.inboxLoading}
                 domainSyncing={actions.domainSyncing}
@@ -70,19 +66,17 @@ export function MailboxPage() {
                 onOAuth={actions.runOAuth}
                 onFetchInbox={() => actions.fetchInbox()}
                 onSyncDomains={actions.syncProviderDomains}
-                onToggleSecrets={() => setShowSecrets((value) => !value)}
                 onDelete={actions.requestDeleteMailbox}
                 onDone={actions.done}
                 onError={actions.toast.showError}
               />
             </div>
-            <Outlet context={{ data, actions, showSecrets, panelMode, closeDetails } satisfies MailboxPageContext} />
+            <Outlet context={{ data, actions, panelMode, closeDetails } satisfies MailboxPageContext} />
           </div>
         </div>
       </main>
       <MailboxDeleteDialog
         mailbox={actions.deleteTarget}
-        showSecrets={showSecrets}
         busy={actions.deleting}
         onCancel={actions.cancelDeleteMailbox}
         onConfirm={actions.confirmDeleteMailbox}
@@ -110,7 +104,7 @@ export function MailboxInboxRoute() {
 }
 
 function MailboxDetailRoute() {
-  const { data, actions, showSecrets, panelMode, closeDetails } = useOutletContext<MailboxPageContext>();
+  const { data, actions, panelMode, closeDetails } = useOutletContext<MailboxPageContext>();
   if (!data.selected) {
     return <MailboxReadingEmpty busy={data.busy} total={data.mailboxes.length} />;
   }
@@ -120,7 +114,6 @@ function MailboxDetailRoute() {
       mailbox={data.selected}
       providerCapability={capabilityForProvider(data.providerCapabilities, data.selected.provider_key)}
       mode={panelMode}
-      showSecrets={showSecrets}
       inboxResult={actions.inboxResult}
       inboxLoading={actions.inboxLoading}
       canFetchInbox={canRunProviderMailboxAction(

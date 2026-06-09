@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Inbox, KeyRound, Plus, RefreshCcw } from 'lucide-react';
+import { Inbox, KeyRound, Plus, RefreshCcw } from 'lucide-react';
 import { MailboxProviderAction, type ToolbarActionDescriptor } from './dashboard-kit';
 import { bulkMailboxActionCount } from './mailbox-provider-capabilities';
 import { mailboxAllProviderTab, type MailboxProviderTab } from './mailbox-provider-config';
@@ -14,14 +14,12 @@ type ProviderToolbarView = {
 type ProviderToolbarProps = {
   mode: MailboxPanelMode;
   busy: boolean;
-  showSecrets: boolean;
   oauthing: string;
   inboxLoading: boolean;
   domainSyncing: boolean;
   onOAuth: (emailAddress?: string) => Promise<void>;
   onFetchInbox: () => Promise<void>;
   onSyncDomains: (providerKey: string) => Promise<void>;
-  onToggleSecrets: () => void;
 };
 
 type ToolbarActionFactory = (ctx: {
@@ -73,13 +71,13 @@ export function providerToolbarActions(view: ProviderToolbarView, props: Provide
   const actions = (view.capability?.actions || [])
     .map((action) => toolbarActionFactories[action.action]?.({ action, view, props, openImport }))
     .filter((action): action is ToolbarActionDescriptor => !!action);
-  return [...actions, secretsAction(props)];
+  return actions;
 }
 
 function inboxToolbarActions(view: ProviderToolbarView, props: ProviderToolbarProps): ToolbarActionDescriptor[] {
   if (view.value === mailboxAllProviderTab) return aggregateToolbarActions(view, props);
   const fetchAction = (view.capability?.actions || []).find((action) => action.action === MailboxProviderAction.MAILBOX_PROVIDER_ACTION_FETCH_INBOX);
-  if (!fetchAction) return [secretsAction(props)];
+  if (!fetchAction) return [];
   const count = bulkMailboxActionCount(view.mailboxes, fetchAction);
   return [{
     id: 'fetch-inbox',
@@ -87,7 +85,7 @@ function inboxToolbarActions(view: ProviderToolbarView, props: ProviderToolbarPr
     icon: <Inbox className="size-4" />,
     disabled: props.busy || props.inboxLoading || count === 0,
     onClick: () => void props.onFetchInbox(),
-  }, secretsAction(props)];
+  }];
 }
 
 function aggregateToolbarActions(view: ProviderToolbarView, props: ProviderToolbarProps): ToolbarActionDescriptor[] {
@@ -97,14 +95,5 @@ function aggregateToolbarActions(view: ProviderToolbarView, props: ProviderToolb
     icon: <Inbox className="size-4" />,
     disabled: props.busy || props.inboxLoading || view.mailboxes.length === 0,
     onClick: () => void props.onFetchInbox(),
-  }, secretsAction(props)];
-}
-
-function secretsAction(props: ProviderToolbarProps): ToolbarActionDescriptor {
-  return {
-    id: 'toggle-secrets',
-    label: props.showSecrets ? '隐藏明文' : '显示明文',
-    icon: props.showSecrets ? <EyeOff className="size-4" /> : <Eye className="size-4" />,
-    onClick: props.onToggleSecrets,
-  };
+  }];
 }
