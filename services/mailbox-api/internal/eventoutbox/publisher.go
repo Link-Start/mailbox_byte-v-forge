@@ -2,7 +2,6 @@ package eventoutbox
 
 import (
 	"context"
-	"time"
 
 	"mailboxapi/internal/eventbus"
 )
@@ -19,50 +18,30 @@ func PublishRows(ctx context.Context, publisher eventbus.Publisher, rows []Row, 
 		if ctx.Err() != nil {
 			return published, ctx.Err()
 		}
-		message, err := MessageFromEnvelope(row.Envelope)
-		now := optionNow(options).Unix()
+		ok, err := publishRow(ctx, publisher, row, updates, options)
 		if err != nil {
-			if updateErr := updates.MarkDiscarded(ctx, row.EventID, TruncateError(err), now); updateErr != nil {
-				return published, updateErr
-			}
-			continue
+			return published, err
 		}
-		publishCtx, cancel := context.WithTimeout(ctx, publishTimeout(options))
-		_, err = publisher.Publish(publishCtx, message)
-		cancel()
-		if err != nil {
-			nextAttempt := row.AttemptCount + 1
-			nextAttemptAt := optionNow(options).Add(retryDelay(options, nextAttempt)).Unix()
-			if updateErr := updates.MarkRetry(ctx, row.EventID, nextAttempt, nextAttemptAt, TruncateError(err), optionNow(options).Unix()); updateErr != nil {
-				return published, updateErr
-			}
-			continue
+		if ok {
+			published++
 		}
-		if updateErr := updates.MarkPublished(ctx, row.EventID, optionNow(options).Unix()); updateErr != nil {
-			return published, updateErr
-		}
-		published++
 	}
 	return published, nil
 }
 
-func publishTimeout(options PublishOptions) time.Duration {
-	if options.PublishTimeout > 0 {
-		return options.PublishTimeout
+func publishRow(ctx context.Context, publisher eventbus.Publisher, row Row, updates Updates, options PublishOptions) (bool, error) {
+	message, err := MessageFromEnvelope(row.Envelope)
+	now := optionNow(options).Unix()
+	if err != nil {
+		return false, updates.MarkDiscarded(ctx, row.EventID, TruncateError(err), now)
 	}
-	return defaultPublishTimeout
-}
-
-func retryDelay(options PublishOptions, attempt int32) time.Duration {
-	if options.RetryDelay != nil {
-		return options.RetryDelay(attempt)
+	publishCtx, cancel := context.WithTimeout(ctx, publishTimeout(options))
+	_, err = publisher.Publish(publishCtx, message)
+	cancel()
+	if err != nil {
+		nextAttempt := row.AttemptCount + 1
+		nextAttemptAt := optionNow(options).Add(retryDelay(options, nextAttempt)).Unix()
+		return false, updates.MarkRetry(ctx, row.EventID, nextAttempt, nextAttemptAt, TruncateError(err), optionNow(options).Unix())
 	}
-	return DefaultRetryDelay(attempt)
-}
-
-func optionNow(options PublishOptions) time.Time {
-	if options.Now != nil {
-		return options.Now()
-	}
-	return time.Now()
+	return true, updates.MarkPublished(ctx, row.EventID, optionNow(options).Unix())
 }
