@@ -1,6 +1,6 @@
 export { useQuery, useQueryClient } from '@tanstack/react-query';
 export { Toaster } from '@/components/ui/sonner';
-export { TooltipProvider } from '@/components/ui/tooltip';
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 export { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 export { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 export * from './action-runner';

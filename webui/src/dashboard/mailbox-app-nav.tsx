@@ -1,7 +1,8 @@
-import { Inbox, UsersRound } from 'lucide-react';
+import { Inbox, Mail, UsersRound } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router';
-import { mailboxAccountsIndexPath, mailboxInboxIndexPath } from './mailbox-route-paths';
+import { Button, Tooltip, TooltipContent, TooltipTrigger } from './dashboard-kit';
 import { persistentMailboxPanelSearch } from './mailbox-panel-query';
+import { mailboxAccountsIndexPath, mailboxInboxIndexPath } from './mailbox-route-paths';
 
 const navItems = [
   { id: 'inbox', label: '邮件', to: mailboxInboxIndexPath(), icon: <Inbox className="size-4" /> },
@@ -9,17 +10,21 @@ const navItems = [
 ];
 
 export function MailboxAppNav() {
-  const { search } = useLocation();
+  const { pathname, search } = useLocation();
   const persistentSearch = persistentMailboxPanelSearch(search);
   return (
     <nav className="mailboxAppNav" aria-label="Mailbox">
-      <div className="mailboxAppMark">M</div>
+      <div className="mailboxAppMark" aria-label="Mailbox"><Mail className="size-5" /></div>
       <div className="mailboxAppNavItems">
         {navItems.map((item) => (
-          <NavLink key={item.id} to={`${item.to}${persistentSearch}`} className={({ isActive }) => `mailboxAppNavItem ${isActive ? 'active' : ''}`} title={item.label}>
-            {item.icon}
-            <span>{item.label}</span>
-          </NavLink>
+          <Tooltip key={item.id}>
+            <TooltipTrigger asChild>
+              <Button asChild variant={pathname.startsWith(item.to) ? 'secondary' : 'ghost'} size="icon" className="mailboxAppNavButton">
+                <NavLink to={`${item.to}${persistentSearch}`} aria-label={item.label}>{item.icon}</NavLink>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{item.label}</TooltipContent>
+          </Tooltip>
         ))}
       </div>
     </nav>
