@@ -20,51 +20,42 @@ func (r *Repository) prepareInboxMessage(provider string, mailboxEmail string, i
 	if message == nil {
 		return nil, "", inboxapp.MessageRow{}, errors.New("message is required")
 	}
-	receivedAt := message.GetReceivedAtUnix()
-	if receivedAt <= 0 {
-		receivedAt = now
+	bodyText, htmlBody := inboxBodies(input, message)
+	sourceEmail := emailx.Normalize(stringx.FirstNonEmpty(message.GetSourceMailboxEmail(), message.GetMailboxEmail(), mailboxEmail))
+	key := inboxapp.StableMessageKey(provider, mailboxEmail, stringx.FirstNonEmpty(message.GetId(), message.GetSubject(), message.GetBodyPreview()))
+	persisted := r.persistedInboxMessage(provider, mailboxEmail, sourceEmail, key, bodyText, htmlBody, message, now)
+	row, err := persistedInboxRow(provider, mailboxEmail, sourceEmail, bodyText, htmlBody, persisted)
+	if err != nil {
+		return nil, "", inboxapp.MessageRow{}, err
 	}
+	return persisted, key, row, nil
+}
+
+func inboxBodies(input inboxapp.MessageInput, message *mailboxv1.EmailInboxMessage) (string, string) {
 	bodyText := strings.TrimSpace(input.BodyText)
 	if bodyText == "" {
 		bodyText = strings.TrimSpace(message.GetBodyPreview())
 	}
-	htmlBody := strings.TrimSpace(input.HTMLBody)
-	sourceEmail := emailx.Normalize(stringx.FirstNonEmpty(message.GetSourceMailboxEmail(), message.GetMailboxEmail(), mailboxEmail))
-	key := inboxapp.StableMessageKey(provider, mailboxEmail, stringx.FirstNonEmpty(message.GetId(), message.GetSubject(), message.GetBodyPreview()))
-	messageID := stringx.FirstNonEmpty(message.GetId(), key)
-	bodyPreview := inboxapp.CompactMessageText(message.GetBodyPreview(), 500)
-	recipients := inboxapp.UniqueEmails(message.GetRecipients())
-	recipientsJSON, err := json.Marshal(recipients)
+	return bodyText, strings.TrimSpace(input.HTMLBody)
+}
+
+func persistedInboxRow(provider string, mailboxEmail string, sourceEmail string, bodyText string, htmlBody string, persisted *mailboxv1.EmailInboxMessage) (inboxapp.MessageRow, error) {
+	recipientsJSON, err := json.Marshal(persisted.GetRecipients())
 	if err != nil {
-		return nil, "", inboxapp.MessageRow{}, err
+		return inboxapp.MessageRow{}, err
 	}
-	persisted := &mailboxv1.EmailInboxMessage{
-		Id:                 messageID,
-		MailboxEmail:       mailboxEmail,
-		Subject:            strings.TrimSpace(message.GetSubject()),
-		FromAddress:        emailx.Normalize(message.GetFromAddress()),
-		BodyPreview:        bodyPreview,
-		ReceivedAtUnix:     receivedAt,
-		Recipients:         recipients,
-		ProviderKey:        provider,
-		SourceMailboxEmail: sourceEmail,
-		BodyArtifactRef:    inboxapp.ArtifactRef(provider, mailboxEmail, messageID, "body_text", int64(len(bodyText)), r.providers.NormalizeProviderInput),
-		HtmlArtifactRef:    inboxapp.ArtifactRef(provider, mailboxEmail, messageID, "html_body", int64(len(htmlBody)), r.providers.NormalizeProviderInput),
-		RawSize:            message.GetRawSize(),
-	}
-	row := inboxapp.MessageRow{
+	return inboxapp.MessageRow{
 		ID:             persisted.GetId(),
 		MailboxEmail:   mailboxEmail,
 		Subject:        persisted.GetSubject(),
 		FromAddress:    persisted.GetFromAddress(),
 		BodyPreview:    persisted.GetBodyPreview(),
-		ReceivedAtUnix: receivedAt,
+		ReceivedAtUnix: persisted.GetReceivedAtUnix(),
 		RecipientsJSON: string(recipientsJSON),
 		Provider:       provider,
 		SourceEmail:    sourceEmail,
 		BodyText:       bodyText,
 		HTMLBody:       htmlBody,
 		RawSize:        persisted.GetRawSize(),
-	}
-	return persisted, key, row, nil
+	}, nil
 }
