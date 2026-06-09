@@ -4,27 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/nats-io/nats.go"
 )
-
-type ConsumerConfig struct {
-	Stream  string
-	Subject string
-	Durable string
-	Batch   int
-	MaxWait time.Duration
-	AckWait time.Duration
-}
-
-type PullConsumer struct {
-	sub     *nats.Subscription
-	bus     *Bus
-	durable string
-	batch   int
-	maxWait time.Duration
-}
 
 func (b *Bus) PullConsumer(cfg ConsumerConfig) (*PullConsumer, error) {
 	if b == nil || b.js == nil {
