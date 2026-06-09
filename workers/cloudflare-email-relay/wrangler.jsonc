@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "cloudflare-email-relay",
+  "account_id": "04d289f3ff972711c415793f0b7da61d",
   "main": "src/index.js",
   "compatibility_date": "2026-05-13",
   "compatibility_flags": [
@@ -9,11 +10,15 @@
   "observability": {
     "enabled": true
   },
-  // Create a KV namespace and add its real id to enable pending-email pull cache.
-  // "kv_namespaces": [{ "binding": "EMAIL_EVENT_CACHE", "id": "<kv_namespace_id>" }],
+  "kv_namespaces": [
+    {
+      "binding": "EMAIL_EVENT_CACHE",
+      "id": "483d15b7182047d88467af6f947ee63f"
+    }
+  ],
   "upload_source_maps": true,
   "vars": {
-    "MAILBOX_WEBHOOK_URL": "https://mailbox.example.invalid/webhooks/email/cloudflare",
+    "MAILBOX_WEBHOOK_URL": "https://hook.tibo-nice.space/webhooks/email/cloudflare",
     "WEBHOOK_FAIL_OPEN": "false",
     "EMAIL_EVENT_CACHE_TTL_SECONDS": "259200"
   }
