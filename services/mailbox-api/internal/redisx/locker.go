@@ -23,18 +23,7 @@ type Lock struct {
 }
 
 func NewBestEffortLocker(client redis.Cmdable, prefix string, ttl time.Duration, retry time.Duration) *BestEffortLocker {
-	if ttl <= 0 {
-		ttl = 30 * time.Second
-	}
-	if retry <= 0 {
-		retry = 100 * time.Millisecond
-	}
-	return &BestEffortLocker{
-		client:   client,
-		keyspace: NewKeyspace(prefix),
-		ttl:      ttl,
-		retry:    retry,
-	}
+	return &BestEffortLocker{client: client, keyspace: NewKeyspace(prefix), ttl: lockTTL(ttl), retry: lockRetry(retry)}
 }
 
 func (l *BestEffortLocker) Lock(ctx context.Context, key string) (*Lock, error) {
@@ -58,11 +47,4 @@ func (l *BestEffortLocker) Lock(ctx context.Context, key string) (*Lock, error) 
 			return nil, err
 		}
 	}
-}
-
-func (l *BestEffortLocker) redisKey(key string) (string, bool) {
-	if l == nil || l.client == nil {
-		return "", false
-	}
-	return l.keyspace.Key(key)
 }
