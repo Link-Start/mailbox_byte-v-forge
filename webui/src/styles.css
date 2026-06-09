@@ -81,7 +81,7 @@ button, input, textarea { font: inherit; }
 .uiItemContent { display: grid; gap: 4px; flex: 1; }
 .uiItemTitle { display: flex; align-items: center; font-weight: 700; }
 .uiItemDescription { color: var(--muted-foreground); font-size: 12px; }
-.emptyBlock { border: 1px dashed var(--border); border-radius: 14px; padding: 24px; text-align: center; color: var(--muted-foreground); font-size: 14px; }
+.emptyBlock { border: 0; border-radius: 14px; padding: 24px; text-align: center; color: var(--muted-foreground); font-size: 14px; box-shadow: none; }
 .tabsRoot { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; gap: 10px; height: 100%; }
 .tabsContent { min-height: 0; overflow: hidden; }
 .segmentedControl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted); }
@@ -108,22 +108,26 @@ button, input, textarea { font: inherit; }
 .cursorPager { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; color: var(--muted-foreground); font-size: 12px; }
 .mailboxInboxToolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; }
 .mailboxInboxLayout { display: grid; gap: 12px; height: 100%; min-height: 0; }
-@media (min-width: 960px) { .mailboxInboxLayout { grid-template-columns: minmax(280px, .85fr) minmax(360px, 1.15fr); align-items: stretch; } }
-.inboxMessageRow { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; cursor: pointer; border-color: transparent; background: transparent; }
+.mailboxInboxLayout > * { min-width: 0; min-height: 0; }
+@media (min-width: 960px) { .mailboxInboxLayout { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); align-items: stretch; } }
+.inboxMessageRow { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: start; gap: 10px; min-width: 0; cursor: pointer; border: 0; border-radius: 10px; background: transparent; box-shadow: none; }
 .inboxMessageRow:hover { background: var(--accent); }
-.inboxMessageRow.selected { border-color: transparent; background: var(--secondary); box-shadow: inset 3px 0 0 var(--primary); }
+.inboxMessageRow.selected { background: var(--secondary); box-shadow: none; }
 .inboxSenderAvatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 999px; background: var(--muted); color: var(--primary); font-size: 13px; font-weight: 700; }
 .inboxMessageTop, .inboxMessageSubject, .inboxMessageMeta { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.inboxMessageTop > span:first-child, .inboxMessageSubject > span:first-child, .inboxMessageMeta > span:first-child { min-width: 0; flex: 1; }
 .inboxMessageSubject { color: var(--foreground); font-size: 13px; font-weight: 650; }
 .inboxMessageMeta { color: var(--muted-foreground); }
 .inboxNewBadge { background: var(--primary); color: var(--primary-foreground); }
-.mailboxInboxDetail { gap: 12px; padding: 14px; overflow: auto; }
+.mailboxInboxDetail { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 12px; min-width: 0; min-height: 0; border: 0; padding: 14px 0 0 14px; overflow: hidden; box-shadow: none; }
 .mailboxInboxDetailHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .mailboxInboxMetadata { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 6px 10px; font-size: 12px; }
 .mailboxInboxMetadata dt { color: var(--muted-foreground); }
 .mailboxInboxMetadata dd { margin: 0; }
-.mailboxInboxBody { border-top: 1px solid var(--border); padding-top: 10px; }
-.mailboxEmailViewer { overflow-wrap: anywhere; color: var(--foreground); line-height: 1.58; }
+.mailboxInboxBody { min-width: 0; min-height: 0; overflow: auto; border-top: 1px solid var(--border); padding-top: 10px; }
+.mailboxEmailViewer { max-width: 100%; overflow-wrap: anywhere; color: var(--foreground); line-height: 1.58; }
+.mailboxEmailViewer :where(*) { max-width: 100%; }
 .mailboxEmailViewer :where(p, ul, ol, blockquote, table) { margin-block: 0 12px; }
+.mailboxEmailViewer :where(table) { width: 100% !important; table-layout: auto; }
 .mailboxEmailViewer :where(a) { color: var(--primary); text-decoration: underline; }
 .mailboxEmailViewer :where(img) { max-width: 100%; height: auto; }

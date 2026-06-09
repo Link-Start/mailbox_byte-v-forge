@@ -87,7 +87,6 @@ function InboxMessageRow({ message, selected, showSecrets, onSelect }: {
   const isRecent = Date.now() / 1000 - (message.received_at_unix || 0) < 300;
   return (
     <Item
-      variant="outline"
       className={`inboxMessageRow items-start ${selected ? 'selected' : ''}`}
       role="button"
       tabIndex={0}
