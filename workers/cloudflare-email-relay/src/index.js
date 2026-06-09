@@ -1,5 +1,6 @@
 import { buildEmailEvent } from "./email-event.js";
 import { cacheEmailEvent, deleteCachedEmailEvents } from "./event-cache.js";
+import { forwardEmailCopies } from "./relay-copy.js";
 import { forwardEmailEvent } from "./relay-forward.js";
 import { handleRelayAPI } from "./relay-api.js";
 
@@ -15,10 +16,10 @@ export default {
     const forwarded = await forwardEmailEvent(env, event);
     if (forwarded) {
       await deleteCachedEmailEvents(env, [event.eventId]);
+    } else if (!cached && env.WEBHOOK_FAIL_OPEN !== "true") {
+      message.setReject("mailbox webhook delivery failed");
       return;
     }
-    if (!cached && env.WEBHOOK_FAIL_OPEN !== "true") {
-      message.setReject("mailbox webhook delivery failed");
-    }
+    await forwardEmailCopies(message, env);
   },
 };

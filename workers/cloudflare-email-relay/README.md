@@ -10,6 +10,7 @@ Cloudflare Email Routing Worker that parses inbound email, caches it briefly, an
 - `EMAIL_EVENT_CACHE`: KV binding used as pending-email cache for pull compensation.
 - `EMAIL_EVENT_CACHE_TTL_SECONDS`: pending cache TTL, default 259200 seconds.
 - `MAILBOX_RELAY_PULL_TOKEN`: optional secret required by `GET /pending` and `POST /ack`; defaults to `MAILBOX_WEBHOOK_TOKEN`.
+- `MAILBOX_RELAY_COPY_TO_EMAILS`: optional comma/semicolon/space-separated verified destination addresses that receive a raw email copy, for example a Telegram email bridge.
 
 ## Cache and pull API
 
@@ -18,6 +19,8 @@ Create a KV namespace, bind it as `EMAIL_EVENT_CACHE`, and set the pull token:
 ```sh
 wrangler kv namespace create EMAIL_EVENT_CACHE
 wrangler secret put MAILBOX_WEBHOOK_TOKEN
+wrangler email routing addresses create tg-bridge@example.invalid
+wrangler secret put MAILBOX_RELAY_COPY_TO_EMAILS
 ```
 
 The Worker stores each parsed email before forwarding. If mailbox webhook delivery succeeds, the cached event is deleted. If the tunnel/webhook is unavailable, mailbox can later pull pending events:
