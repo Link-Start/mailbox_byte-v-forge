@@ -62,7 +62,8 @@ func (s *outlookInboxSource) fetchMessageWithGraphSDK(ctx context.Context, acces
 	if err != nil {
 		return graphMessage{}, false, graphFetchErrorFromSDK(err)
 	}
-	return graphMessageFromSDK(resp)
+	message, ok := graphMessageFromSDK(resp)
+	return message, ok, nil
 }
 
 func graphHTMLBodyHeaders() *abs.RequestHeaders {
