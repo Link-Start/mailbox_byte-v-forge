@@ -53,8 +53,10 @@ export function useMailboxActions(data: MailboxData, onMailboxDeleted: (email: s
           await queryClient.invalidateQueries({ queryKey: mailboxInboxQueryKey(email) });
         }
       }
-      toast.showToast(resp.failed_count > 0 ? 'error' : 'ok', `${target ? `${target} ` : ''}收信完成：${resp.message_count} 封邮件`);
-      if (resp.message_count > 0 || resp.failed_count > 0) await data.invalidate();
+      const messageCount = resp.message_count ?? 0;
+      const failedCount = resp.failed_count ?? 0;
+      toast.showToast(failedCount > 0 ? 'error' : 'ok', `${target ? `${target} ` : ''}收信完成：${messageCount} 封邮件`);
+      if (messageCount > 0 || failedCount > 0) await data.invalidate();
     }, { onError: toast.showError });
   }
 

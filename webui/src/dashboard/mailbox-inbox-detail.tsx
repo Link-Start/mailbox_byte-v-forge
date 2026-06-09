@@ -19,7 +19,7 @@ export function MailboxInboxDetail({ message }: {
   const detail = detailQuery.data;
   const detailMessage = detail?.message || message;
   const subject = detailMessage.subject || '-';
-  const body = emailBodyContent(detail?.html_body || '', detail?.body_text || detailMessage.body_preview || '');
+  const body = emailBodyContent(detail?.body_text || detailMessage.body_preview || '', detail?.html_body || '');
   return (
     <Card className="mailboxInboxDetail">
       <div className="mailboxInboxDetailHeader">
@@ -50,8 +50,11 @@ function MetadataRow({ label, value, title }: { label: string; value: string; ti
   return <><dt>{label}</dt><dd className="truncate" title={title || value}>{value}</dd></>;
 }
 
-function emailBodyContent(htmlBody: string, textBody: string) {
-  return htmlBody.trim() || textAsHTML(textBody || '-');
+function emailBodyContent(textBody: string, htmlBody: string) {
+  const text = String(textBody || '').trim();
+  if (text) return textAsHTML(text);
+  const html = String(htmlBody || '').trim();
+  return html || textAsHTML('-');
 }
 
 function textAsHTML(value: string) {
