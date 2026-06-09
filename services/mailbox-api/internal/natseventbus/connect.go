@@ -1,10 +1,8 @@
 package natseventbus
 
 import (
-	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/nats-io/nats.go"
 )
@@ -29,17 +27,6 @@ func Connect(cfg Config, opts ...nats.Option) (*Bus, error) {
 	return bus, nil
 }
 
-func ConnectRequired(cfg Config, requiredMessage string, opts ...nats.Option) (*Bus, error) {
-	if strings.TrimSpace(cfg.URL) == "" {
-		requiredMessage = strings.TrimSpace(requiredMessage)
-		if requiredMessage == "" {
-			requiredMessage = "nats url is required"
-		}
-		return nil, errors.New(requiredMessage)
-	}
-	return Connect(cfg, opts...)
-}
-
 func connectNATS(cfg Config, opts ...nats.Option) (*nats.Conn, error) {
 	url := strings.TrimSpace(cfg.URL)
 	if url == "" {
@@ -51,18 +38,4 @@ func connectNATS(cfg Config, opts ...nats.Option) (*nats.Conn, error) {
 		return nil, fmt.Errorf("connect nats: %w", err)
 	}
 	return conn, nil
-}
-
-func defaultConnectOptions(cfg Config) []nats.Option {
-	name := strings.TrimSpace(cfg.ClientName)
-	if name == "" {
-		name = "mailbox"
-	}
-	return []nats.Option{
-		nats.Name(name),
-		nats.Timeout(5 * time.Second),
-		nats.RetryOnFailedConnect(true),
-		nats.MaxReconnects(-1),
-		nats.ReconnectWait(time.Second),
-	}
 }
