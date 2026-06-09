@@ -3,8 +3,6 @@ package mailboxmem
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 	"time"
 
 	"mailboxapi/internal/emailx"
@@ -44,101 +42,4 @@ func (r *Repository) UpsertMailbox(ctx context.Context, mailbox *mailboxmodel.Re
 	r.mu.Unlock()
 
 	return r.FindMailbox(ctx, email)
-}
-
-func mergeCredentials(record *mailboxmodel.Record, input *mailboxmodel.Record, existed bool) {
-	password := strings.TrimSpace(input.GetPassword())
-	refreshToken := strings.TrimSpace(input.GetRefreshToken())
-	accessToken := strings.TrimSpace(input.GetAccessToken())
-	authStatus := strings.TrimSpace(input.GetAuthStatus())
-	lastError := strings.TrimSpace(input.GetLastError())
-	if password != "" || !existed {
-		record.Password = password
-	}
-	if refreshToken != "" || !existed {
-		record.RefreshToken = refreshToken
-	}
-	if accessToken != "" || !existed {
-		record.AccessToken = accessToken
-	}
-	switch {
-	case authStatus != "":
-		record.AuthStatus = authStatus
-	case refreshToken != "":
-		record.AuthStatus = mailboxmodel.AuthStatusAuthorized
-	case !existed && record.AuthStatus == "":
-		record.AuthStatus = mailboxmodel.AuthStatusOAuthPending
-	}
-	if authStatus != "" || lastError != "" || !existed {
-		record.LastError = lastError
-	}
-}
-
-func (r *Repository) MarkEmailAuthStatus(ctx context.Context, email string, authStatus string, lastError string) (*mailboxmodel.Record, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	email = emailx.Normalize(email)
-	authStatus = strings.TrimSpace(authStatus)
-	if email == "" {
-		return nil, errors.New("email_address is required")
-	}
-	if authStatus == "" {
-		return nil, errors.New("auth_status is required")
-	}
-	r.mu.Lock()
-	entry, ok := r.mailboxes[email]
-	if !ok || entry.record == nil {
-		r.mu.Unlock()
-		return nil, fmt.Errorf("mailbox not found: %s", emailx.Redact(email))
-	}
-	entry.record.AuthStatus = authStatus
-	entry.record.LastError = safeText(lastError)
-	entry.record.UpdatedAt = time.Now().Unix()
-	r.mailboxes[email] = entry
-	r.mu.Unlock()
-	return r.FindMailbox(ctx, email)
-}
-
-func (r *Repository) UpdateMailboxTokens(ctx context.Context, email string, refreshToken string, accessToken string) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	email = emailx.Normalize(email)
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	entry, ok := r.mailboxes[email]
-	if !ok || entry.record == nil {
-		return fmt.Errorf("mailbox not found: %s", emailx.Redact(email))
-	}
-	definition := r.providers.StorageByKey(entry.record.ProviderKey)
-	if definition == nil {
-		return fmt.Errorf("mailbox provider has no token storage: %s", entry.record.ProviderKey)
-	}
-	if _, ok := definition.TokenFields(); !ok {
-		return fmt.Errorf("mailbox provider has no token storage: %s", entry.record.ProviderKey)
-	}
-	entry.record.RefreshToken = strings.TrimSpace(refreshToken)
-	entry.record.AccessToken = strings.TrimSpace(accessToken)
-	entry.record.AuthStatus = mailboxmodel.AuthStatusAuthorized
-	entry.record.LastError = ""
-	entry.record.UpdatedAt = time.Now().Unix()
-	r.mailboxes[email] = entry
-	return nil
-}
-
-func (r *Repository) DeleteMailbox(ctx context.Context, email string) (bool, error) {
-	if err := ctx.Err(); err != nil {
-		return false, err
-	}
-	email = emailx.Normalize(email)
-	if email == "" {
-		return false, errors.New("email_address is required")
-	}
-	r.mu.Lock()
-	_, mailboxExists := r.mailboxes[email]
-	delete(r.mailboxes, email)
-	messageDeleted := r.deleteInboxLocked(email)
-	r.mu.Unlock()
-	return mailboxExists || messageDeleted, nil
 }
