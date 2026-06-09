@@ -6,7 +6,6 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 	commonv1 "mailboxapi/internal/contracts/commonv1"
-	"mailboxapi/internal/hashx"
 )
 
 const DefaultEventVersion = "v1"
@@ -53,8 +52,4 @@ func NewEventMetadata(cfg EventMetadataConfig) *commonv1.EventMetadata {
 		DataContentType: ProtobufContentType,
 		DataSchema:      strings.TrimSpace(cfg.DataSchema),
 	}
-}
-
-func StableEventID(prefix string, parts ...string) string {
-	return strings.TrimSpace(prefix) + hashx.StableParts(parts...)
 }
