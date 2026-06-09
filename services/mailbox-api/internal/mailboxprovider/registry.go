@@ -1,9 +1,6 @@
 package mailboxprovider
 
-import (
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 type Registry struct {
 	ordered []Plugin
@@ -13,102 +10,47 @@ type Registry struct {
 func NewRegistry(plugins ...Plugin) (*Registry, error) {
 	registry := &Registry{byKey: map[string]Plugin{}}
 	for _, plugin := range plugins {
-		if plugin == nil {
-			return nil, fmt.Errorf("mailbox provider plugin is required")
+		if err := registry.register(plugin); err != nil {
+			return nil, err
 		}
-		key := NormalizeKey(plugin.Key())
-		if key == "" {
-			return nil, fmt.Errorf("mailbox provider plugin key is required")
-		}
-		if _, exists := registry.byKey[key]; exists {
-			return nil, fmt.Errorf("duplicate mailbox provider plugin %q", key)
-		}
-		if fields, ok := plugin.TokenFields(); ok {
-			if err := validateTokenFields(fields); err != nil {
-				return nil, fmt.Errorf("invalid mailbox provider %q token fields: %w", key, err)
-			}
-		}
-		registry.byKey[key] = plugin
-		for _, alias := range plugin.Aliases() {
-			alias = NormalizeKey(alias)
-			if alias == "" {
-				continue
-			}
-			if _, exists := registry.byKey[alias]; exists {
-				return nil, fmt.Errorf("duplicate mailbox provider alias %q", alias)
-			}
-			registry.byKey[alias] = plugin
-		}
-		registry.ordered = append(registry.ordered, plugin)
 	}
 	return registry, nil
 }
 
-func (r *Registry) All() []Plugin {
-	if r == nil {
-		return nil
+func (r *Registry) register(plugin Plugin) error {
+	if plugin == nil {
+		return fmt.Errorf("mailbox provider plugin is required")
 	}
-	return append([]Plugin{}, r.ordered...)
+	key := NormalizeKey(plugin.Key())
+	if key == "" {
+		return fmt.Errorf("mailbox provider plugin key is required")
+	}
+	if _, exists := r.byKey[key]; exists {
+		return fmt.Errorf("duplicate mailbox provider plugin %q", key)
+	}
+	if fields, ok := plugin.TokenFields(); ok {
+		if err := validateTokenFields(fields); err != nil {
+			return fmt.Errorf("invalid mailbox provider %q token fields: %w", key, err)
+		}
+	}
+	r.byKey[key] = plugin
+	if err := r.registerAliases(plugin); err != nil {
+		return err
+	}
+	r.ordered = append(r.ordered, plugin)
+	return nil
 }
 
-func (r *Registry) CapabilityPlugins() []CapabilityPlugin {
-	if r == nil {
-		return nil
+func (r *Registry) registerAliases(plugin Plugin) error {
+	for _, alias := range plugin.Aliases() {
+		alias = NormalizeKey(alias)
+		if alias == "" {
+			continue
+		}
+		if _, exists := r.byKey[alias]; exists {
+			return fmt.Errorf("duplicate mailbox provider alias %q", alias)
+		}
+		r.byKey[alias] = plugin
 	}
-	plugins := make([]CapabilityPlugin, 0, len(r.ordered))
-	for _, plugin := range r.ordered {
-		plugins = append(plugins, plugin)
-	}
-	return plugins
-}
-
-func (r *Registry) StorageExtensions() []StorageExtension {
-	if r == nil {
-		return nil
-	}
-	plugins := make([]StorageExtension, 0, len(r.ordered))
-	for _, plugin := range r.ordered {
-		plugins = append(plugins, plugin)
-	}
-	return plugins
-}
-
-func (r *Registry) InboxRetentionPolicies() []InboxRetentionPolicy {
-	if r == nil {
-		return nil
-	}
-	plugins := make([]InboxRetentionPolicy, 0, len(r.ordered))
-	for _, plugin := range r.ordered {
-		plugins = append(plugins, plugin)
-	}
-	return plugins
-}
-
-func (r *Registry) VirtualMailboxSources() []VirtualMailboxSource {
-	if r == nil {
-		return nil
-	}
-	plugins := make([]VirtualMailboxSource, 0, len(r.ordered))
-	for _, plugin := range r.ordered {
-		plugins = append(plugins, plugin)
-	}
-	return plugins
-}
-
-func (r *Registry) DefaultKey() string {
-	if r == nil || len(r.ordered) == 0 {
-		return ""
-	}
-	return r.ordered[0].Key()
-}
-
-func (r *Registry) ByKey(provider string) Plugin {
-	if r == nil {
-		return nil
-	}
-	return r.byKey[NormalizeKey(provider)]
-}
-
-func NormalizeKey(provider string) string {
-	return strings.ToLower(strings.TrimSpace(provider))
+	return nil
 }
