@@ -1,8 +1,3 @@
-import type { ComponentType } from 'react';
-import { GenericMailboxProviderPanel } from './mailbox-provider-generic';
-import { CloudflareMailboxProviderPanel } from './mailbox-provider-cloudflare';
-import { OutlookMailboxProviderPanel } from './mailbox-provider-outlook';
-import type { MailboxProviderPanelProps } from './mailbox-provider-types';
 import { mailboxAllProviderTab, mailboxProviderMatches, normalizeMailboxProviderKey } from './mailbox-provider-config';
 import type { Mailbox, MailboxProviderCapability } from './types';
 
@@ -11,12 +6,6 @@ export type MailboxProviderView = {
   label: string;
   capability?: MailboxProviderCapability;
   mailboxes: Mailbox[];
-  Component: ComponentType<MailboxProviderPanelProps>;
-};
-
-const providerPanelRegistry: Record<string, ComponentType<MailboxProviderPanelProps>> = {
-  cloudflare: CloudflareMailboxProviderPanel,
-  outlook: OutlookMailboxProviderPanel,
 };
 
 export function mailboxProviderViews(capabilities: MailboxProviderCapability[], mailboxes: Mailbox[]): MailboxProviderView[] {
@@ -37,7 +26,6 @@ function allMailboxView(mailboxes: Mailbox[]): MailboxProviderView {
     value: mailboxAllProviderTab,
     label: '全部',
     mailboxes,
-    Component: GenericMailboxProviderPanel,
   };
 }
 
@@ -49,7 +37,6 @@ function providerView(providerKey: string, capability: MailboxProviderCapability
     label: capability?.display_name || value,
     capability,
     mailboxes: mailboxes.filter((mailbox) => mailboxProviderMatches(mailbox.provider_key, value)),
-    Component: providerPanelRegistry[value] || GenericMailboxProviderPanel,
   };
 }
 

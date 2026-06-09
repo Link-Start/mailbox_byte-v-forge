@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useOutletContext, useParams } from 'react-router';
-import { MailboxProviderAction, WorkspacePanel } from './dashboard-kit';
+import { MailboxProviderAction } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
 import { useMailboxActions } from './mailbox-actions';
 import { useMailboxData } from './mailbox-data';
@@ -42,7 +42,7 @@ export function MailboxPage() {
   useMailboxEmailEventCache({ email: data.selected?.email_address, inboxQueryKey: actions.inboxQueryKey, enabled: !!data.selected?.email_address });
   return (
     <>
-      <WorkspacePanel>
+      <main className="workspacePanel">
         <div className="mailboxAppShell">
           <MailboxAppNav />
           <div className="mailboxWorkspace">
@@ -79,7 +79,7 @@ export function MailboxPage() {
             <Outlet context={{ data, actions, showSecrets, panelMode, closeDetails } satisfies MailboxPageContext} />
           </div>
         </div>
-      </WorkspacePanel>
+      </main>
       <MailboxDeleteDialog
         mailbox={actions.deleteTarget}
         showSecrets={showSecrets}

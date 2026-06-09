@@ -11,7 +11,8 @@ import {
   ItemTitle,
   compactToast,
   formatUnix,
-  maskPreview
+  maskPreview,
+  ScrollArea
 } from './dashboard-kit';
 import { formatEmailList, maskEmail } from './email-utils';
 import { MailboxInboxDetail } from './mailbox-inbox-detail';
@@ -41,7 +42,7 @@ export function MailboxInboxSection({ mailbox, result, showSecrets, loading, can
   }, [messages, selectedKey]);
 
   return (
-    <section className="grid gap-3">
+    <section className="grid h-full min-h-0 gap-3">
       {canFetch && <div className="flex justify-end"><Button variant="outline" size="icon" title={loading ? '刷新中' : '刷新'} aria-label={loading ? '刷新中' : '刷新'} disabled={loading} onClick={() => onFetch(mailbox.email_address)}><RefreshCcw className="size-4" /></Button></div>}
       {result?.error_message && (
         <Alert variant="destructive">
@@ -49,14 +50,16 @@ export function MailboxInboxSection({ mailbox, result, showSecrets, loading, can
         </Alert>
       )}
       <div className="mailboxInboxLayout">
-        <div className="grid gap-2">
-          {messages.map((message, index) => {
-            const key = inboxMessageKey(message, index);
-            return <InboxMessageRow message={message} selected={key === selectedKey} showSecrets={showSecrets} key={key} onSelect={() => setSelectedKey(key)} />;
-          })}
-          {!result && <EmptyBlock text={loading ? '读取中' : '暂无邮件'} />}
-          {result && !result.error_message && messages.length === 0 && <EmptyBlock text="暂无邮件" />}
-        </div>
+        <ScrollArea className="h-full min-h-0">
+          <div className="grid gap-2 pr-2">
+            {messages.map((message, index) => {
+              const key = inboxMessageKey(message, index);
+              return <InboxMessageRow message={message} selected={key === selectedKey} showSecrets={showSecrets} key={key} onSelect={() => setSelectedKey(key)} />;
+            })}
+            {!result && <EmptyBlock text={loading ? '读取中' : '暂无邮件'} />}
+            {result && !result.error_message && messages.length === 0 && <EmptyBlock text="暂无邮件" />}
+          </div>
+        </ScrollArea>
         {messages.length > 0 && <MailboxInboxDetail message={selectedMessage} showSecrets={showSecrets} />}
       </div>
     </section>

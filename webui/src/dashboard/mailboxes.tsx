@@ -2,16 +2,20 @@ import { Inbox, Search, UsersRound, X } from 'lucide-react';
 import {
   Badge,
   Button,
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
   EmptyBlock,
   Input,
   PanelTabs,
-  ToolbarActionButtons,
-  AccountManagementFrame
+  ToolbarActionButtons
 } from './dashboard-kit';
 import { MailboxImportSheet } from './mailbox-import';
 import type { MailboxPanelMode, MailboxProviderPanelProps } from './mailbox-provider-types';
 import { providerToolbarActions } from './mailbox-toolbar-actions';
-import { capabilityForProvider } from './mailbox-provider-capabilities';
+import { capabilityForProvider, providerShowsCredentialState } from './mailbox-provider-capabilities';
 import { mailboxAllProviderTab, type MailboxProviderTab } from './mailbox-provider-config';
 import { useMailboxPanelState } from './mailbox-panel-state';
 import type { Mailbox, MailboxOperation, MailboxProviderCapability } from './types';
@@ -55,14 +59,20 @@ function InboxMailboxPanel({ props, state }: { props: MailboxPanelProps; state: 
   return (
     <div className="mailboxListPanel">
       <MailboxPanelSearch props={props} state={state} />
-      <AccountManagementFrame title="收件箱" icon={<Inbox className="size-4" />} actions={<ToolbarActionButtons actions={actions} />}>
-        <MailboxRecordList
-          {...providerPanelProps(props, state.searchQuery)}
-          mailboxes={state.filteredMailboxes}
-          showStatus={false}
-          emptyText={state.searchQuery ? '无匹配邮箱' : '暂无邮箱'}
-        />
-      </AccountManagementFrame>
+      <Card className="mailboxPanelCard">
+        <CardHeader className="mailboxPanelHeader">
+          <CardTitle className="panelTitle"><Inbox className="size-4" />收件箱</CardTitle>
+          <CardAction><ToolbarActionButtons actions={actions} /></CardAction>
+        </CardHeader>
+        <CardContent className="mailboxPanelContent">
+          <MailboxRecordList
+            {...providerPanelProps(props, state.searchQuery)}
+            mailboxes={state.filteredMailboxes}
+            showStatus={false}
+            emptyText={state.searchQuery ? '无匹配邮箱' : '暂无邮箱'}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -78,22 +88,31 @@ function AccountsMailboxPanel({ props, state }: { props: MailboxPanelProps; stat
         tabsClassName="min-h-0 flex-1 overflow-hidden"
         tabsListVariant="line"
         tabsListClassName="h-8"
-        tabs={state.providerViews.map(({ value, label, capability, mailboxes, Component }) => ({
+        tabs={state.providerViews.map(({ value, label, capability, mailboxes }) => ({
           value,
           label,
           triggerClassName: 'gap-1.5 px-2',
           contentClassName: 'flex flex-col overflow-hidden',
           content: (
-            <Component
-              {...panelProps}
-              mailboxes={mailboxes}
-              capability={capability}
-              actions={(
-                <ToolbarActionButtons
-                  actions={providerToolbarActions({ value, capability, mailboxes }, props, (provider) => state.updateQuery({ importProvider: provider }))}
+            <Card className="mailboxPanelCard">
+              <CardHeader className="mailboxPanelHeader mailboxPanelHeaderCompact">
+                <CardTitle className="panelTitle">{label}</CardTitle>
+                <CardAction>
+                  <ToolbarActionButtons
+                    actions={providerToolbarActions({ value, capability, mailboxes }, props, (provider) => state.updateQuery({ importProvider: provider }))}
+                  />
+                </CardAction>
+              </CardHeader>
+              <CardContent className="mailboxPanelContent">
+                <MailboxRecordList
+                  {...panelProps}
+                  mailboxes={mailboxes}
+                  providerCapability={capability}
+                  showStatus={providerShowsCredentialState(capability)}
+                  emptyText={state.searchQuery ? '无匹配邮箱' : '暂无邮箱'}
                 />
-              )}
-            />
+              </CardContent>
+            </Card>
           )
         }))}
       />

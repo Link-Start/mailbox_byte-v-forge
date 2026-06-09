@@ -1,4 +1,4 @@
-import { DEFAULT_CURSOR_PAGE_SIZE, CursorPager, RecordList } from './dashboard-kit';
+import { DEFAULT_CURSOR_PAGE_SIZE, CursorPager, EmptyBlock, ScrollArea } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
 import { MailboxCard } from './mailbox-card';
 import type { MailboxPanelMode } from './mailbox-provider-types';
@@ -26,25 +26,27 @@ export type MailboxRecordListProps = {
 export function MailboxRecordList({ mailboxes, mode, emptyText, providerCapability, providerCapabilities, showStatus, selected, busy, showSecrets, oauthing, runningOperationByEmail, hasMoreMailboxes, loadingMoreMailboxes, onLoadMoreMailboxes, onOAuth, onDelete }: MailboxRecordListProps) {
   return (
     <>
-      <RecordList className="wideRecordList" emptyText={emptyText}>
-        {mailboxes.map((mailbox) => (
-          <MailboxCard
-            key={mailbox.email_address}
-            mailbox={mailbox}
-            mode={mode}
-            selected={selected === mailbox.email_address}
-            busy={busy}
-            showSecrets={showSecrets}
-            oauthing={oauthing}
-            showStatus={showStatus ?? true}
-            providerCapability={providerCapability}
-            providerCapabilities={providerCapabilities}
-            currentOperation={runningOperationByEmail.get(normalizeUiEmail(mailbox.email_address))}
-            onOAuth={onOAuth}
-            onDelete={onDelete}
-          />
-        ))}
-      </RecordList>
+      <ScrollArea className="h-full min-h-0">
+        <div className="recordList wideRecordList">
+          {mailboxes.length > 0 ? mailboxes.map((mailbox) => (
+            <MailboxCard
+              key={mailbox.email_address}
+              mailbox={mailbox}
+              mode={mode}
+              selected={selected === mailbox.email_address}
+              busy={busy}
+              showSecrets={showSecrets}
+              oauthing={oauthing}
+              showStatus={showStatus ?? true}
+              providerCapability={providerCapability}
+              providerCapabilities={providerCapabilities}
+              currentOperation={runningOperationByEmail.get(normalizeUiEmail(mailbox.email_address))}
+              onOAuth={onOAuth}
+              onDelete={onDelete}
+            />
+          )) : <EmptyBlock text={emptyText} />}
+        </div>
+      </ScrollArea>
       {onLoadMoreMailboxes && <CursorPager itemCount={mailboxes.length} pageSize={DEFAULT_CURSOR_PAGE_SIZE} hasNext={hasMoreMailboxes} loading={loadingMoreMailboxes} onNext={() => void onLoadMoreMailboxes()} />}
     </>
   );

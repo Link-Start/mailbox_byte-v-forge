@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
@@ -17,7 +17,7 @@ export {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-export { Alert, AlertDescription, Badge, Button, Card, Input };
+export { Alert, AlertDescription, Badge, Button, Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input };
 
 export function EmptyBlock({ text }: { text: string }) {
   return <Card className="emptyBlock shadow-none">{text}</Card>;

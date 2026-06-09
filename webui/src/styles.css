@@ -72,12 +72,11 @@ button, input, textarea { font: inherit; }
 .mailboxReadingEmpty { display: grid; min-height: 0; place-items: center; background: var(--card); }
 @media (max-width: 1080px) { .mailboxAppShell { grid-template-columns: 64px minmax(0, 1fr); } .mailboxWorkspace { grid-template-columns: minmax(0, 1fr); } .mailboxReadingEmpty, .mailboxDetailPane { min-height: 420px; } }
 
-.accountFrame { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; gap: 10px; }
-.panelHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; }
+.mailboxPanelCard { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; gap: 0; overflow: hidden; padding: 0; box-shadow: none; }
+.mailboxPanelHeader { min-height: 42px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.mailboxPanelHeaderCompact { min-height: 38px; }
+.mailboxPanelContent { min-height: 0; display: grid; padding: 0; }
 .panelTitle { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
-.panelBody { min-height: 0; display: grid; }
-.drawerBody { min-height: 0; overflow: auto; padding: 12px; }
-.appDrawer { width: min(720px, 100vw); max-width: none; }
 
 .uiItem { display: flex; gap: 10px; padding: 10px; }
 .uiItemContent { display: grid; gap: 4px; flex: 1; }
@@ -88,9 +87,8 @@ button, input, textarea { font: inherit; }
 .tabsContent { min-height: 0; overflow: hidden; }
 .segmentedControl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; border-radius: 12px; background: var(--muted); }
 
-.recordList { min-height: 0; overflow: auto; display: grid; align-content: start; gap: 6px; }
-.recordCard { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; border: 1px solid transparent; border-radius: 12px; background: transparent; }
-.recordCard.clickable { cursor: pointer; }
+.recordList { min-height: 0; display: grid; align-content: start; gap: 6px; padding: 2px; }
+.recordCard { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; border: 1px solid transparent; border-radius: 12px; background: transparent; box-shadow: none; }
 .recordCard:hover { background: var(--accent); }
 .recordCard.selected { border-color: #bfdbfe; background: var(--secondary); box-shadow: inset 3px 0 0 var(--primary); }
 .recordMain { display: grid; gap: 6px; min-width: 0; }
@@ -98,7 +96,7 @@ button, input, textarea { font: inherit; }
 .recordIdentity small, .recordMeta { color: var(--muted-foreground); }
 .recordIcon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 10px; background: #e0edff; color: var(--primary); }
 .recordTitle { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.recordActions, .rowActionsMain, .rowActionButtons, .toolbarActions, .actionButtonGroup { display: flex; align-items: center; gap: 6px; }
+.rowActionButtons, .toolbarActions, .actionButtonGroup { display: flex; align-items: center; gap: 6px; }
 .statusBadge.authorized { background: var(--success-soft); color: var(--success); }
 .statusBadge.auth-failed { background: var(--danger-soft); color: var(--destructive); }
 

@@ -1,13 +1,6 @@
 import { Mail } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router';
-import {
-  RecordActionButtons,
-  RecordActions,
-  RecordCard,
-  RecordIdentity,
-  RecordTop,
-  StatusBadge
-} from './dashboard-kit';
+import { Card, RecordActionButtons, StatusBadge } from './dashboard-kit';
 import { maskEmail } from './email-utils';
 import { mailboxDetailPath } from './mailbox-route-paths';
 import { authStatus } from './mailbox-auth-status';
@@ -39,27 +32,23 @@ export function MailboxCard({ mailbox, mode, selected, busy, showSecrets, oauthi
   const sourceLabel = mailboxSourceLabel(mailbox, providerCapability, providerCapabilities);
 
   return (
-    <RecordCard selected={selected}>
+    <Card className={`recordCard ${selected ? 'selected' : ''}`}>
       <NavLink to={detailPath} className="recordMain rounded-md text-inherit no-underline outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-        <RecordTop>
-          <RecordIdentity
-            icon={<Mail className="size-4" />}
-            title={<span title={displayEmail}>{displayEmail}</span>}
-            subtitle={sourceLabel}
-          />
+        <div className="recordTop">
+          <div className="recordIdentity">
+            <span className="recordIcon"><Mail className="size-4" /></span>
+            <div className="min-w-0">
+              <strong className="recordTitle" title={displayEmail}>{displayEmail}</strong>
+              <small>{sourceLabel}</small>
+            </div>
+          </div>
           {showStatus && <StatusBadge status={authStatus(mailbox)} />}
-        </RecordTop>
+        </div>
         <MailboxErrorMeta error={mailbox.last_error} />
         <MailboxOperationMeta operation={currentOperation} />
       </NavLink>
-      {rowActions.length > 0 && (
-        <RecordActions className="rowActions">
-          <div className="rowActionsMain">
-            <RecordActionButtons actions={rowActions} />
-          </div>
-        </RecordActions>
-      )}
-    </RecordCard>
+      {rowActions.length > 0 && <RecordActionButtons actions={rowActions} />}
+    </Card>
   );
 }
 
