@@ -34,7 +34,7 @@ async function handleAck(request, env) {
 }
 
 function authorized(request, env) {
-  const expected = String(env.MAILBOX_RELAY_PULL_TOKEN || "").trim();
+  const expected = String(env.MAILBOX_RELAY_PULL_TOKEN || env.MAILBOX_WEBHOOK_TOKEN || "").trim();
   if (!expected) return false;
   const headerToken = String(request.headers.get(relayTokenHeader) || "").trim();
   const bearerToken = String(request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();

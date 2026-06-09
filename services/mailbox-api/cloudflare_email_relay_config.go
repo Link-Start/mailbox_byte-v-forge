@@ -22,7 +22,7 @@ type cloudflareRelayPullConfig struct {
 func loadCloudflareRelayPullConfig() cloudflareRelayPullConfig {
 	return cloudflareRelayPullConfig{
 		baseURL:   strings.TrimRight(envx.String("MAILBOX_CLOUDFLARE_RELAY_PULL_URL"), "/"),
-		token:     envx.String("MAILBOX_CLOUDFLARE_RELAY_PULL_TOKEN"),
+		token:     envx.StringDefault("MAILBOX_CLOUDFLARE_RELAY_PULL_TOKEN", envx.String("MAILBOX_WEBHOOK_TOKEN")),
 		timeout:   positiveSeconds("MAILBOX_CLOUDFLARE_RELAY_PULL_TIMEOUT_SECONDS", defaultCloudflareRelayPullTimeoutSeconds),
 		maxEvents: positiveInt("MAILBOX_CLOUDFLARE_RELAY_PULL_MAX_EVENTS", defaultCloudflareRelayPullMaxEvents),
 	}
