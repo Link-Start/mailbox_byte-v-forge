@@ -3,8 +3,6 @@ package eventcatalog
 import (
 	"errors"
 	"strings"
-
-	"mailboxapi/internal/eventbus"
 )
 
 var ErrEmptyDefinitionConsumerDurable = errors.New("event catalog consumer durable is required")
@@ -12,15 +10,6 @@ var ErrEmptyDefinitionConsumerDurable = errors.New("event catalog consumer durab
 type ConsumerBinding struct {
 	Definition Definition
 	Durable    string
-}
-
-func (definition Definition) ExpectedMessage() eventbus.ExpectedMessage {
-	return eventbus.ExpectedMessage{
-		Subject:      strings.TrimSpace(definition.Subject),
-		EventName:    strings.TrimSpace(definition.EventName),
-		EventVersion: strings.TrimSpace(definition.EventVersion),
-		PayloadType:  strings.TrimSpace(definition.PayloadType),
-	}
 }
 
 func (definition Definition) DefaultConsumerBinding() ConsumerBinding {
