@@ -37,26 +37,3 @@ func PublicAuthStatus(value string) mailboxv1.MailboxAuthStatus {
 		return mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_UNKNOWN
 	}
 }
-
-func AuthStatusValue(status mailboxv1.MailboxAuthStatus) string {
-	switch status {
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_OAUTH_PENDING:
-		return AuthStatusOAuthPending
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_AUTHORIZED:
-		return AuthStatusAuthorized
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_AUTH_FAILED:
-		return AuthStatusAuthFailed
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_NEEDS_MANUAL_VERIFICATION:
-		return AuthStatusNeedsManualVerify
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_PASSWORD_ONLY:
-		return "PASSWORD_ONLY"
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_WEBHOOK_ONLY:
-		return "WEBHOOK_ONLY"
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_DISABLED:
-		return "DISABLED"
-	case mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_UNKNOWN:
-		return "UNKNOWN"
-	default:
-		return ""
-	}
-}
