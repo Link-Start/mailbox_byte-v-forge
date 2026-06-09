@@ -40,11 +40,18 @@ func (s *Service) UpsertMailbox(ctx context.Context, request *mailboxv1.UpsertEm
 }
 
 func (s *Service) ListMailboxes(ctx context.Context, request *mailboxv1.ListEmailMailboxesRequest) (*mailboxv1.ListEmailMailboxesResponse, error) {
-	page, err := s.repo.ListMailboxes(ctx, mailboxmodel.AuthStatusValue(request.GetAuthStatus()), request.GetProviderKey(), request.GetEmailAddress(), request.GetCursor(), request.GetLimit())
+	page, err := s.repo.ListMailboxes(ctx, listAuthStatusValue(request.GetAuthStatus()), request.GetProviderKey(), request.GetEmailAddress(), request.GetCursor(), request.GetLimit())
 	if err != nil {
 		return nil, err
 	}
 	return &mailboxv1.ListEmailMailboxesResponse{Mailboxes: PublicMailboxList(page.Mailboxes), NextCursor: page.NextCursor}, nil
+}
+
+func listAuthStatusValue(status mailboxv1.MailboxAuthStatus) string {
+	if status == mailboxv1.MailboxAuthStatus_MAILBOX_AUTH_STATUS_UNKNOWN {
+		return ""
+	}
+	return mailboxmodel.AuthStatusValue(status)
 }
 
 func (s *Service) DeleteMailbox(ctx context.Context, request *mailboxv1.DeleteMailboxRequest) (*mailboxv1.DeleteMailboxResponse, error) {
