@@ -56,6 +56,13 @@ body { margin: 0; background: var(--background); color: var(--foreground); }
 button, input, textarea { font: inherit; }
 
 .workspacePanel { height: 100%; padding: 14px; overflow: hidden; }
+.mailboxWorkspace { display: grid; grid-template-columns: minmax(340px, .95fr) minmax(420px, 1.2fr); gap: 12px; height: 100%; min-height: 0; }
+.mailboxSourcePane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; gap: 10px; }
+.mailboxDetailPane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--shadow-sm); }
+.mailboxDetailHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.mailboxDetailBody { min-height: 0; overflow: hidden; padding: 12px; }
+.mailboxReadingEmpty { display: grid; min-height: 0; place-items: center; border: 1px dashed var(--border); border-radius: 16px; background: var(--accent); }
+@media (max-width: 1080px) { .mailboxWorkspace { grid-template-columns: minmax(0, 1fr); } .mailboxReadingEmpty, .mailboxDetailPane { min-height: 420px; } }
 .accountFrame { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; gap: 10px; }
 .panelHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .panelTitle { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
