@@ -45,31 +45,32 @@ export function MailboxInboxSection({ mailbox, result, showSecrets, loading, can
 
   return (
     <section className="grid h-full min-h-0 gap-3">
-      <div className="mailboxInboxToolbar">
-        <div className="flex min-w-0 items-center gap-2">
-          <Mail className="size-4 text-muted-foreground" />
-          <strong>邮件</strong>
-          <Badge variant="secondary">{messages.length}</Badge>
-          <Badge variant="outline">实时</Badge>
-        </div>
-        {canFetch && <Button variant="ghost" size="icon" title={loading ? '刷新中' : '刷新'} aria-label={loading ? '刷新中' : '刷新'} disabled={loading} onClick={() => onFetch(mailbox.email_address)}><RefreshCcw className="size-4" /></Button>}
-      </div>
       {result?.error_message && (
         <Alert variant="destructive">
           <AlertDescription>{compactToast(result.error_message)}</AlertDescription>
         </Alert>
       )}
       <div className="mailboxInboxLayout">
-        <ScrollArea className="h-full min-h-0">
-          <div className="grid gap-2 pr-2">
-            {messages.map((message, index) => {
-              const key = inboxMessageKey(message, index);
-              return <InboxMessageRow message={message} selected={key === selectedKey} showSecrets={showSecrets} key={key} onSelect={() => setSelectedKey(key)} />;
-            })}
-            {!result && <EmptyBlock text={loading ? '读取中' : '暂无邮件'} />}
-            {result && !result.error_message && messages.length === 0 && <EmptyBlock text="暂无邮件" />}
+        <div className="mailboxInboxListPane">
+          <div className="mailboxInboxToolbar">
+            <div className="flex min-w-0 items-center gap-2">
+              <Mail className="size-4 text-muted-foreground" />
+              <strong>邮件</strong>
+              <Badge variant="secondary">{messages.length}</Badge>
+            </div>
+            {canFetch && <Button variant="ghost" size="icon" title={loading ? '刷新中' : '刷新'} aria-label={loading ? '刷新中' : '刷新'} disabled={loading} onClick={() => onFetch(mailbox.email_address)}><RefreshCcw className="size-4" /></Button>}
           </div>
-        </ScrollArea>
+          <ScrollArea className="h-full min-h-0">
+            <div className="grid gap-2 pr-2">
+              {messages.map((message, index) => {
+                const key = inboxMessageKey(message, index);
+                return <InboxMessageRow message={message} selected={key === selectedKey} showSecrets={showSecrets} key={key} onSelect={() => setSelectedKey(key)} />;
+              })}
+              {!result && <EmptyBlock text={loading ? '读取中' : '暂无邮件'} />}
+              {result && !result.error_message && messages.length === 0 && <EmptyBlock text="暂无邮件" />}
+            </div>
+          </ScrollArea>
+        </div>
         {messages.length > 0 && <MailboxInboxDetail message={selectedMessage} showSecrets={showSecrets} />}
       </div>
     </section>

@@ -106,7 +106,8 @@ button, input, textarea { font: inherit; }
 .kvRow dt { color: var(--muted-foreground); font-size: 12px; }
 .kvRow dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cursorPager { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; color: var(--muted-foreground); font-size: 12px; }
-.mailboxInboxToolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; }
+.mailboxInboxListPane { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; min-width: 0; min-height: 0; }
+.mailboxInboxToolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; padding-right: 8px; }
 .mailboxInboxLayout { display: grid; gap: 12px; height: 100%; min-height: 0; }
 .mailboxInboxLayout > * { min-width: 0; min-height: 0; }
 @media (min-width: 960px) { .mailboxInboxLayout { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); align-items: stretch; } }
