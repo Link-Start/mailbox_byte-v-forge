@@ -7,7 +7,11 @@ export function mailboxIndexPath() {
   return '/';
 }
 
+export function mailboxInboxIndexPath() {
+  return '/inbox';
+}
+
 export function mailboxDetailPath(email: string, tab: MailboxDetailTab = 'overview') {
-  const base = `/mailboxes/${encodeURIComponent(email)}`;
-  return tab === 'inbox' ? `${base}/inbox` : base;
+  const encoded = encodeURIComponent(email);
+  return tab === 'inbox' ? `/inbox/${encoded}` : `/accounts/${encoded}`;
 }

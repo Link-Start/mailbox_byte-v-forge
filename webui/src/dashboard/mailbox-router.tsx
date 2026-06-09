@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { MailboxInboxRoute, MailboxIndexRoute, MailboxOverviewRoute, MailboxPage } from './mailbox-page';
-import { mailboxIndexPath, mailboxStandaloneBasename } from './mailbox-route-paths';
+import { mailboxInboxIndexPath, mailboxIndexPath, mailboxStandaloneBasename } from './mailbox-route-paths';
 
 function createMailboxRouter(basename: string) {
   return createBrowserRouter([
@@ -10,12 +10,13 @@ function createMailboxRouter(basename: string) {
       path: mailboxIndexPath(),
       Component: MailboxPage,
       children: [
-        { index: true, Component: MailboxIndexRoute },
-        { path: 'mailboxes/:mailboxEmail', Component: MailboxOverviewRoute },
-        { path: 'mailboxes/:mailboxEmail/inbox', Component: MailboxInboxRoute }
+        { index: true, element: <Navigate replace to={mailboxInboxIndexPath()} /> },
+        { path: 'inbox', Component: MailboxIndexRoute },
+        { path: 'inbox/:mailboxEmail', Component: MailboxInboxRoute },
+        { path: 'accounts/:mailboxEmail', Component: MailboxOverviewRoute }
       ]
     },
-    { path: '*', element: <Navigate replace to={mailboxIndexPath()} /> }
+    { path: '*', element: <Navigate replace to={mailboxInboxIndexPath()} /> }
   ], { basename });
 }
 

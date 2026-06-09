@@ -9,7 +9,7 @@ import { useMailboxEmailEventCache } from './mailbox-events';
 import { MailboxPageStatus } from './mailbox-page-status';
 import { persistentMailboxPanelSearch } from './mailbox-panel-query';
 import { MailboxReadingEmpty, MailboxReadingPane } from './mailbox-reading-pane';
-import { mailboxDetailPath, mailboxIndexPath, type MailboxDetailTab } from './mailbox-route-paths';
+import { mailboxDetailPath, mailboxInboxIndexPath, type MailboxDetailTab } from './mailbox-route-paths';
 import { MailboxPanel } from './mailboxes';
 import { canRunProviderMailboxAction, capabilityForProvider } from './mailbox-provider-capabilities';
 
@@ -27,7 +27,7 @@ export function MailboxPage() {
   const { mailboxEmail = '' } = useParams();
   const selectedEmail = normalizeUiEmail(mailboxEmail);
   const [showSecrets, setShowSecrets] = useState(false);
-  const closeDetails = useCallback(() => void navigate(`${mailboxIndexPath()}${persistentMailboxPanelSearch(search)}`), [navigate, search]);
+  const closeDetails = useCallback(() => void navigate(`${mailboxInboxIndexPath()}${persistentMailboxPanelSearch(search)}`), [navigate, search]);
   const closeDeletedMailbox = useCallback((email: string) => {
     if (normalizeUiEmail(email) === selectedEmail) closeDetails();
   }, [closeDetails, selectedEmail]);
