@@ -7,12 +7,13 @@ import (
 	"mailboxapi/internal/inboxapp"
 )
 
-func persistedInboxRow(provider string, mailboxEmail string, sourceEmail string, bodyText string, htmlBody string, persisted *mailboxv1.EmailInboxMessage) (inboxapp.MessageRow, error) {
+func persistedInboxRow(provider string, mailboxEmail string, sourceEmail string, key string, bodyText string, htmlBody string, persisted *mailboxv1.EmailInboxMessage) (inboxapp.MessageRow, error) {
 	recipientsJSON, err := json.Marshal(persisted.GetRecipients())
 	if err != nil {
 		return inboxapp.MessageRow{}, err
 	}
 	return inboxapp.MessageRow{
+		Key:            key,
 		ID:             persisted.GetId(),
 		MailboxEmail:   mailboxEmail,
 		Subject:        persisted.GetSubject(),

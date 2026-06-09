@@ -1,6 +1,6 @@
 import { Inbox, KeyRound, Plus, RefreshCcw } from 'lucide-react';
 import { MailboxProviderAction, type ToolbarActionDescriptor } from './dashboard-kit';
-import { bulkMailboxActionCount } from './mailbox-provider-capabilities';
+import { bulkMailboxActionCount, canRunProviderMailboxAction } from './mailbox-provider-capabilities';
 import { mailboxAllProviderTab, type MailboxProviderTab } from './mailbox-provider-config';
 import type { MailboxPanelMode } from './mailbox-provider-types';
 import type { Mailbox, MailboxProviderActionCapability, MailboxProviderCapability } from './types';
@@ -13,6 +13,7 @@ type ProviderToolbarView = {
 
 type ProviderToolbarProps = {
   mode: MailboxPanelMode;
+  providerCapabilities: MailboxProviderCapability[];
   busy: boolean;
   oauthing: string;
   inboxLoading: boolean;
@@ -89,11 +90,12 @@ function inboxToolbarActions(view: ProviderToolbarView, props: ProviderToolbarPr
 }
 
 function aggregateToolbarActions(view: ProviderToolbarView, props: ProviderToolbarProps): ToolbarActionDescriptor[] {
+  const count = view.mailboxes.filter((mailbox) => canRunProviderMailboxAction(props.providerCapabilities, mailbox, MailboxProviderAction.MAILBOX_PROVIDER_ACTION_FETCH_INBOX)).length;
   return [{
     id: 'fetch-all-inboxes',
     label: props.inboxLoading ? '收信中' : '收信',
     icon: <Inbox className="size-4" />,
-    disabled: props.busy || props.inboxLoading || view.mailboxes.length === 0,
+    disabled: props.busy || props.inboxLoading || count === 0,
     onClick: () => void props.onFetchInbox(),
   }];
 }

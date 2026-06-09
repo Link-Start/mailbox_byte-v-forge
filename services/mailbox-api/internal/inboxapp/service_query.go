@@ -3,6 +3,7 @@ package inboxapp
 import (
 	"context"
 	"errors"
+	"strings"
 
 	mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 	"mailboxapi/internal/emailx"
@@ -32,4 +33,25 @@ func (s *Service) ListMessagesSince(ctx context.Context, email string, limit int
 		out = append(out, message)
 	}
 	return out, nil
+}
+
+func (s *Service) ListMessagesPage(ctx context.Context, email string, limit int32, cursor string, keyword string) (MessagePage, error) {
+	email = emailx.Normalize(email)
+	if email == "" {
+		return MessagePage{}, errors.New("email_address is required")
+	}
+	n := MessageLimitValue(limit, 25)
+	page, err := s.repo.ListInboxPageRows(ctx, email, n, strings.TrimSpace(cursor), strings.TrimSpace(keyword))
+	if err != nil {
+		return MessagePage{}, err
+	}
+	messages := []*mailboxv1.EmailInboxMessage{}
+	for _, row := range page.Rows {
+		message := MessageFromRowLenient(row, s.normalizeProvider)
+		if err := s.AttachSignalSecrets(ctx, message); err != nil {
+			s.log("list mailbox email signal secret refresh failed email=%s: %v", emailx.Redact(email), err)
+		}
+		messages = append(messages, message)
+	}
+	return MessagePage{Messages: messages, NextCursor: page.NextCursor}, nil
 }

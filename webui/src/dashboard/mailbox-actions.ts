@@ -17,7 +17,7 @@ import type { InboxResult, Mailbox } from './types';
 
 export const mailboxInboxQueryKey = (email: string) => ['mailbox', 'inbox', normalizeUiEmail(email)] as const;
 
-export function useMailboxActions(data: MailboxData, onMailboxDeleted: (email: string) => void) {
+export function useMailboxActions(data: MailboxData, onMailboxDeleted: (email: string) => void, options: { loadInbox?: boolean } = {}) {
   const toast = useToastMessage();
   const queryClient = useQueryClient();
   const selectedEmail = normalizeUiEmail(data.selected?.email_address || '');
@@ -26,7 +26,7 @@ export function useMailboxActions(data: MailboxData, onMailboxDeleted: (email: s
   const inboxQuery = useQuery<InboxResult | null>({
     queryKey: selectedInboxKey,
     queryFn: () => selectedEmail ? fetchStoredInbox(selectedEmail) : Promise.resolve(null),
-    enabled: !!selectedEmail,
+    enabled: !!selectedEmail && options.loadInbox !== false,
     initialData: null
   });
   const runner = useAsyncActionRunner();
@@ -48,10 +48,13 @@ export function useMailboxActions(data: MailboxData, onMailboxDeleted: (email: s
       const resp = await fetchMailboxInboxes(target);
       for (const result of resp.results || []) {
         const email = result.mailbox?.email_address || result.messages?.[0]?.mailbox_email || target;
-        if (email) queryClient.setQueryData(mailboxInboxQueryKey(email), result);
+        if (email) {
+          queryClient.setQueryData(mailboxInboxQueryKey(email), result);
+          await queryClient.invalidateQueries({ queryKey: mailboxInboxQueryKey(email) });
+        }
       }
       toast.showToast(resp.failed_count > 0 ? 'error' : 'ok', `${target ? `${target} ` : ''}收信完成：${resp.message_count} 封邮件`);
-      await data.invalidate();
+      if (resp.message_count > 0 || resp.failed_count > 0) await data.invalidate();
     }, { onError: toast.showError });
   }
 

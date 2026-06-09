@@ -25,13 +25,13 @@ func (s *EmailService) ListInbox(ctx context.Context, request *mailboxv1.ListMai
 		limit = 100
 	}
 	s.pullCloudflareRelayPendingForInbox(ctx, email)
-	messages, err := s.inbox.ListMessages(ctx, email, limit)
+	page, err := s.inbox.ListMessagesPage(ctx, email, limit, request.GetCursor(), request.GetQuery())
 	if err != nil {
 		return nil, status.Error(codes.Internal, safeMailboxError(err))
 	}
 	resultMailbox := &mailboxmodel.Record{
 		EmailAddress: email,
-		ProviderKey:  s.providers.ProviderForInboxAddress(email, messages),
+		ProviderKey:  s.providers.ProviderForInboxAddress(email, page.Messages),
 		Domain:       domainForEmail(email),
 	}
 	s.providers.prepareProjection(resultMailbox)
@@ -40,8 +40,8 @@ func (s *EmailService) ListInbox(ctx context.Context, request *mailboxv1.ListMai
 	}
 	return &mailboxv1.ListMailboxInboxResponse{Result: &mailboxv1.FetchMailboxInboxResult{
 		Mailbox:  mailboxapp.PublicMailbox(resultMailbox),
-		Messages: messages,
-	}}, nil
+		Messages: page.Messages,
+	}, NextCursor: page.NextCursor}, nil
 }
 
 func (s *EmailService) GetInboxMessage(ctx context.Context, request *mailboxv1.GetMailboxInboxMessageRequest) (*mailboxv1.GetMailboxInboxMessageResponse, error) {

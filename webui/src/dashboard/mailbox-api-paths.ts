@@ -17,7 +17,11 @@ export function mailboxURL(email: string) {
 }
 
 export function mailboxInboxURL(email: string, limit = 20) {
-  return `${mailboxURL(email)}/inbox?limit=${limit}`;
+  return mailboxInboxPageURL(email, { limit });
+}
+
+export function mailboxInboxPageURL(email: string, options: { cursor?: string; limit?: number; query?: string }) {
+  return cursorPageURL(mailboxURL(email) + '/inbox', { cursor: options.cursor, limit: options.limit || 20, params: { q: options.query } });
 }
 
 export function mailboxInboxMessageURL(email: string, messageID: string, queryString = '') {

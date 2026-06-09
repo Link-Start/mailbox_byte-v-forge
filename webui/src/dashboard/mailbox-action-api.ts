@@ -7,7 +7,7 @@ import {
   type SyncMailboxDomainsRequest,
   type SyncMailboxDomainsResponse
 } from './dashboard-kit';
-import { mailboxApiPaths, mailboxInboxURL, mailboxURL } from './mailbox-api-paths';
+import { mailboxApiPaths, mailboxInboxPageURL, mailboxURL } from './mailbox-api-paths';
 import type { DeleteMailboxResponse, InboxResponse } from './types';
 
 export function startMailboxOAuth(emailAddress = '') {
@@ -39,7 +39,11 @@ export function deleteMailbox(email: string) {
   return api<DeleteMailboxResponse>(mailboxURL(email), { method: 'DELETE' });
 }
 
-export async function fetchStoredInbox(email: string) {
-  const resp = await api<ListMailboxInboxResponse>(mailboxInboxURL(email));
+export async function fetchStoredInbox(email: string, options: { cursor?: string; limit?: number; query?: string } = {}) {
+  const resp = await api<ListMailboxInboxResponse>(mailboxInboxPageURL(email, options));
   return resp.result || null;
+}
+
+export function fetchStoredInboxPage(email: string, options: { cursor?: string; limit?: number; query?: string } = {}) {
+  return api<ListMailboxInboxResponse>(mailboxInboxPageURL(email, options));
 }

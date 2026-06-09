@@ -3,6 +3,7 @@ package inboxapp
 import mailboxv1 "mailboxapi/internal/contracts/mailboxv1"
 
 type MessageRow struct {
+	Key            string
 	ID             string
 	MailboxEmail   string
 	Subject        string
@@ -21,4 +22,14 @@ type MessageInput struct {
 	Message  *mailboxv1.EmailInboxMessage
 	BodyText string
 	HTMLBody string
+}
+
+type MessageRowPage struct {
+	Rows       []MessageRow
+	NextCursor string
+}
+
+type MessagePage struct {
+	Messages   []*mailboxv1.EmailInboxMessage
+	NextCursor string
 }

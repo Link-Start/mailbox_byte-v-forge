@@ -36,7 +36,7 @@ export function MailboxPage() {
     if (normalizeUiEmail(email) === selectedEmail) closeDetails();
   }, [closeDetails, selectedEmail]);
   const data = useMailboxData(selectedEmail);
-  const actions = useMailboxActions(data, closeDeletedMailbox);
+  const actions = useMailboxActions(data, closeDeletedMailbox, { loadInbox: panelMode === 'accounts' });
   useMailboxEmailEventCache({ email: data.selected?.email_address, signalKind: 'any', inboxQueryKey: actions.inboxQueryKey, enabled: !!data.selected?.email_address });
   return (
     <>

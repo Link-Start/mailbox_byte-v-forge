@@ -23,7 +23,7 @@ func (r *Repository) prepareInboxMessage(provider string, mailboxEmail string, i
 	sourceEmail := emailx.Normalize(stringx.FirstNonEmpty(message.GetSourceMailboxEmail(), message.GetMailboxEmail(), mailboxEmail))
 	key := inboxapp.StableMessageKey(provider, mailboxEmail, stringx.FirstNonEmpty(message.GetId(), message.GetSubject(), message.GetBodyPreview()))
 	persisted := r.persistedInboxMessage(provider, mailboxEmail, sourceEmail, key, bodyText, htmlBody, message, now)
-	row, err := persistedInboxRow(provider, mailboxEmail, sourceEmail, bodyText, htmlBody, persisted)
+	row, err := persistedInboxRow(provider, mailboxEmail, sourceEmail, key, bodyText, htmlBody, persisted)
 	if err != nil {
 		return nil, "", inboxapp.MessageRow{}, err
 	}

@@ -1869,6 +1869,8 @@ type ListMailboxInboxRequest struct {
 	EmailAddress  string                 `protobuf:"bytes,1,opt,name=email_address,json=emailAddress,proto3" json:"email_address,omitempty"`
 	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
 	ParserProfile string                 `protobuf:"bytes,3,opt,name=parser_profile,json=parserProfile,proto3" json:"parser_profile,omitempty"`
+	Cursor        string                 `protobuf:"bytes,4,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Query         string                 `protobuf:"bytes,5,opt,name=query,proto3" json:"query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1924,10 +1926,25 @@ func (x *ListMailboxInboxRequest) GetParserProfile() string {
 	return ""
 }
 
+func (x *ListMailboxInboxRequest) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
+func (x *ListMailboxInboxRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
 type ListMailboxInboxResponse struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
 	Result        *FetchMailboxInboxResult `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
 	ErrorMessage  string                   `protobuf:"bytes,2,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+	NextCursor    string                   `protobuf:"bytes,3,opt,name=next_cursor,json=nextCursor,proto3" json:"next_cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1972,6 +1989,13 @@ func (x *ListMailboxInboxResponse) GetResult() *FetchMailboxInboxResult {
 func (x *ListMailboxInboxResponse) GetErrorMessage() string {
 	if x != nil {
 		return x.ErrorMessage
+	}
+	return ""
+}
+
+func (x *ListMailboxInboxResponse) GetNextCursor() string {
+	if x != nil {
+		return x.NextCursor
 	}
 	return ""
 }
@@ -3453,14 +3477,18 @@ const file_byte_v_forge_contracts_mailbox_v1_mailbox_proto_rawDesc = "" +
 	"signalKind\x12*\n" +
 	"\x11issued_after_unix\x18\x05 \x01(\x03R\x0fissuedAfterUnix\x12#\n" +
 	"\rdeadline_unix\x18\x06 \x01(\x03R\fdeadlineUnix\x12\x16\n" +
-	"\x06reason\x18\a \x01(\tR\x06reason\"{\n" +
+	"\x06reason\x18\a \x01(\tR\x06reason\"\xa9\x01\n" +
 	"\x17ListMailboxInboxRequest\x12#\n" +
 	"\remail_address\x18\x01 \x01(\tR\femailAddress\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12%\n" +
-	"\x0eparser_profile\x18\x03 \x01(\tR\rparserProfile\"\x93\x01\n" +
+	"\x0eparser_profile\x18\x03 \x01(\tR\rparserProfile\x12\x16\n" +
+	"\x06cursor\x18\x04 \x01(\tR\x06cursor\x12\x14\n" +
+	"\x05query\x18\x05 \x01(\tR\x05query\"\xb4\x01\n" +
 	"\x18ListMailboxInboxResponse\x12R\n" +
 	"\x06result\x18\x01 \x01(\v2:.byte.v.forge.contracts.mailbox.v1.FetchMailboxInboxResultR\x06result\x12#\n" +
-	"\rerror_message\x18\x02 \x01(\tR\ferrorMessage\"\xad\x01\n" +
+	"\rerror_message\x18\x02 \x01(\tR\ferrorMessage\x12\x1f\n" +
+	"\vnext_cursor\x18\x03 \x01(\tR\n" +
+	"nextCursor\"\xad\x01\n" +
 	"\x1dGetMailboxInboxMessageRequest\x12#\n" +
 	"\remail_address\x18\x01 \x01(\tR\femailAddress\x12\x1d\n" +
 	"\n" +

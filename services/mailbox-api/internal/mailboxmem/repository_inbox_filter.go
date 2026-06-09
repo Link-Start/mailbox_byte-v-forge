@@ -43,5 +43,5 @@ func inboxFilterMatches(row inboxapp.MessageRow, email string, keyword string, t
 	if includeEqual {
 		return row.ReceivedAtUnix >= timestamp && messageMatchesKeyword(row, keyword)
 	}
-	return row.ReceivedAtUnix > timestamp
+	return row.ReceivedAtUnix > timestamp && messageMatchesKeyword(row, keyword)
 }

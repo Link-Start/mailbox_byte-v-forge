@@ -213,11 +213,14 @@ message ListMailboxInboxRequest {
   string email_address = 1;
   int32 limit = 2;
   string parser_profile = 3;
+  string cursor = 4;
+  string query = 5;
 }
 
 message ListMailboxInboxResponse {
   FetchMailboxInboxResult result = 1;
   string error_message = 2;
+  string next_cursor = 3;
 }
 
 message GetMailboxInboxMessageRequest {

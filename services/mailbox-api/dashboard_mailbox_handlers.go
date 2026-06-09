@@ -44,6 +44,8 @@ func (s *dashboardServer) handleMailboxStoredInbox(w http.ResponseWriter, r *htt
 		EmailAddress:  strings.TrimSpace(email),
 		Limit:         int32(httpx.QueryInt(r, "limit", 20)),
 		ParserProfile: strings.TrimSpace(r.URL.Query().Get("parser_profile")),
+		Cursor:        strings.TrimSpace(r.URL.Query().Get("cursor")),
+		Query:         strings.TrimSpace(r.URL.Query().Get("q")),
 	})
 	if err != nil {
 		writeError(w, http.StatusBadGateway, err)

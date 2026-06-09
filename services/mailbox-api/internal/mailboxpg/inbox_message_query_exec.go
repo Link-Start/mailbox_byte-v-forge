@@ -18,6 +18,11 @@ func (q *inboxMessageQuery) Limit(limit int) *inboxMessageQuery {
 	return q
 }
 
+func (q *inboxMessageQuery) Offset(offset int) *inboxMessageQuery {
+	q.offset = offset
+	return q
+}
+
 func (q *inboxMessageQuery) Query(ctx context.Context, querier mailboxQuerier) (pgx.Rows, error) {
 	query, args := q.SQL()
 	return querier.Query(ctx, query, args...)
@@ -35,6 +40,10 @@ func (q *inboxMessageQuery) SQL() (string, []any) {
 	if q.limit > 0 {
 		args = append(args, q.limit)
 		query += fmt.Sprintf(" LIMIT $%d", len(args))
+	}
+	if q.offset > 0 {
+		args = append(args, q.offset)
+		query += fmt.Sprintf(" OFFSET $%d", len(args))
 	}
 	return query, args
 }

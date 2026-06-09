@@ -14,7 +14,7 @@ func (s *EmailService) pullCloudflareRelayPendingForInbox(ctx context.Context, e
 	if s == nil || s.cloudflareRelay == nil || !s.isCloudflareStoredInbox(email) {
 		return
 	}
-	events, err := s.cloudflareRelay.PullPending(ctx, email)
+	events, err := s.cloudflareRelay.PullPending(ctx, "")
 	if err != nil {
 		logWarning("pull Cloudflare relay pending email=%s: %v", emailx.Redact(email), err)
 		return

@@ -3,7 +3,7 @@ package mailboxpg
 import "mailboxapi/internal/inboxapp"
 
 const inboxMessageSelectSQL = `
-	SELECT message_id, mailbox_email, subject, from_address, body_preview,
+	SELECT message_key, message_id, mailbox_email, subject, from_address, body_preview,
 		received_at, recipients_json, provider, source_mailbox_email, body_text,
 		html_body, raw_size
 	FROM mailbox_inbox_messages
@@ -12,6 +12,7 @@ const inboxMessageSelectSQL = `
 func scanInboxMessageRow(scanner Scanner) (inboxapp.MessageRow, error) {
 	var row inboxapp.MessageRow
 	err := scanner.Scan(
+		&row.Key,
 		&row.ID,
 		&row.MailboxEmail,
 		&row.Subject,

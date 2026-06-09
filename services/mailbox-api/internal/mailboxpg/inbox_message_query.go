@@ -5,6 +5,7 @@ type inboxMessageQuery struct {
 	args       []any
 	orderBy    string
 	limit      int
+	offset     int
 }
 
 func newInboxMessageQuery() *inboxMessageQuery {

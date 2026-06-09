@@ -48,6 +48,6 @@ func (q *inboxMessageQuery) WhereKeyword(keyword string) *inboxMessageQuery {
 		return q
 	}
 	placeholder := q.addArg("%" + keyword + "%")
-	q.conditions = append(q.conditions, fmt.Sprintf("(subject ILIKE %s OR body_preview ILIKE %s OR body_text ILIKE %s)", placeholder, placeholder, placeholder))
+	q.conditions = append(q.conditions, fmt.Sprintf("(subject ILIKE %s OR from_address ILIKE %s OR recipients_json ILIKE %s OR body_preview ILIKE %s OR body_text ILIKE %s)", placeholder, placeholder, placeholder, placeholder, placeholder))
 	return q
 }

@@ -12,6 +12,7 @@ type Repository interface {
 	InboxWatermark(ctx context.Context, email string) (int64, error)
 	HasInboxMessages(ctx context.Context, email string) (bool, error)
 	ListInboxRows(ctx context.Context, email string, limit int, receivedAfterUnix int64) ([]MessageRow, error)
+	ListInboxPageRows(ctx context.Context, email string, limit int, cursor string, keyword string) (MessageRowPage, error)
 	GetInboxRow(ctx context.Context, email string, messageID string, provider string) (MessageRow, bool, error)
 	LatestInboxRows(ctx context.Context, email string, subjectKeyword string, issuedAfterUnix int64, limit int) ([]MessageRow, error)
 	RecordMessages(ctx context.Context, request RecordMessagesRequest) ([]*mailboxv1.EmailInboxMessage, error)

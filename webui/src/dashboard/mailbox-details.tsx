@@ -16,7 +16,7 @@ export function MailboxDetails({ mailbox, providerCapability, mode, inboxResult,
   onDelete: (mailbox: Mailbox) => void;
 }) {
   if (mode === 'inbox') {
-    return <MailboxInboxSection mailbox={mailbox} result={inboxResult} loading={inboxLoading} canFetch={canFetchInbox} onFetch={onFetchInbox} />;
+    return <MailboxInboxSection mailbox={mailbox} loading={inboxLoading} canFetch={canFetchInbox} onFetch={onFetchInbox} />;
   }
   const latestOtp = latestOtpForInboxResult(inboxResult || null, mailbox.email_address);
   return <MailboxOverview mailbox={mailbox} providerCapability={providerCapability} latestOtp={latestOtp} onCopy={onCopy} onDelete={onDelete} />;
