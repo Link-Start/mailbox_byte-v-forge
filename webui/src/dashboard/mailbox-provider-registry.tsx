@@ -3,7 +3,7 @@ import { GenericMailboxProviderPanel } from './mailbox-provider-generic';
 import { CloudflareMailboxProviderPanel } from './mailbox-provider-cloudflare';
 import { OutlookMailboxProviderPanel } from './mailbox-provider-outlook';
 import type { MailboxProviderPanelProps } from './mailbox-provider-types';
-import { mailboxProviderMatches, normalizeMailboxProviderKey } from './mailbox-provider-config';
+import { mailboxAllProviderTab, mailboxProviderMatches, normalizeMailboxProviderKey } from './mailbox-provider-config';
 import type { Mailbox, MailboxProviderCapability } from './types';
 
 export type MailboxProviderView = {
@@ -20,16 +20,25 @@ const providerPanelRegistry: Record<string, ComponentType<MailboxProviderPanelPr
 };
 
 export function mailboxProviderViews(capabilities: MailboxProviderCapability[], mailboxes: Mailbox[]): MailboxProviderView[] {
-  const seen = new Set<string>();
-  const views = capabilities
+  const seen = new Set<string>([mailboxAllProviderTab]);
+  const views = [allMailboxView(mailboxes), ...capabilities
     .map((capability) => providerView(capability.key, capability, mailboxes))
-    .filter((view): view is MailboxProviderView => !!view && markSeen(seen, view.value));
+    .filter((view): view is MailboxProviderView => !!view && markSeen(seen, view.value))];
   for (const mailbox of mailboxes) {
     const key = normalizeMailboxProviderKey(mailbox.provider_key);
     const view = providerView(key, undefined, mailboxes);
     if (view && markSeen(seen, view.value)) views.push(view);
   }
   return views;
+}
+
+function allMailboxView(mailboxes: Mailbox[]): MailboxProviderView {
+  return {
+    value: mailboxAllProviderTab,
+    label: '全部',
+    mailboxes,
+    Component: GenericMailboxProviderPanel,
+  };
 }
 
 function providerView(providerKey: string, capability: MailboxProviderCapability | undefined, mailboxes: Mailbox[]): MailboxProviderView | null {

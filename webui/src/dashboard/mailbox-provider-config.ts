@@ -1,4 +1,5 @@
 export type MailboxProviderTab = string;
+export const mailboxAllProviderTab = 'all';
 
 export function mailboxProviderValue(provider: string): string {
   return normalizeMailboxProviderKey(provider);
