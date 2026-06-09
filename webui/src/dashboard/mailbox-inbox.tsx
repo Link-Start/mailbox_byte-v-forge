@@ -18,8 +18,9 @@ import {
   ScrollArea
 } from './dashboard-kit';
 import { emailDisplayName, emailInitial } from './email-utils';
+import { useMailboxEmailEventCache } from './mailbox-events';
 import { MailboxInboxDetail } from './mailbox-inbox-detail';
-import { mailboxInboxPageSize, useMailboxInboxPages } from './mailbox-inbox-pages';
+import { mailboxInboxPageSize, mailboxInboxPagesQueryKey, useMailboxInboxPages } from './mailbox-inbox-pages';
 import { MessageSignalBadges } from './mailbox-signal-badges';
 import type { InboxMessage, Mailbox } from './types';
 
@@ -32,6 +33,11 @@ export function MailboxInboxSection({ mailbox, loading, canFetch, onFetch }: {
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearch = useDeferredValue(searchQuery);
   const inbox = useMailboxInboxPages(mailbox.email_address, deferredSearch);
+  useMailboxEmailEventCache({
+    email: mailbox.email_address,
+    signalKind: 'any',
+    inboxQueryKey: mailboxInboxPagesQueryKey(mailbox.email_address, deferredSearch)
+  });
   const messages = inbox.messages;
   const [selectedKey, setSelectedKey] = useState('');
   const selectedMessage = messages.find((message, index) => inboxMessageKey(message, index) === selectedKey) || null;

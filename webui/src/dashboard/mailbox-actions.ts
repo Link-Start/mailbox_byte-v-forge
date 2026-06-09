@@ -1,34 +1,25 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   activeActionTargets,
   actionTargetStateKey,
   hasActiveAction,
   short,
-  useQuery,
   useQueryClient,
   useAsyncActionRunner,
   useToastMessage
 } from './dashboard-kit';
 import { normalizeUiEmail } from './email-utils';
-import { deleteMailbox, fetchMailboxInboxes, fetchStoredInbox, startMailboxOAuth, syncMailboxDomains } from './mailbox-action-api';
+import { deleteMailbox, fetchMailboxInboxes, startMailboxOAuth, syncMailboxDomains } from './mailbox-action-api';
 import type { MailboxData } from './mailbox-data';
 import { capabilityForProvider, providerDisplayName } from './mailbox-provider-capabilities';
-import type { InboxResult, Mailbox } from './types';
+import type { Mailbox } from './types';
 
-export const mailboxInboxQueryKey = (email: string) => ['mailbox', 'inbox', normalizeUiEmail(email)] as const;
+const mailboxInboxQueryPrefix = (email: string) => ['mailbox', 'inbox', normalizeUiEmail(email)] as const;
 
-export function useMailboxActions(data: MailboxData, onMailboxDeleted: (email: string) => void, options: { loadInbox?: boolean } = {}) {
+export function useMailboxActions(data: MailboxData, onMailboxDeleted: (email: string) => void) {
   const toast = useToastMessage();
   const queryClient = useQueryClient();
-  const selectedEmail = normalizeUiEmail(data.selected?.email_address || '');
-  const selectedInboxKey = useMemo(() => mailboxInboxQueryKey(selectedEmail), [selectedEmail]);
   const [deleteTarget, setDeleteTarget] = useState<Mailbox | null>(null);
-  const inboxQuery = useQuery<InboxResult | null>({
-    queryKey: selectedInboxKey,
-    queryFn: () => selectedEmail ? fetchStoredInbox(selectedEmail) : Promise.resolve(null),
-    enabled: !!selectedEmail && options.loadInbox !== false,
-    initialData: null
-  });
   const runner = useAsyncActionRunner();
 
   useEffect(() => { if (data.loadError) toast.showError(data.loadError); }, [data.loadError, toast]);
@@ -49,8 +40,7 @@ export function useMailboxActions(data: MailboxData, onMailboxDeleted: (email: s
       for (const result of resp.results || []) {
         const email = result.mailbox?.email_address || result.messages?.[0]?.mailbox_email || target;
         if (email) {
-          queryClient.setQueryData(mailboxInboxQueryKey(email), result);
-          await queryClient.invalidateQueries({ queryKey: mailboxInboxQueryKey(email) });
+          await queryClient.invalidateQueries({ queryKey: mailboxInboxQueryPrefix(email) });
         }
       }
       const messageCount = resp.message_count ?? 0;
@@ -98,10 +88,8 @@ export function useMailboxActions(data: MailboxData, onMailboxDeleted: (email: s
   return {
     toast,
     deleteTarget,
-    inboxResult: inboxQuery.data ?? null,
-    inboxQueryKey: selectedInboxKey,
     oauthing: activeActionTargets(runner.activeKeys, 'oauth')[0] || '',
-    inboxLoading: inboxQuery.isFetching || hasActiveAction(runner.activeKeys, 'fetch-inbox'),
+    inboxLoading: hasActiveAction(runner.activeKeys, 'fetch-inbox'),
     domainSyncing: hasActiveAction(runner.activeKeys, 'sync-domains'),
     deleting: hasActiveAction(runner.activeKeys, 'delete-mailbox'),
     runOAuth,

@@ -2,7 +2,7 @@ import { Mail, X } from 'lucide-react';
 import { Button, EmptyBlock } from './dashboard-kit';
 import { MailboxDetails } from './mailbox-details';
 import type { MailboxPanelMode } from './mailbox-provider-types';
-import type { InboxResult, Mailbox, MailboxProviderCapability } from './types';
+import type { Mailbox, MailboxProviderCapability } from './types';
 
 export function MailboxReadingEmpty({ busy, total }: { busy: boolean; total: number }) {
   const text = busy ? '加载中' : total > 0 ? '选择邮箱' : '暂无邮箱';
@@ -13,7 +13,6 @@ export function MailboxReadingPane({
   mailbox,
   providerCapability,
   mode,
-  inboxResult,
   inboxLoading,
   canFetchInbox,
   onClose,
@@ -24,7 +23,6 @@ export function MailboxReadingPane({
   mailbox: Mailbox;
   providerCapability?: MailboxProviderCapability;
   mode: MailboxPanelMode;
-  inboxResult?: InboxResult | null;
   inboxLoading: boolean;
   canFetchInbox: boolean;
   onClose: () => void;
@@ -49,7 +47,6 @@ export function MailboxReadingPane({
           mailbox={mailbox}
           providerCapability={providerCapability}
           mode={mode}
-          inboxResult={inboxResult}
           inboxLoading={inboxLoading}
           canFetchInbox={canFetchInbox}
           onCopy={onCopy}

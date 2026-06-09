@@ -6,7 +6,6 @@ import { useMailboxActions } from './mailbox-actions';
 import { useMailboxData } from './mailbox-data';
 import { MailboxAppNav } from './mailbox-app-nav';
 import { MailboxDeleteDialog } from './mailbox-delete-dialog';
-import { useMailboxEmailEventCache } from './mailbox-events';
 import { MailboxPageStatus } from './mailbox-page-status';
 import { persistentMailboxPanelSearch } from './mailbox-panel-query';
 import { MailboxReadingEmpty, MailboxReadingPane } from './mailbox-reading-pane';
@@ -36,8 +35,7 @@ export function MailboxPage() {
     if (normalizeUiEmail(email) === selectedEmail) closeDetails();
   }, [closeDetails, selectedEmail]);
   const data = useMailboxData(selectedEmail);
-  const actions = useMailboxActions(data, closeDeletedMailbox, { loadInbox: panelMode === 'accounts' });
-  useMailboxEmailEventCache({ email: data.selected?.email_address, signalKind: 'any', inboxQueryKey: actions.inboxQueryKey, enabled: !!data.selected?.email_address });
+  const actions = useMailboxActions(data, closeDeletedMailbox);
   return (
     <>
       <main className="workspacePanel">
@@ -114,7 +112,6 @@ function MailboxDetailRoute() {
       mailbox={data.selected}
       providerCapability={capabilityForProvider(data.providerCapabilities, data.selected.provider_key)}
       mode={panelMode}
-      inboxResult={actions.inboxResult}
       inboxLoading={actions.inboxLoading}
       canFetchInbox={canRunProviderMailboxAction(
         data.providerCapabilities,

@@ -9,13 +9,11 @@ import { mailboxStatusText } from './labels';
 import { authStatus } from './mailbox-auth-status';
 import { mailboxCredentialPresent } from './mailbox-credentials';
 import { providerShowsCredentialState } from './mailbox-provider-capabilities';
-import { MailboxOtpPanel } from './otp-panel';
-import type { LatestOtp, Mailbox, MailboxProviderCapability } from './types';
+import type { Mailbox, MailboxProviderCapability } from './types';
 
-export function MailboxOverview({ mailbox, providerCapability, latestOtp, onCopy, onDelete }: {
+export function MailboxOverview({ mailbox, providerCapability, onCopy, onDelete }: {
   mailbox: Mailbox;
   providerCapability?: MailboxProviderCapability;
-  latestOtp: LatestOtp | null;
   onCopy: (label: string, value: string) => void;
   onDelete: (mailbox: Mailbox) => void;
 }) {
@@ -31,10 +29,7 @@ export function MailboxOverview({ mailbox, providerCapability, latestOtp, onCopy
 
   return (
     <section className="grid gap-3">
-      <MailboxOtpPanel latestOtp={latestOtp} loading={false} />
-      <div>
-        <KVList items={fields} onCopy={onCopy} />
-      </div>
+      <KVList items={fields} onCopy={onCopy} />
       <ActionButtonGroup actions={actions} />
     </section>
   );
